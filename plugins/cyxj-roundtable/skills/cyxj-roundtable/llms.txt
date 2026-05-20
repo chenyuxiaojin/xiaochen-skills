@@ -1,0 +1,43 @@
+# Roundtable Consilium Skill
+
+> A Claude Code Skill that convenes 6 independent Opus 4.7 subagents as adversarial advisors when the user (小陈) needs to think through a difficult decision. Inspired by Roman consilium and rejection of AI sycophancy. The user sits at the head of the table — AI does not decide.
+
+## Core Capabilities
+
+- Extract topic briefing from current conversation context
+- Hand-shake briefing with user before dispatching subagents
+- Parallel-dispatch 6 Opus 4.7 subagents with distinct adversarial personas
+- Each subagent isolated (cannot see other seats) to prevent echo chamber
+- Seat 7 (real user feedback) explicitly NOT roleplayed — user must ask a real person
+- AI refuses to make the final decision on user's behalf
+- Auto-write meeting record to Obsidian vault with frontmatter
+
+## Six Seats
+
+| # | Seat | Stance |
+|---|------|--------|
+| 1 | Socrates | Asks 5-7 prerequisite-piercing questions, no answers |
+| 2 | Senior Peer | Zero-emotion code review, lists 3-5 hard problems |
+| 3 | Biased Investor | Already not investing, gives 3 specific reasons why |
+| 4 | Historian | Lists 3-5 past projects that died the same way |
+| 5 | Future-Regretful Self | Letter from 2031 self exposing today's self-deception |
+| 6 | Ally | Believes it can succeed, gives 3 specific upgrades to not die |
+
+Seat 7 (real user) is explicitly NOT AI-played.
+
+## Tech Stack
+
+- Claude Code Skill (SKILL.md format, no external dependencies)
+- Agent tool with `model: opus` for parallel subagent dispatch
+- File output to Obsidian vault at `~/obsidian/灵感库/决策记录/`
+
+## Trigger Phrases
+
+Chinese: `/圆桌`, `开个圆桌`, `开圆桌`, `圆桌一下`
+English: `/roundtable`, `open the roundtable`
+
+## Cost Profile
+
+- Full meeting: ¥8-20 per session (6 Opus 4.7 subagents)
+- Single seat test: ¥1-2
+- Dry-run with Haiku 4.5: ¥0.5
