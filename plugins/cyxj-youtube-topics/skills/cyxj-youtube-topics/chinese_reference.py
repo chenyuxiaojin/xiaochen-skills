@@ -13,7 +13,8 @@ from datetime import datetime, timedelta, timezone
 
 import requests
 
-from paths import load_youtube_api_key
+from paths import load_youtube_api_keys
+from youtube_search import KeyRotator, youtube_get
 
 # ── 常量 ──────────────────────────────────────────────
 
@@ -86,7 +87,7 @@ def is_definitely_non_chinese(title: str, lang: str) -> bool:
 
 # ── 召回 ──────────────────────────────────────────────
 
-def recall(api_key: str, published_after: str) -> list[dict]:
+def recall(rotator: KeyRotator, published_after: str) -> list[dict]:
     """多关键词搜索，按 video_id 去重"""
     all_videos = []
     seen_ids = set()
@@ -94,8 +95,7 @@ def recall(api_key: str, published_after: str) -> list[dict]:
 
     for keyword in KEYWORDS_ZH:
         try:
-            resp = requests.get(f"{API_BASE}/search", params={
-                "key": api_key,
+            resp = youtube_get(rotator, "/search", {
                 "q": keyword,
                 "part": "snippet",
                 "type": "video",
@@ -104,7 +104,6 @@ def recall(api_key: str, published_after: str) -> list[dict]:
                 "relevanceLanguage": "zh",  # ISO-639-1 标准；不传 regionCode（CN 无效）
                 "maxResults": MAX_RESULTS_PER_KEYWORD,
             }, timeout=30)
-            resp.raise_for_status()
         except Exception as e:
             print(f"警告：中文关键词 '{keyword}' 搜索失败 ({e})", file=sys.stderr)
             failed.append(keyword)
@@ -135,7 +134,7 @@ def recall(api_key: str, published_after: str) -> list[dict]:
 
 # ── 详情 + 中文判定过滤 ────────────────────────────────
 
-def filter_chinese(api_key: str, videos: list[dict]) -> list[dict]:
+def filter_chinese(rotator: KeyRotator, videos: list[dict]) -> list[dict]:
     """批量拿 statistics + snippet，做中文双向判定"""
     if not videos:
         return []
@@ -147,12 +146,10 @@ def filter_chinese(api_key: str, videos: list[dict]) -> list[dict]:
     for i in range(0, len(video_ids), 50):
         batch = video_ids[i:i + 50]
         try:
-            resp = requests.get(f"{API_BASE}/videos", params={
-                "key": api_key,
+            resp = youtube_get(rotator, "/videos", {
                 "part": "statistics,snippet",
                 "id": ",".join(batch),
             }, timeout=30)
-            resp.raise_for_status()
         except Exception as e:
             print(f"警告：中文区 videos.list 批次失败 ({e})", file=sys.stderr)
             continue
@@ -206,13 +203,13 @@ def main():
         print("中文区参考已关闭（CYXJ_ENABLE_ZH_REFERENCE=0）", file=sys.stderr)
         return
 
-    api_key = load_youtube_api_key()
+    rotator = KeyRotator(load_youtube_api_keys())
     published_after = (
         datetime.now(timezone.utc) - timedelta(hours=HOURS_WINDOW)
     ).strftime("%Y-%m-%dT%H:%M:%SZ")
 
-    candidates = recall(api_key, published_after)
-    chinese = filter_chinese(api_key, candidates)
+    candidates = recall(rotator, published_after)
+    chinese = filter_chinese(rotator, candidates)
     result = finalize(chinese)
 
     print(f"中文区最终输出：top {len(result)}", file=sys.stderr)

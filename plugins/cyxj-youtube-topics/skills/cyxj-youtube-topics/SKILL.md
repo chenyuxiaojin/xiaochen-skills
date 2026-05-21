@@ -28,12 +28,13 @@ description: |
 
 首次使用前配置以下环境变量（一次配置永久生效）：
 
-1. **YouTube Data API v3 Key**（必需）
+1. **YouTube Data API v3 Key**（必需，可配多个轮询）
    - 在 https://console.cloud.google.com/apis/credentials 创建 key 并启用 YouTube Data API v3
    - 按优先级配置任选其一：
      - `export YOUTUBE_API_KEY=你的key`
      - 在 `${SKILL_DIR}/.env` 写入 `YOUTUBE_API_KEY=你的key`
      - 在 `~/.config/cyxj/.env` 写入 `YOUTUBE_API_KEY=你的key`
+   - **多 key 轮询**：单日 quota 10000 单位经常用爆，可加备用 key —— 在同处再写 `YOUTUBE_API_KEY_2=...`、`YOUTUBE_API_KEY_3=...`。脚本 403 quotaExceeded 时自动切下一个 key 重试。⚠️ 备用 key 必须来自**不同的 Google Cloud 项目**才有独立配额，同项目里加几个 key 也是同一份 quota。变量名大小写不敏感、`_2` 和 `2` 都认。
 
 2. **Obsidian 选题库目录**（必需）
    - `export CYXJ_TOPIC_DIR="$HOME/obsidian/灵感库/选题库"`

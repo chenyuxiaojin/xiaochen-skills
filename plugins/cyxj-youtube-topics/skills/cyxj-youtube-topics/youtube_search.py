@@ -10,7 +10,7 @@ from pathlib import Path
 
 import requests
 
-from paths import get_topic_dir, load_youtube_api_key
+from paths import get_topic_dir, load_youtube_api_keys
 
 # ── 常量 ──────────────────────────────────────────────
 
@@ -80,6 +80,67 @@ VIDEO_ID_PATTERN = re.compile(
 )
 
 
+# ── 多 key 轮询 ───────────────────────────────────────
+
+QUOTA_REASONS = {"quotaExceeded", "dailyLimitExceeded", "rateLimitExceeded", "userRateLimitExceeded"}
+
+
+class KeyRotator:
+    """YouTube API key 轮询器。current 返回当前 key，advance() 切下一个，耗尽返回 False。"""
+
+    def __init__(self, keys: list[str]):
+        if not keys:
+            raise ValueError("KeyRotator 至少需要 1 个 key")
+        self.keys = keys
+        self.idx = 0
+
+    @property
+    def current(self) -> str:
+        return self.keys[self.idx]
+
+    def advance(self) -> bool:
+        if self.idx + 1 >= len(self.keys):
+            return False
+        self.idx += 1
+        return True
+
+    def __bool__(self) -> bool:
+        return True
+
+    def __len__(self) -> int:
+        return len(self.keys)
+
+
+def _is_quota_error(resp: requests.Response) -> bool:
+    if resp.status_code != 403:
+        return False
+    try:
+        errors = resp.json().get("error", {}).get("errors", [])
+        return any(e.get("reason") in QUOTA_REASONS for e in errors)
+    except Exception:
+        return False
+
+
+def youtube_get(rotator: KeyRotator, endpoint: str, params: dict, **kwargs) -> requests.Response:
+    """带配额轮询的 GET。403 quotaExceeded 时切下一个 key 重试，所有 key 耗尽则抛最后一次的 HTTPError。"""
+    last_resp = None
+    while True:
+        params["key"] = rotator.current
+        resp = requests.get(f"{API_BASE}{endpoint}", params=params, **kwargs)
+        last_resp = resp
+        if _is_quota_error(resp):
+            print(
+                f"警告：key #{rotator.idx + 1} 配额耗尽，尝试切换下一个 key", file=sys.stderr
+            )
+            if rotator.advance():
+                continue
+            print(
+                f"错误：所有 {len(rotator)} 个 YouTube API key 都已耗尽配额", file=sys.stderr
+            )
+        resp.raise_for_status()
+        return resp
+
+
 # ── 工具函数 ──────────────────────────────────────────
 
 def parse_duration(duration_str: str) -> int:
@@ -110,7 +171,7 @@ def format_view_count(count: int) -> str:
 
 # ── 第一段：召回 ──────────────────────────────────────
 
-def recall(api_key: str, published_after: str) -> list[dict]:
+def recall(rotator: KeyRotator, published_after: str) -> list[dict]:
     """多关键词搜索，尽量多拿候选，按 Video ID 去重"""
     all_videos = []
     seen_ids = set()
@@ -118,8 +179,7 @@ def recall(api_key: str, published_after: str) -> list[dict]:
 
     for keyword in KEYWORDS:
         try:
-            resp = requests.get(f"{API_BASE}/search", params={
-                "key": api_key,
+            resp = youtube_get(rotator, "/search", {
                 "q": keyword,
                 "part": "snippet",
                 "type": "video",
@@ -128,7 +188,6 @@ def recall(api_key: str, published_after: str) -> list[dict]:
                 "relevanceLanguage": "en",
                 "maxResults": MAX_RESULTS_PER_KEYWORD,
             }, timeout=30)
-            resp.raise_for_status()
         except Exception as e:
             print(f"警告：关键词 '{keyword}' 搜索失败 ({e})", file=sys.stderr)
             failed_keywords.append(keyword)
@@ -160,7 +219,7 @@ def recall(api_key: str, published_after: str) -> list[dict]:
 
 # ── 第二段：硬过滤 ──────────────────────────────────────
 
-def enrich_and_filter(api_key: str, videos: list[dict]) -> list[dict]:
+def enrich_and_filter(rotator: KeyRotator | None, videos: list[dict]) -> list[dict]:
     """获取详情 + 硬过滤：语言、时长、播放量、噪音标题。
     已带 duration_seconds + view_count 的视频（如 Apify backend 召回的）跳过 videos.list。"""
     if not videos:
@@ -175,16 +234,14 @@ def enrich_and_filter(api_key: str, videos: list[dict]) -> list[dict]:
     duration_map = {}
     lang_map = {}
 
-    if need_enrich and api_key:
+    if need_enrich and rotator:
         video_ids = [v["video_id"] for v in need_enrich]
         for i in range(0, len(video_ids), 50):
             batch = video_ids[i:i + 50]
-            resp = requests.get(f"{API_BASE}/videos", params={
-                "key": api_key,
+            resp = youtube_get(rotator, "/videos", {
                 "part": "statistics,contentDetails,snippet",
                 "id": ",".join(batch),
             }, timeout=30)
-            resp.raise_for_status()
             for item in resp.json().get("items", []):
                 vid = item["id"]
                 stats_map[vid] = int(item["statistics"].get("viewCount", 0))
@@ -346,15 +403,14 @@ def _parse_apify_duration(value) -> int:
 
 
 def _trusted_recall_youtube_api(
-    api_key: str, published_after: str, channels: list[tuple[str, str]]
+    rotator: KeyRotator, published_after: str, channels: list[tuple[str, str]]
 ) -> list[dict]:
     """生产 backend：每个频道单独调一次 search.list?channelId=X。每个频道 100 配额。"""
     out = []
     failed = 0
     for cid, name in channels:
         try:
-            resp = requests.get(f"{API_BASE}/search", params={
-                "key": api_key,
+            resp = youtube_get(rotator, "/search", {
                 "channelId": cid,
                 "part": "snippet",
                 "type": "video",
@@ -362,7 +418,6 @@ def _trusted_recall_youtube_api(
                 "publishedAfter": published_after,
                 "maxResults": TRUSTED_MAX_RESULTS_PER_CHANNEL,
             }, timeout=30)
-            resp.raise_for_status()
         except Exception as e:
             print(f"警告：信任频道 '{name}' ({cid}) 拉取失败 ({e})", file=sys.stderr)
             failed += 1
@@ -488,7 +543,7 @@ def _trusted_recall_apify(
     return out
 
 
-def recall_from_trusted_channels(api_key: str, published_after: str) -> list[dict]:
+def recall_from_trusted_channels(rotator: KeyRotator | None, published_after: str) -> list[dict]:
     """信任频道直查。env CYXJ_TRUSTED_BACKEND 切换：youtube_api（默认）/ apify（测试）。"""
     channels = get_trusted_channels()
     if not channels:
@@ -501,21 +556,25 @@ def recall_from_trusted_channels(api_key: str, published_after: str) -> list[dic
     )
     if backend == "apify":
         return _trusted_recall_apify(published_after, channels)
-    return _trusted_recall_youtube_api(api_key, published_after, channels)
+    return _trusted_recall_youtube_api(rotator, published_after, channels)
 
 
 # ── 入口 ──────────────────────────────────────────────
 
 def main():
     api_key_required = os.environ.get("CYXJ_TRUSTED_BACKEND", "youtube_api") != "apify"
-    api_key = load_youtube_api_key() if api_key_required else ""
+    rotator: KeyRotator | None = None
+    if api_key_required:
+        keys = load_youtube_api_keys()
+        rotator = KeyRotator(keys)
+        print(f"YouTube API key 池：共 {len(keys)} 个，按序号轮询", file=sys.stderr)
     published_after = (
         datetime.now(timezone.utc) - timedelta(hours=HOURS_WINDOW)
     ).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     # 1a. 关键词召回（Apify 模式下不跑——避免烧 YouTube quota）
-    if api_key:
-        keyword_candidates = recall(api_key, published_after)
+    if rotator:
+        keyword_candidates = recall(rotator, published_after)
         for v in keyword_candidates:
             v["source"] = "keyword"
     else:
@@ -523,7 +582,7 @@ def main():
         keyword_candidates = []
 
     # 1b. 信任频道直查
-    trusted_candidates = recall_from_trusted_channels(api_key, published_after)
+    trusted_candidates = recall_from_trusted_channels(rotator, published_after)
 
     # 1c. 合并：video_id 去重，trusted 覆盖 keyword（保留 trusted source）
     by_id: dict[str, dict] = {}
@@ -535,7 +594,7 @@ def main():
     print(f"召回合并：{len(candidates)} 个候选（去重后）", file=sys.stderr)
 
     # 2. 硬过滤
-    clean = enrich_and_filter(api_key, candidates)
+    clean = enrich_and_filter(rotator, candidates)
 
     # 3. 去重
     seen_ids = load_seen_ids()
