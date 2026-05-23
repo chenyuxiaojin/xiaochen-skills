@@ -25,11 +25,6 @@
       "source": "./plugins/cyxj-wechat-mask"
     },
     {
-      "name": "cyxj-cc-price",
-      "description": "Claude 订阅/拼车/中转成本计算器",
-      "source": "./plugins/cyxj-cc-price"
-    },
-    {
       "name": "cyxj-obsidian-build",
       "description": "Obsidian 知识库编译：Wiki 概念页、反向链接、日记提炼、健康度检查",
       "source": "./plugins/cyxj-obsidian-build"

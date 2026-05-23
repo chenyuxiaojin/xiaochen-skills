@@ -668,7 +668,7 @@ git commit -m "feat(roundtable): add SKILL.md main entry"
 
 - [ ] **Step 4.2: 写 llms.txt**
 
-完整文件内容（参考 cyxj-cc-price 的 llms.txt 风格）：
+完整文件内容：
 
 ```markdown
 # Roundtable Consilium Skill
