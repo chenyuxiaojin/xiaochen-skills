@@ -20,11 +20,12 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-from paths import get_topic_dir
+from paths import get_state_dir
 from subtitle_fetcher import fetch_subtitle
 
-TOPIC_DIR = get_topic_dir()
-INDEX_PATH = TOPIC_DIR / "话题索引.json"
+# 话题索引是机器状态，住本地非同步目录（与 write_topics.py 同源）。此处只读。
+STATE_DIR = get_state_dir()
+INDEX_PATH = STATE_DIR / "话题索引.json"
 
 DEAD_AGE_DAYS = 14
 DEAD_NO_NEW_THRESHOLD = 1

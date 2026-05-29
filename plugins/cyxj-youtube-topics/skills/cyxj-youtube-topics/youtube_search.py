@@ -10,7 +10,7 @@ from pathlib import Path
 
 import requests
 
-from paths import get_topic_dir, load_youtube_api_keys
+from paths import get_state_dir, get_topic_dir, load_youtube_api_keys
 
 # ── 常量 ──────────────────────────────────────────────
 
@@ -70,8 +70,9 @@ NON_ENGLISH_PATTERN = re.compile(
     r"\u0600-\u06ff\u0e00-\u0e7f\u0900-\u097f]"
 )
 
-TOPIC_DIR = get_topic_dir()
-SEEN_IDS_PATH = TOPIC_DIR / ".seen_video_ids.json"
+TOPIC_DIR = get_topic_dir()           # iCloud / Obsidian：.md 总览（去重兜底扫这里）
+STATE_DIR = get_state_dir()           # 本地非同步：状态文件（与 write_topics.py 同源）
+SEEN_IDS_PATH = STATE_DIR / ".seen_video_ids.json"
 
 # 匹配 YouTube URL 中的 11 位 Video ID
 VIDEO_ID_PATTERN = re.compile(
@@ -339,8 +340,8 @@ def sort_and_output(videos: list[dict]) -> list[dict]:
 # ── 信任频道直查 ──────────────────────────────────────
 
 def _load_creator_index() -> dict:
-    """从 Obsidian 选题库读创作者索引，找不到返回空字典。"""
-    p = TOPIC_DIR / "创作者索引.json"
+    """从本地状态目录读创作者索引，找不到返回空字典。"""
+    p = STATE_DIR / "创作者索引.json"
     if not p.exists():
         return {}
     try:

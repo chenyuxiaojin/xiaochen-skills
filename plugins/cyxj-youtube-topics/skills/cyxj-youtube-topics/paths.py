@@ -141,6 +141,29 @@ def get_topic_dir() -> Path:
     return Path(env_path).expanduser()
 
 
+def get_state_dir() -> Path:
+    """返回流水线状态文件的存放目录（话题索引 / 创作者索引 / 判断日志 / .seen_video_ids）。
+
+    关键：这些是机器内部状态，**不放进 iCloud / Obsidian 同步目录**。iCloud 同步守护进程
+    （bird/fileproviderd）会对同步目录加 advisory lock，写盘时连写多文件会撞
+    `OSError: [Errno 11] Resource deadlock avoided`。把状态文件放本地非同步目录可从根上避开。
+    （供人阅读的 .md 总览仍留在 CYXJ_TOPIC_DIR / iCloud。）
+
+    默认：~/Library/Application Support/cyxj-youtube-topics/state
+    可用环境变量 CYXJ_STATE_DIR 覆盖。目录不存在则自动创建。
+    """
+    env_path = os.environ.get("CYXJ_STATE_DIR")
+    if env_path:
+        state_dir = Path(env_path).expanduser()
+    else:
+        state_dir = (
+            Path.home() / "Library" / "Application Support"
+            / "cyxj-youtube-topics" / "state"
+        )
+    state_dir.mkdir(parents=True, exist_ok=True)
+    return state_dir
+
+
 def load_user_profile() -> str:
     """返回用户个人档案的纯文本内容。可用于判断层做差异化建议。
 

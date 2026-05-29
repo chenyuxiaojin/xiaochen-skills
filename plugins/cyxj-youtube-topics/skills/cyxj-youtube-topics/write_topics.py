@@ -1,24 +1,28 @@
 #!/usr/bin/env python3
 """将聚类后的话题 JSON 写入 Obsidian 选题库 — 分层总览 + 话题索引追踪"""
 
+import errno
 import json
+import os
 import re
 import sys
+import time
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from paths import get_topic_dir
+from paths import get_state_dir, get_topic_dir
 
 VIDEO_ID_PATTERN = re.compile(
     r"(?:youtube\.com/watch\?v=|youtu\.be/|youtube\.com/shorts/|youtube\.com/embed/)"
     r"([0-9A-Za-z_-]{11})"
 )
 
-TOPIC_DIR = get_topic_dir()
-INDEX_PATH = TOPIC_DIR / "话题索引.json"
-ARCHIVE_INDEX_PATH = TOPIC_DIR / "话题索引-归档.json"
-CREATOR_PATH = TOPIC_DIR / "创作者索引.json"
-SEEN_IDS_PATH = TOPIC_DIR / ".seen_video_ids.json"
+TOPIC_DIR = get_topic_dir()           # iCloud / Obsidian：只放给人看的 .md 总览
+STATE_DIR = get_state_dir()           # 本地非同步：机器内部状态，避开 iCloud 文件锁
+INDEX_PATH = STATE_DIR / "话题索引.json"
+ARCHIVE_INDEX_PATH = STATE_DIR / "话题索引-归档.json"
+CREATOR_PATH = STATE_DIR / "创作者索引.json"
+SEEN_IDS_PATH = STATE_DIR / ".seen_video_ids.json"
 
 # 状态判断阈值
 RISING_MIN_APPEARANCES = 2
@@ -30,6 +34,41 @@ ARCHIVE_AFTER_DAYS = 30  # 已沉寂 + 超过 N 天没更新 → 归档
 # 创作者优质判断阈值
 QUALITY_AVG_VIEWS = 5000
 QUALITY_MAX_VIEWS = 20000
+
+
+# ── 原子写：避开 iCloud / 同步盘 advisory lock 死锁 ──────────────
+
+def _unlink_quiet(p: Path):
+    try:
+        p.unlink()
+    except OSError:
+        pass
+
+
+def atomic_write(path: Path, text: str, *, encoding: str = "utf-8", retries: int = 4):
+    """原子写文件：先写同目录隐藏临时文件，再 os.replace 原子重命名。
+
+    撞同步盘 advisory lock（macOS 上 iCloud 表现为 errno 11 EDEADLK / 35 EAGAIN）时做短退避
+    重试；非锁竞争错误（如磁盘满）立即上抛，不吞。临时文件用点前缀，避免 Obsidian 当成笔记。
+    """
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+    delays = [0.2, 0.5, 1.0, 2.0]
+    last_err = None
+    for attempt in range(max(1, retries)):
+        try:
+            tmp.write_text(text, encoding=encoding)
+            os.replace(tmp, path)
+            return
+        except OSError as e:
+            last_err = e
+            if e.errno not in (errno.EDEADLK, errno.EAGAIN):
+                _unlink_quiet(tmp)
+                raise
+            time.sleep(delays[min(attempt, len(delays) - 1)])
+    _unlink_quiet(tmp)
+    raise last_err
 
 
 def load_creators() -> dict:
@@ -44,10 +83,7 @@ def load_creators() -> dict:
 
 def save_creators(data: dict):
     """保存创作者索引"""
-    CREATOR_PATH.write_text(
-        json.dumps(data, ensure_ascii=False, indent=2),
-        encoding="utf-8",
-    )
+    atomic_write(CREATOR_PATH, json.dumps(data, ensure_ascii=False, indent=2))
 
 
 def parse_view_count(formatted: str) -> int:
@@ -191,10 +227,7 @@ def append_seen_video_ids(new_ids: set):
         except Exception:
             pass
     all_ids = existing | new_ids
-    SEEN_IDS_PATH.write_text(
-        json.dumps(sorted(all_ids), ensure_ascii=False),
-        encoding="utf-8",
-    )
+    atomic_write(SEEN_IDS_PATH, json.dumps(sorted(all_ids), ensure_ascii=False))
 
 
 def load_index() -> dict:
@@ -209,11 +242,7 @@ def load_index() -> dict:
 
 def save_index(index: dict):
     """保存话题索引"""
-    TOPIC_DIR.mkdir(parents=True, exist_ok=True)
-    INDEX_PATH.write_text(
-        json.dumps(index, ensure_ascii=False, indent=2),
-        encoding="utf-8",
-    )
+    atomic_write(INDEX_PATH, json.dumps(index, ensure_ascii=False, indent=2))
 
 
 def archive_stale_topics(index: dict, today: str) -> int:
@@ -244,10 +273,7 @@ def archive_stale_topics(index: dict, today: str) -> int:
         for t in to_archive:
             t["archived_at"] = today
         archive.setdefault("topics", []).extend(to_archive)
-        ARCHIVE_INDEX_PATH.write_text(
-            json.dumps(archive, ensure_ascii=False, indent=2),
-            encoding="utf-8",
-        )
+        atomic_write(ARCHIVE_INDEX_PATH, json.dumps(archive, ensure_ascii=False, indent=2))
         index["topics"] = active
     return len(to_archive)
 
@@ -742,7 +768,7 @@ cssclasses:
         print(f"CYXJ_RESULT_FILE={recent_path}")
         return
 
-    file_path.write_text(content, encoding="utf-8")
+    atomic_write(file_path, content)
 
     # 把 verdict 写入话题索引的 last_judgment 字段（下次跑时 LLM 可见）
     for g, entry in all_pairs:
@@ -756,60 +782,71 @@ cssclasses:
             "timestamp": timestamp,
         }
 
-    # 保存更新后的话题索引和创作者索引
-    index["topics"] = list(index_map.values())
-    archived_count = archive_stale_topics(index, today)
-    if archived_count:
-        print(f"归档 {archived_count} 个长期沉寂话题", file=sys.stderr)
-    save_index(index)
-    creator_data["creators"] = creators
-    save_creators(creator_data)
+    # ── 状态文件落地（话题索引 / 创作者索引 / 判断日志 / .seen_video_ids）──
+    # 全部写本地非同步目录 + atomic_write，避开 iCloud 文件锁。任一写盘失败都"大声"上报：
+    # .md 已写成功不该掩盖成"假成功"——状态没落地会导致下次重复处理、烧预算。
+    try:
+        index["topics"] = list(index_map.values())
+        archived_count = archive_stale_topics(index, today)
+        if archived_count:
+            print(f"归档 {archived_count} 个长期沉寂话题", file=sys.stderr)
+        save_index(index)
+        creator_data["creators"] = creators
+        save_creators(creator_data)
 
-    # 写判断日志（按 (timestamp, topic_id) 去重合并：同次跑同话题只保留最新一条）
-    log_path = TOPIC_DIR / "判断日志.jsonl"
-    new_entries = []
-    for g, entry in all_pairs:
-        new_entries.append({
-            "timestamp": timestamp,
-            "topic": g.get("topic", ""),
-            "topic_id": entry.get("id", ""),
-            "is_new": g.get("is_new", True),
-            "verdict": effective_verdict(g),
-            "signals": g.get("signals", {}),
-            "triage": g.get("triage", {}),
-            "videos_count": len(g.get("videos", [])),
-            "top_video_url": g.get("videos", [{}])[0].get("url", "") if g.get("videos") else "",
-        })
+        # 写判断日志（按 (timestamp, topic_id) 去重合并：同次跑同话题只保留最新一条）
+        log_path = STATE_DIR / "判断日志.jsonl"
+        new_entries = []
+        for g, entry in all_pairs:
+            new_entries.append({
+                "timestamp": timestamp,
+                "topic": g.get("topic", ""),
+                "topic_id": entry.get("id", ""),
+                "is_new": g.get("is_new", True),
+                "verdict": effective_verdict(g),
+                "signals": g.get("signals", {}),
+                "triage": g.get("triage", {}),
+                "videos_count": len(g.get("videos", [])),
+                "top_video_url": g.get("videos", [{}])[0].get("url", "") if g.get("videos") else "",
+            })
 
-    existing_entries = []
-    if log_path.exists():
-        for line in log_path.read_text(encoding="utf-8").splitlines():
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                existing_entries.append(json.loads(line))
-            except json.JSONDecodeError:
-                continue  # 容错：损坏行直接丢弃
+        existing_entries = []
+        if log_path.exists():
+            for line in log_path.read_text(encoding="utf-8").splitlines():
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    existing_entries.append(json.loads(line))
+                except json.JSONDecodeError:
+                    continue  # 容错：损坏行直接丢弃
 
-    new_keys = {(e["timestamp"], e.get("topic_id", "")) for e in new_entries}
-    merged = [e for e in existing_entries
-              if (e.get("timestamp", ""), e.get("topic_id", "")) not in new_keys] + new_entries
-    log_path.write_text(
-        "\n".join(json.dumps(e, ensure_ascii=False) for e in merged) + "\n",
-        encoding="utf-8",
-    )
+        new_keys = {(e["timestamp"], e.get("topic_id", "")) for e in new_entries}
+        merged = [e for e in existing_entries
+                  if (e.get("timestamp", ""), e.get("topic_id", "")) not in new_keys] + new_entries
+        atomic_write(log_path, "\n".join(json.dumps(e, ensure_ascii=False) for e in merged) + "\n")
 
-    # 最后一步：总览 + 索引 + 日志都写完了，标记视频为"已见"是安全的。
-    # 如果上面任何一步失败，这里不会执行，下次跑仍能重新捞到。
-    video_ids = set()
-    for g in topics:
-        for v in g["videos"]:
-            m = VIDEO_ID_PATTERN.search(v.get("url", ""))
-            if m:
-                video_ids.add(m.group(1))
-    if video_ids:
-        append_seen_video_ids(video_ids)
+        # 最后一步：总览 + 索引 + 日志都写完了，标记视频为"已见"是安全的。
+        # 如果上面任何一步失败，这里不会执行，下次跑仍能重新捞到。
+        video_ids = set()
+        for g in topics:
+            for v in g["videos"]:
+                m = VIDEO_ID_PATTERN.search(v.get("url", ""))
+                if m:
+                    video_ids.add(m.group(1))
+        if video_ids:
+            append_seen_video_ids(video_ids)
+    except OSError as e:
+        # .md 已生成，但状态文件没落地——大声报错并以非零码退出，
+        # 不让上层（claude / launcher）把它误判成完整成功。
+        print(f"CYXJ_STATE_WRITE_FAILED={type(e).__name__}(errno={e.errno}): {e}")
+        print(
+            f"❌ 状态文件写盘失败（.md 已生成，但索引/日志/seen 未落地）：{e}\n"
+            f"   状态目录：{STATE_DIR}\n"
+            f"   后果：下次运行会重复处理本批视频。请检查该目录的写权限与磁盘空间。",
+            file=sys.stderr,
+        )
+        sys.exit(1)
 
     # 输出结果
     print(

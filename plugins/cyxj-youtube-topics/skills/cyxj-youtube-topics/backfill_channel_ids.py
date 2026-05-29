@@ -19,9 +19,9 @@ from pathlib import Path
 
 import requests
 
-from paths import get_topic_dir, load_youtube_api_key
+from paths import get_state_dir, load_youtube_api_key
 
-CREATOR_INDEX_PATH = get_topic_dir() / "创作者索引.json"
+CREATOR_INDEX_PATH = get_state_dir() / "创作者索引.json"
 API_BASE = "https://www.googleapis.com/youtube/v3"
 
 # 手工查证的 channelId 映射（避免烧 YouTube quota）
