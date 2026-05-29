@@ -265,9 +265,15 @@ def enrich_and_filter(rotator: KeyRotator | None, videos: list[dict]) -> list[di
     for v in videos:
         title = v["title"]
 
-        # 相关性过滤：标题或描述必须包含相关关键词（不区分大小写）
+        # 相关性过滤：标题或描述必须包含相关关键词（不区分大小写）。
+        # 信任频道豁免——已白名单的创作者不再做关键词复查（与下方时长豁免同理）：
+        # search.list 返回的描述是截断的，开头若是推广链接会把关键词挤出截断段，
+        # 导致标题不含关键词的相关视频（如 Nate Herk 的发布解读）被误砍。真跑偏的
+        # 视频仍由下游 LLM 聚类/判断阶段拦截。
         text = (title + " " + v.get("description", "")).lower()
-        if not any(kw in text for kw in ("claude code", "anthropic", "claude desktop")):
+        if v.get("source") != "trusted_channel" and not any(
+            kw in text for kw in ("claude code", "anthropic", "claude desktop")
+        ):
             continue
 
         # 语言过滤：只保留英语（en, en-US, en-GB 等）或未标注语言的视频
