@@ -18,7 +18,7 @@
 Phase 1: Python 结构处理 (srt_cleaner.py)
   HTML 清理 → 去重 → 标点替换 → 合并短条目 → 拆分长条目 → 重新编号
 
-Phase 2a: Gemini Flash Lite 自动初修 (srt_corrector.py)
+Phase 2a: Gemini 3.5 Flash 自动初修 (srt_corrector.py)
   分批 API 调用（词典 + 主题上下文）→ _gemini_fixed.srt + _changes.json
 
 Phase 2b: Opus 审查（在 Claude Code 对话中）
@@ -32,9 +32,9 @@ Phase 3: 导出纯文本（供 IntelliScript 使用）
 | 方案 | 400 条字幕成本 | 准确度 |
 |------|--------------|--------|
 | 纯 Opus (v3) | ~$2-4 | 高 |
-| Gemini Flash Lite + Opus 审查 (v4) | ~$0.35-0.55 | 高 |
+| Gemini 3.5 Flash + Opus 审查 (v4) | ~$0.6-1.0 | 高 |
 
-Gemini 以 1/50 的成本完成 95%+ 的修正，Opus 只需审查修改清单（diff），不处理全文。
+Gemini 以约 1/10 的成本完成 95%+ 的修正，Opus 只需审查修改清单（diff），不处理全文。
 
 ## 环境要求
 
@@ -106,8 +106,7 @@ python3 srt_corrector.py "input_cleaned.srt" --topic "视频主题" --premium
 
 | 模型 | 用途 | 输入/输出价格 |
 |------|------|-------------|
-| `gemini-3.1-flash-lite-preview` | 默认，最便宜 | $0.25 / $1.50 每百万 token |
-| `gemini-3-flash-preview` | 高端，更智能 | $0.50 / $3.00 每百万 token |
+| `gemini-3.5-flash` | 日常与 `--premium` 同款（3.5 系列仅 flash 一档）| $1.50 / $9.00 每百万 token |
 
 > 注意：图片生成模型（`gemini-3.1-flash-image-preview`、`gemini-3-pro-image-preview`）不适用于文本修正。
 

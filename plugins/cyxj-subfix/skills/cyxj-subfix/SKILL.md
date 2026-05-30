@@ -130,8 +130,8 @@ python3 "$SKILL_DIR/srt_cleaner.py" "<_fixed.srt>" --export-txt
 
 | 用途 | 模型 ID | 价格 | 说明 |
 |------|---------|------|------|
-| 日常初修 | `gemini-3.1-flash-lite-preview` | $0.25/$1.50 per M | 默认，最便宜 |
-| 高端初修 | `gemini-3-flash-preview` | $0.50/$3 per M | flash-lite 效果不够时加 `--premium` |
+| 日常初修 | `gemini-3.5-flash` | $1.50/$9 per M | 默认（3.5 系列目前仅 flash 一档）|
+| 高端初修 | `gemini-3.5-flash` | $1.50/$9 per M | 与日常同款，`--premium` 仅保留参数兼容 |
 | 审查 | Opus 4.6（对话内） | $15/$75 per M | 只审查 diff |
 
 **注意**：`gemini-3.1-flash-image-preview` 和 `gemini-3-pro-image-preview` 是图片生成专用模型，不用于文本修正。

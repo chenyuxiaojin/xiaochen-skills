@@ -18,7 +18,7 @@ When you export subtitles from DaVinci Resolve's built-in speech-to-text, Chines
 Phase 1: Python structural processing (srt_cleaner.py)
   HTML cleanup → dedup → punctuation → merge short → split long → renumber
 
-Phase 2a: Gemini Flash Lite auto-correction (srt_corrector.py)
+Phase 2a: Gemini 3.5 Flash auto-correction (srt_corrector.py)
   Batch API calls with dictionary + topic context → _gemini_fixed.srt + _changes.json
 
 Phase 2b: Opus review (in Claude Code conversation)
@@ -32,9 +32,9 @@ Phase 3: Export plain text for IntelliScript
 | Approach | Cost per 400 subtitles | Accuracy |
 |----------|----------------------|----------|
 | Opus only (v3) | ~$2-4 | High |
-| Gemini Flash Lite + Opus review (v4) | ~$0.35-0.55 | High |
+| Gemini 3.5 Flash + Opus review (v4) | ~$0.6-1.0 | High |
 
-Gemini handles 95%+ of corrections at 1/50th the cost. Opus only reviews the diff, not the full text.
+Gemini handles 95%+ of corrections at ~1/10th the cost. Opus only reviews the diff, not the full text.
 
 ## Prerequisites
 
@@ -106,8 +106,7 @@ The `feedback.gemini_missed` field tracks errors Gemini missed but Opus caught, 
 
 | Model | Use Case | Input/Output Price |
 |-------|----------|-------------------|
-| `gemini-3.1-flash-lite-preview` | Default, cheapest | $0.25 / $1.50 per M tokens |
-| `gemini-3-flash-preview` | Premium, smarter | $0.50 / $3.00 per M tokens |
+| `gemini-3.5-flash` | Default & `--premium` (only flash in 3.5 series) | $1.50 / $9.00 per M tokens |
 
 > Note: Image generation models (`gemini-3.1-flash-image-preview`, `gemini-3-pro-image-preview`) are NOT suitable for text correction.
 

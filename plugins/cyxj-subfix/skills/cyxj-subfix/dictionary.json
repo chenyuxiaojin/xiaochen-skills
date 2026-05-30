@@ -45,7 +45,8 @@
     "反代": ["反贷"],
     "教会": ["交会"],
     "命令行": ["命令函"],
-    "PowerShell": ["PowerShield"]
+    "PowerShell": ["PowerShield"],
+    "Dynamic Workflows": ["Dynamic Worker Flows", "Dynamic Worker Flow"]
   },
   "user_additions": {},
   "feedback": {
@@ -58,7 +59,11 @@
       {"original": "蝉了", "correct": "长了", "context": "同音字：蝉→长（有点长了）", "date": "2026-04-01"},
       {"original": "站", "correct": "张", "context": "同音字：站→张（量词，50张60张图片）", "date": "2026-04-01"},
       {"original": "质疑", "correct": "指引", "context": "近音字：质疑→指引（它会指引你登录）", "date": "2026-04-01"},
-      {"original": "看了一个", "correct": "看另一个", "context": "ASR错误：看了→看另（想看另一个部分）", "date": "2026-04-01"}
+      {"original": "看了一个", "correct": "看另一个", "context": "ASR错误：看了→看另（想看另一个部分）", "date": "2026-04-01"},
+      {"original": "GPT-4.5/GPT-4o", "correct": "GPT-5.5", "context": "Gemini主动把口播的GPT 5 5(GPT-5.5)改成旧版本GPT-4.5/4o——训练数据偏老的典型，模型版本号属时效性事实，每次需人工核当前版本", "date": "2026-05-30"},
+      {"original": "Claude加GPT", "correct": "Codex加GPT", "context": "Gemini把对手阵营的Codex误改成Claude，破坏对比语义（原句说Opus比对手强，对手不可能是Claude）", "date": "2026-05-30"},
+      {"original": "Dynamic Worker Flows", "correct": "Dynamic Workflows", "context": "Claude Code功能名，ASR把Workflows拆成Worker Flows，已加入corrections", "date": "2026-05-30"},
+      {"original": "敏感度", "correct": "思考强度", "context": "Gemini受词典误导把'思想难度'改成'敏感度'，实为thinking档位语境(超高/中/低)，应为思考强度", "date": "2026-05-30"}
     ]
   }
 }
