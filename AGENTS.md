@@ -96,4 +96,7 @@ python3 -c "import json,os; reg={p['name'] for p in json.load(open('.claude-plug
 | cyxj-geo | 纯 SKILL.md 指令 | 无 | ✓ |
 | cyxj-roundtable | 纯 SKILL.md 指令（拉起多个 Opus subagent） | 无 | ✓ |
 | cyxj-ai-weekly-news | 纯 SKILL.md 指令（9 步交互式 SOP + references 模板） | 达芬奇 / Obsidian 工作流 | ✓ |
-| cyxj-ps-export | 本机 Photoshop + Bash 批处理 | Photoshop（本地 app） | ✓ |
+| cyxj-ps-export | 本机 Photoshop + Bash 批处理（将由 cyxj-psjpg 取代，待删） | Photoshop（本地 app） | ✓ |
+| cyxj-transcript | 纯 SKILL.md 指令（逐字稿转文章） | Obsidian 工作流 | ✓ |
+| cyxj-blog-pub | 纯 SKILL.md 指令（Astro 博客发布） | Astro / 图床 | ✓ |
+| cyxj-psjpg | 本机 Photoshop + Bash + exiftool（导出 JPG + 去 XMP 转换痕迹） | Photoshop（本地 app）、exiftool | ✓ |

@@ -5,8 +5,8 @@
     "url": "https://github.com/chenhuajinchj"
   },
   "metadata": {
-    "description": "小陈的 Claude Code 技能集：达芬奇字幕修正、公众号排版发布、微信截图打码、订阅成本计算、Obsidian 知识库编译、海报设计、YouTube 选题发现、博主用法研究、Notebook LM 研究、逐字稿转文章、Astro 博客发布",
-    "version": "1.6.0"
+    "description": "小陈的 Claude Code 技能集：达芬奇字幕修正、公众号排版发布、微信截图打码、订阅成本计算、Obsidian 知识库编译、海报设计、YouTube 选题发现、博主用法研究、Notebook LM 研究、逐字稿转文章、Astro 博客发布、PS 批量转 JPG",
+    "version": "1.7.0"
   },
   "plugins": [
     {
@@ -83,6 +83,11 @@
       "name": "cyxj-blog-pub",
       "description": "Astro 博客发布：frontmatter 校验、kebab-case 命名、正文图片全用图床 URL，build 后部署",
       "source": "./plugins/cyxj-blog-pub"
+    },
+    {
+      "name": "cyxj-psjpg",
+      "description": "真 PS 批量导出 JPG + 清理转换痕迹：质量可配、嵌 sRGB、抹掉 PNG→JPG 来源痕迹",
+      "source": "./plugins/cyxj-psjpg"
     }
   ]
 }
