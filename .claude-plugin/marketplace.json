@@ -63,6 +63,16 @@
       "name": "cyxj-roundtable",
       "description": "圆桌会议：6 个 Opus 4.7 subagent 扮演 6 个有立场的角色对议题给出独立意见，会议自动落地到 Obsidian",
       "source": "./plugins/cyxj-roundtable"
+    },
+    {
+      "name": "cyxj-ai-weekly-news",
+      "description": "每周 AI 热点视频：承接陈宇小金栏目，9 步交互式 SOP 端到端制作（选题→旁白→时间码→4K 渲染）",
+      "source": "./plugins/cyxj-ai-weekly-news"
+    },
+    {
+      "name": "cyxj-ps-export",
+      "description": "批量过 PS：用本机 Photoshop 把一个目录的图统一导出为规格一致的 Progressive JPG",
+      "source": "./plugins/cyxj-ps-export"
     }
   ]
 }

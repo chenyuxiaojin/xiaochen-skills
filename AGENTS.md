@@ -1,11 +1,13 @@
-# CLAUDE.md
+# AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Codex / other coding agents when working with code in this repository.
+它是 CLAUDE.md 的镜像，内容保持同步。**注意：仓库里的真实路径是 `.claude-plugin/` 和环境变量
+`${CLAUDE_PLUGIN_ROOT}`——这些是磁盘上固定的名字，不随读它的 agent 改变，不要把它们替换成 `.Codex-plugin/` 之类的坏路径。**
 
 ## 项目概览
 
 这是一个 Claude Code 插件市场仓库（Plugin Marketplace），里面是一组 `cyxj-*` skill，通过
-`/plugin marketplace add chenhuajinchj/xiaochen-skills` 安装到 Claude Code。
+`/plugin marketplace add chenhuajinchj/xiaochen-skills` 安装。
 
 **真相源 = `.claude-plugin/marketplace.json`**。判断"有几个/哪些插件、各自路径"时一律以它为准，
 不要相信任何文档里写死的数字（它们会漂移）。`plugins/` 下的目录数 ≥ marketplace 注册数：
@@ -32,7 +34,7 @@ plugins/
   拼本地路径定位资源。新写脚本引用本地文件时**必须**走这个变量，不能写死绝对路径
 
 `description` frontmatter 不只是说明文字——它定义了 skill 的**触发条件**（含触发词），写得准不准直接决定
-Claude Code 会不会在对应场景自动唤起这个 skill。
+运行时会不会在对应场景自动唤起这个 skill。
 
 ## 命名规则（三处必须完全一致）
 
@@ -50,9 +52,8 @@ plugins/cyxj-foo/skills/cyxj-foo/SKILL.md   ← name: cyxj-foo
 1. **SKILL.md frontmatter** — `name` 与文件夹名一致
 2. **`.claude-plugin/marketplace.json`** — `name` 和 `source` 已同步；新插件**已注册**（漏注册 = 用户装不到）
 3. **README.md** — Skills 表格同步（名称 + 链接路径），且不留指向已删除目录的幽灵条目
-4. **CLAUDE.md** — 下方技术栈速查表同步
-5. **AGENTS.md** — 这是给 Codex 用的 CLAUDE.md 镜像，内容要同步；注意里面路径必须仍是
-   `.claude-plugin/`（别被机械替换成 `.Codex-plugin/` 这种坏路径）
+4. **CLAUDE.md** — 技术栈速查表同步
+5. **AGENTS.md** — 本文件，内容要与 CLAUDE.md 同步；路径必须仍是 `.claude-plugin/`，别替换成 `.Codex-plugin/` 这种坏路径
 6. **push 到 GitHub** — 本地改动不会自动同步给已安装用户，**必须 push 后才对用户生效**
 
 ## 新增 Skill 的流程
@@ -61,7 +62,7 @@ plugins/cyxj-foo/skills/cyxj-foo/SKILL.md   ← name: cyxj-foo
 2. 辅助脚本 / 资源放同级目录或 `scripts/`
 3. 在 `.claude-plugin/marketplace.json` 的 `plugins` 数组注册
 4. 更新 README.md 的 Skills 表格
-5. 更新本文件的技术栈速查表（及 AGENTS.md）
+5. 更新 CLAUDE.md 与本文件的技术栈速查表
 6. push 到 GitHub 后生效
 
 ## 常用命令
@@ -96,4 +97,3 @@ python3 -c "import json,os; reg={p['name'] for p in json.load(open('.claude-plug
 | cyxj-roundtable | 纯 SKILL.md 指令（拉起多个 Opus subagent） | 无 | ✓ |
 | cyxj-ai-weekly-news | 纯 SKILL.md 指令（9 步交互式 SOP + references 模板） | 达芬奇 / Obsidian 工作流 | ✓ |
 | cyxj-ps-export | 本机 Photoshop + Bash 批处理 | Photoshop（本地 app） | ✓ |
-```
