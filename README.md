@@ -18,10 +18,9 @@
 | [cyxj-geo](./plugins/cyxj-geo/) | GEO 部署：让 AI 在回答时主动提到你/你的产品，含选词矩阵、写作 brief、跨平台投放、监控 SOP |
 | [cyxj-roundtable](./plugins/cyxj-roundtable/) | 圆桌会议：6 个独立 Opus subagent 多视角帮你做决策，落地 Obsidian 决策记录 |
 | [cyxj-ai-weekly-news](./plugins/cyxj-ai-weekly-news/) | 每周 AI 热点视频：9 步交互式 SOP 端到端制作（选题→旁白→时间码→4K 渲染） |
-| [cyxj-ps-export](./plugins/cyxj-ps-export/) | 批量过 PS：用本机 Photoshop 把一个目录的图统一导出为规格一致的 JPG |
 | [cyxj-transcript](./plugins/cyxj-transcript/) | 逐字稿转文章：去口语化、加小标题、数据转表格、原稿留文末，产出 Obsidian Markdown 草稿 |
 | [cyxj-blog-pub](./plugins/cyxj-blog-pub/) | Astro 博客发布：frontmatter 校验、kebab-case 命名、正文图片全用图床 URL，build 后部署 |
-| [cyxj-psjpg](./plugins/cyxj-psjpg/) | 真 PS 批量转 JPG + 去痕迹：质量可配、嵌 sRGB、抹掉 PNG→JPG 来源痕迹（合并自 ps-export + ps-jpg） |
+| [cyxj-psjpg](./plugins/cyxj-psjpg/) | 真 PS 批量转 JPG + 去痕迹：质量可配、嵌 sRGB、抹掉 PNG→JPG 来源痕迹 |
 
 ## 安装
 

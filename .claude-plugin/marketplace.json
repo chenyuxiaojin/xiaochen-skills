@@ -70,11 +70,6 @@
       "source": "./plugins/cyxj-ai-weekly-news"
     },
     {
-      "name": "cyxj-ps-export",
-      "description": "批量过 PS：用本机 Photoshop 把一个目录的图统一导出为规格一致的 Progressive JPG",
-      "source": "./plugins/cyxj-ps-export"
-    },
-    {
       "name": "cyxj-transcript",
       "description": "逐字稿转文章：去口语化、加小标题、数据转表格、原稿留文末，产出 Obsidian Markdown 草稿",
       "source": "./plugins/cyxj-transcript"
