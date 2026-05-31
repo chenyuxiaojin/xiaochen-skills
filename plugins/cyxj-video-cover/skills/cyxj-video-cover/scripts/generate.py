@@ -1,277 +1,232 @@
 #!/usr/bin/env python3
 """
-视频封面生成脚本
+视频封面生成（真人版）
 
-使用 Gemini API + IP 参考图 + 风格参考图，生成 3D 渲染风格的视频封面。
-默认输出 4:3 横版 + 3:4 竖版两张。
+用 gpt-image-2（eo.ioll.pp.ua 中转站）+ 你的真人照片，生成带本人形象的封面。
+照片走 /v1/images/edits 端点重绘入场，人脸保持一致。
+默认输出 4 个比例（YouTube 16:9 / 公众号 2.35:1 / 竖版 3:4 / 横版 4:3），
+每比例 2 张供挑选，全部并行生成（约 1 分钟出齐）。
 
 用法：
   python3 generate.py --title "封面标题"
-  python3 generate.py --title "封面标题" --scene "角色坐在电脑前编程"
-  python3 generate.py --title "封面标题" --ratios 4:3 --output ./covers/
+  python3 generate.py --title "封面标题" --face ~/Pictures/封面形象/某张.png
+  python3 generate.py --title "封面标题" --ratios 16:9,3:4 --n 1
+  python3 generate.py --title "封面标题" --scene "坐在电脑前敲代码"
+
+key 与中转站地址自动从密钥存储读取（无需手动 export）：
+  ~/项目/自己的应用/密钥存储/.env 里的 EO_BASE_URL / EO_API_KEY
+也可用环境变量覆盖：EO_BASE_URL / EO_API_KEY
 """
 
 import argparse
+import base64
+import json
 import os
 import sys
+import urllib.request
+import urllib.error
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from PIL import Image
-from google import genai
-from google.genai import types
 
-# 路径常量
-SCRIPT_DIR = Path(__file__).resolve().parent
-SKILL_DIR = SCRIPT_DIR.parent
-STYLE_REF = SKILL_DIR / "style-reference" / "reference.png"
+# ---- 默认配置 ----
+DEFAULT_MODEL = "gpt-image-2"
+DEFAULT_FACE_DIR = Path.home() / "Pictures" / "封面形象"
+KEY_STORE = Path.home() / "项目" / "自己的应用" / "密钥存储" / ".env"
 
-
-def get_ip_ref_dir() -> Path:
-    """从环境变量 CYXJ_IP_REF_DIR 读取 IP 参考图目录。
-
-    目录约定：
-      - 任意数量的 .png 参考图（建议至少 1 张正面图 + 1 张多视角设定图）
-      - ip-description.txt — IP 形象的英文描述段落，用于注入 Gemini prompt
-    """
-    env_path = os.environ.get("CYXJ_IP_REF_DIR")
-    if not env_path:
-        print(
-            "❌ 未设置 CYXJ_IP_REF_DIR 环境变量。\n"
-            "请准备 IP 形象资料目录后设置：\n"
-            "  export CYXJ_IP_REF_DIR=/path/to/your/ip-reference/\n"
-            "目录里需要：\n"
-            "  - 至少 1 张 .png 参考图（建议正面图 + 多视角设定图）\n"
-            "  - ip-description.txt（一段英文，描述 IP 外形特征）\n"
-            "示例 ip-description.txt 内容：\n"
-            '  A 3D rendered character with a bald head, large blue eyes,\n'
-            '  wearing an oversized blue hoodie. Smooth vinyl toy finish,\n'
-            '  friendly and confident expression.',
-            file=sys.stderr,
-        )
-        sys.exit(1)
-    return Path(env_path).expanduser()
-
-
-def load_ip_description(ip_ref_dir: Path) -> str:
-    """从 ${CYXJ_IP_REF_DIR}/ip-description.txt 读取 IP 角色描述。"""
-    desc_file = ip_ref_dir / "ip-description.txt"
-    if not desc_file.exists():
-        print(
-            f"❌ 缺少 IP 角色描述文件：{desc_file}\n"
-            "请创建该文件，写入一段英文描述你 IP 形象的外形特征（颜色、服饰、表情、风格等）。\n"
-            "这段描述会注入到 Gemini prompt 里，让生成的封面保持 IP 一致性。",
-            file=sys.stderr,
-        )
-        sys.exit(1)
-    return desc_file.read_text(encoding="utf-8").strip()
-
-
-# 默认模型
-DEFAULT_MODEL = "gemini-3-pro-image-preview"
-
-# 比例 → 文件名映射
-RATIO_FILENAME = {
-    "4:3": "cover_4x3.png",
-    "3:4": "cover_3x4.png",
-    "16:9": "cover_16x9.png",
-    "9:16": "cover_9x16.png",
-    "1:1": "cover_1x1.png",
+# 比例 → 尺寸（均为 16 的倍数、长短比 ≤ 3:1、总像素达标，gpt-image-2 原生支持）
+RATIO_SIZE = {
+    "16:9": "2048x1152",    # YouTube 缩略图
+    "2.35:1": "2560x1088",  # 公众号分享大图
+    "3:4": "1536x2048",     # 竖版
+    "4:3": "2048x1536",     # 横版
 }
-
-# Prompt 模板
-PROMPT_TEMPLATE = """Generate a video cover/thumbnail image in EXACTLY the same visual style as the style reference image provided.
-
-CRITICAL STYLE REQUIREMENTS (match the style reference exactly):
-- 3D rendered character in the SAME art style as the reference images
-- The character MUST be: {ip_description}
-- Clean white/very light gray background with subtle grid pattern
-- Holographic/translucent tech UI panels floating around the character
-- Modern, professional, clean tech tutorial cover aesthetic
-- Soft lighting, slight depth of field
-
-SCENE:
-{scene_description}
-
-TEXT LAYOUT:
-- Large bold text on the left side of the image (black + one accent color):
-{title_lines}
-- Text should be prominent but NOT fill the entire image — professional cover design feel
-- Similar text size and positioning as the style reference
-
-DO NOT use: flat 2D illustration, poster/print aesthetic, dark backgrounds, pixel art style, Mondo screen print. Must be 3D rendered, clean, modern.
-
-ASPECT RATIO: {aspect_label}"""
+DEFAULT_RATIOS = "16:9,2.35:1,3:4,4:3"
 
 
-def build_title_lines(title: str) -> str:
-    """将标题拆成多行用于 prompt。"""
-    # 如果标题较短，直接一行
-    if len(title) <= 12:
-        return f'  "{title}"'
+def load_credentials() -> tuple[str, str]:
+    """读 base_url 和 api_key：环境变量优先，否则从密钥存储 .env 解析。"""
+    base = os.environ.get("EO_BASE_URL")
+    key = os.environ.get("EO_API_KEY")
+    if base and key:
+        return base.rstrip("/"), key
 
-    # 尝试在标点或空格处拆行
-    mid = len(title) // 2
-    for offset in range(min(8, mid)):
-        for i in (mid + offset, mid - offset):
-            if 0 < i < len(title) and title[i] in " ，,、：:——":
-                line1 = title[:i].strip("，, ")
-                line2 = title[i:].strip("，, ")
-                return f'  Line 1: "{line1}"\n  Line 2: "{line2}"'
+    if KEY_STORE.exists():
+        for line in KEY_STORE.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if line.startswith("#") or "=" not in line:
+                continue
+            k, _, v = line.partition("=")
+            k, v = k.strip(), v.strip().strip('"').strip("'")
+            if k == "EO_BASE_URL" and not base:
+                base = v
+            elif k == "EO_API_KEY" and not key:
+                key = v
 
-    # 没有合适断点，强制从中间拆
-    return f'  Line 1: "{title[:mid]}"\n  Line 2: "{title[mid:]}"'
-
-
-def build_scene_description(title: str, scene: str | None) -> str:
-    """构建场景描述。用户不传 scene 时根据 title 自动推断。"""
-    if scene:
-        return (
-            f"- The IP character is in the following scene: {scene}\n"
-            f"- The scene should visually represent the topic: \"{title}\"\n"
-            "- Character should have a semantic action/pose matching the scene"
+    if not base or not key:
+        print(
+            "❌ 找不到中转站配置。需要 EO_BASE_URL 和 EO_API_KEY。\n"
+            f"   已查找：环境变量 + {KEY_STORE}\n"
+            "   请在密钥存储 .env 里确认这两行存在，或先 export。",
+            file=sys.stderr,
         )
-    return (
-        f"- The IP character should be in a scene that visually represents: \"{title}\"\n"
-        "- Character should have a meaningful action/pose related to the topic\n"
-        "- Include relevant holographic UI elements, tech panels, or visual props that match the topic\n"
-        "- Expression: confident, slightly smirking, like sharing a clever insight"
-    )
-
-
-def load_references(ip_ref_dir: Path) -> list[Image.Image]:
-    """加载 IP 参考图（目录里所有 .png）和内置风格参考图。"""
-    ip_pngs = sorted(ip_ref_dir.glob("*.png"))
-    if not ip_pngs:
-        print(f"❌ {ip_ref_dir} 里没有任何 .png 参考图", file=sys.stderr)
         sys.exit(1)
-
-    refs: list[Image.Image] = []
-    for path in ip_pngs:
-        refs.append(Image.open(path))
-        print(f"  📷 IP ref: {path.name}")
-
-    if STYLE_REF.exists():
-        refs.append(Image.open(STYLE_REF))
-        print(f"  🎨 Style ref: {STYLE_REF.name}")
-    else:
-        print(f"  ⚠ Style reference not found: {STYLE_REF}")
-
-    return refs
+    return base.rstrip("/"), key
 
 
-def generate_cover(
-    title: str,
-    scene: str | None,
-    ratio: str,
-    model: str,
-    output_dir: Path,
-    refs: list[Image.Image],
-    ip_description: str,
-) -> Path | None:
-    """生成单张封面。"""
-    aspect_label = {
-        "4:3": "horizontal 4:3 landscape format",
-        "3:4": "vertical 3:4 portrait format",
-        "16:9": "horizontal 16:9 widescreen format",
-        "9:16": "vertical 9:16 portrait format",
-        "1:1": "square 1:1 format",
-    }.get(ratio, f"{ratio} format")
-
-    prompt = PROMPT_TEMPLATE.format(
-        ip_description=ip_description,
-        scene_description=build_scene_description(title, scene),
-        title_lines=build_title_lines(title),
-        aspect_label=aspect_label,
-    )
-
-    filename = RATIO_FILENAME.get(ratio, f"cover_{ratio.replace(':', 'x')}.png")
-    output_path = output_dir / filename
-
-    print(f"\n{'=' * 50}")
-    print(f"📐 {ratio} ({aspect_label})")
-    print(f"🎨 Model: {model}")
-    print(f"⏳ Generating...")
-
-    client = genai.Client(
-        api_key=os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
-    )
-
-    contents = [prompt] + refs
-
-    try:
-        response = client.models.generate_content(
-            model=model,
-            contents=contents,
-            config=types.GenerateContentConfig(
-                responseModalities=["IMAGE"],
-                imageConfig=types.ImageConfig(aspectRatio=ratio),
-            ),
+def resolve_faces(face_arg: str | None) -> list[Path]:
+    """确定参考人脸图：--face 指定（文件或目录）优先，否则用默认素材库目录。"""
+    target = Path(face_arg).expanduser() if face_arg else DEFAULT_FACE_DIR
+    if target.is_file():
+        return [target]
+    if target.is_dir():
+        imgs = sorted(
+            p for p in target.iterdir()
+            if p.suffix.lower() in (".png", ".jpg", ".jpeg", ".webp")
         )
+        if not imgs:
+            print(f"❌ {target} 里没有图片（png/jpg/jpeg/webp）", file=sys.stderr)
+            sys.exit(1)
+        # 默认只用第 1 张做主参考（多图更保真但更慢；需要时改这里取多张）
+        return imgs[:1]
+    print(f"❌ 参考图路径不存在：{target}", file=sys.stderr)
+    sys.exit(1)
 
-        if (
-            response.candidates
-            and response.candidates[0].content
-            and response.candidates[0].content.parts
-        ):
-            for part in response.candidates[0].content.parts:
-                if part.inline_data and part.inline_data.mime_type.startswith("image/"):
-                    image = part.as_image()
-                    output_dir.mkdir(parents=True, exist_ok=True)
-                    image.save(output_path)
-                    print(f"✅ Saved: {output_path}")
-                    return output_path
 
-        print("❌ No image in response")
+def build_prompt(title: str, scene: str | None) -> str:
+    """构建封面 prompt。人在一侧、标题留白另一侧，高点击 YouTube 风格。"""
+    scene_line = (
+        f"The person is in this scene: {scene}." if scene
+        else "Put the person in a scene that visually fits the title, "
+             "with a meaningful pose and relevant props."
+    )
+    return (
+        "Create a high click-through video cover / YouTube thumbnail. "
+        "Keep the SAME real person from the reference photo — same face, "
+        "same identity (do NOT turn into a cartoon or 3D character; keep photorealistic). "
+        "Composition: the person on one side as upper body, looking at camera with a "
+        "vivid, confident, slightly excited expression. "
+        "Leave clean space on the other side for a large bold Chinese title. "
+        f"{scene_line} "
+        "Background: clean modern tech workspace, softly blurred, bright and professional. "
+        f'Add this large bold Chinese title prominently: "{title}". '
+        "The title text must be accurate, large, high-contrast and easy to read "
+        "(black or white with an accent color outline). "
+        "Vivid, eye-catching, professional thumbnail style."
+    )
+
+
+def _multipart(fields: dict[str, str], image_paths: list[Path]) -> tuple[bytes, str]:
+    """组装 multipart/form-data 请求体。"""
+    boundary = "----cyxjvideocover7f3a"
+    parts: list[bytes] = []
+    for name, val in fields.items():
+        parts.append(
+            f'--{boundary}\r\nContent-Disposition: form-data; name="{name}"\r\n\r\n{val}\r\n'.encode()
+        )
+    for p in image_paths:
+        data = p.read_bytes()
+        mime = "image/png" if p.suffix.lower() == ".png" else "image/jpeg"
+        parts.append(
+            (f'--{boundary}\r\nContent-Disposition: form-data; name="image"; '
+             f'filename="{p.name}"\r\nContent-Type: {mime}\r\n\r\n').encode()
+            + data + b"\r\n"
+        )
+    parts.append(f"--{boundary}--\r\n".encode())
+    return b"".join(parts), boundary
+
+
+def generate_one(
+    base: str, key: str, model: str, title: str, scene: str | None,
+    ratio: str, idx: int, faces: list[Path], output_dir: Path,
+) -> Path | None:
+    """生成单张封面。返回保存路径或 None。"""
+    size = RATIO_SIZE.get(ratio)
+    if not size:
+        # 自定义比例兜底：交给中转站 auto
+        size = "auto"
+    body, boundary = _multipart(
+        {"model": model, "prompt": build_prompt(title, scene), "size": size, "n": "1"},
+        faces,
+    )
+    req = urllib.request.Request(
+        base + "/images/edits", data=body,
+        headers={
+            "Authorization": "Bearer " + key,
+            "Content-Type": f"multipart/form-data; boundary={boundary}",
+        },
+        method="POST",
+    )
+    safe_ratio = ratio.replace(":", "x").replace(".", "_")
+    out_path = output_dir / f"cover_{safe_ratio}_{idx}.png"
+    try:
+        with urllib.request.urlopen(req, timeout=300) as r:
+            d = json.load(r)
+        item = d["data"][0]
+        if item.get("b64_json"):
+            output_dir.mkdir(parents=True, exist_ok=True)
+            out_path.write_bytes(base64.b64decode(item["b64_json"]))
+            return out_path
+        if item.get("url"):
+            with urllib.request.urlopen(item["url"], timeout=120) as ir:
+                output_dir.mkdir(parents=True, exist_ok=True)
+                out_path.write_bytes(ir.read())
+            return out_path
+        print(f"⚠ {ratio} #{idx}: 返回里没有图片", file=sys.stderr)
         return None
-
+    except urllib.error.HTTPError as e:
+        print(f"❌ {ratio} #{idx}: HTTP {e.code} {e.read().decode()[:200]}", file=sys.stderr)
+        return None
     except Exception as e:
-        print(f"❌ Error: {e}")
+        print(f"❌ {ratio} #{idx}: {type(e).__name__} {str(e)[:200]}", file=sys.stderr)
         return None
 
 
 def main():
-    parser = argparse.ArgumentParser(description="视频封面生成")
+    parser = argparse.ArgumentParser(description="视频封面生成（真人版）")
     parser.add_argument("--title", required=True, help="封面标题文字")
-    parser.add_argument("--scene", default=None, help="场景/动作描述（可选）")
-    parser.add_argument("--ratios", default="4:3,3:4", help="输出比例，逗号分隔（默认 4:3,3:4）")
+    parser.add_argument("--scene", default=None, help="场景/动作描述（可选，不给则按标题自动）")
+    parser.add_argument("--ratios", default=DEFAULT_RATIOS,
+                        help=f"输出比例，逗号分隔（默认全部：{DEFAULT_RATIOS}）")
+    parser.add_argument("--n", type=int, default=2, help="每个比例出几张（默认 2）")
+    parser.add_argument("--face", default=None,
+                        help=f"参考人脸图，文件或目录（默认 {DEFAULT_FACE_DIR}）")
     parser.add_argument("--model", default=DEFAULT_MODEL, help=f"模型（默认 {DEFAULT_MODEL}）")
     parser.add_argument("--output", default=".", help="输出目录（默认当前目录）")
     args = parser.parse_args()
 
-    # 检查 API key
-    api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
-    if not api_key:
-        print("❌ 未设置 GEMINI_API_KEY 或 GOOGLE_API_KEY 环境变量", file=sys.stderr)
-        sys.exit(1)
+    base, key = load_credentials()
+    faces = resolve_faces(args.face)
+    ratios = [r.strip() for r in args.ratios.split(",") if r.strip()]
+    output_dir = Path(args.output).expanduser().resolve()
 
-    # 提前校验 IP 资料目录和描述文件（错误立即退出）
-    ip_ref_dir = get_ip_ref_dir()
-    ip_description = load_ip_description(ip_ref_dir)
-
-    ratios = [r.strip() for r in args.ratios.split(",")]
-    output_dir = Path(args.output).resolve()
-
-    print(f"🎬 视频封面生成")
+    print("🎬 视频封面生成（真人版）")
     print(f"   标题: {args.title}")
-    print(f"   场景: {args.scene or '(自动推断)'}")
-    print(f"   比例: {', '.join(ratios)}")
-    print(f"   模型: {args.model}")
+    print(f"   场景: {args.scene or '(按标题自动)'}")
+    print(f"   比例: {', '.join(ratios)}  ×{args.n} 张")
+    print(f"   参考: {', '.join(p.name for p in faces)}")
+    print(f"   模型: {args.model} @ {base}")
     print(f"   输出: {output_dir}")
-    print(f"\n📦 加载参考图...")
+    print(f"   共 {len(ratios) * args.n} 张，并行生成中...\n")
 
-    refs = load_references(ip_ref_dir)
-
-    results = []
-    for ratio in ratios:
-        result = generate_cover(
-            args.title, args.scene, ratio, args.model, output_dir, refs, ip_description
-        )
-        if result:
-            results.append(result)
+    jobs = [(r, i + 1) for r in ratios for i in range(args.n)]
+    results: list[Path] = []
+    with ThreadPoolExecutor(max_workers=min(8, len(jobs))) as ex:
+        futs = {
+            ex.submit(generate_one, base, key, args.model, args.title,
+                      args.scene, r, i, faces, output_dir): (r, i)
+            for r, i in jobs
+        }
+        for fut in as_completed(futs):
+            r, i = futs[fut]
+            p = fut.result()
+            if p:
+                results.append(p)
+                print(f"  ✅ {r} #{i} → {p.name}")
 
     print(f"\n{'=' * 50}")
-    print(f"🏁 完成！生成 {len(results)}/{len(ratios)} 张封面")
-    for r in results:
-        print(f"   📄 {r}")
+    print(f"🏁 完成！{len(results)}/{len(jobs)} 张")
+    for p in sorted(results):
+        print(f"   📄 {p}")
     print(f"{'=' * 50}")
 
 

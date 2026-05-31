@@ -1,62 +1,43 @@
 ---
 name: cyxj-video-cover
 description: |
-  视频封面生成。一句话生成 IP 形象 3D 渲染风格的视频封面，默认输出 4:3 横版 + 3:4 竖版。
-  触发方式：/封面、/video-cover、「生成封面」「做个视频封面」「帮我做封面」
-  Video cover generator with 3D rendered IP character. Generates 4:3 + 3:4 covers.
-  Trigger: /封面, /video-cover, "generate cover", "make a cover"
+  视频封面生成（真人版）。用你的真人照片 + gpt-image-2 重绘入场，一句话生成带本人形象的高点击封面。
+  默认输出 4 个比例：YouTube 16:9、公众号 2.35:1、竖版 3:4、横版 4:3，每比例 2 张供挑选，并行生成。
+  中文标题由模型直接渲染（gpt-image-2 中文渲染准确率高）。
+  触发方式：/封面、/video-cover、「生成封面」「做个视频封面」「帮我做封面」「做个 YouTube 封面」
+  Real-person video cover generator. Uses your photo + gpt-image-2 to redraw you into a
+  high-CTR cover. Outputs 16:9 / 2.35:1 / 3:4 / 4:3, 2 picks each, in parallel.
+  Trigger: /封面, /video-cover, "generate cover", "make a YouTube thumbnail"
 ---
 
-# cyxj-video-cover：视频封面生成
+# cyxj-video-cover：视频封面生成（真人版）
 
-一句话生成带 IP 形象的视频封面。默认输出 4:3 横版 + 3:4 竖版两张。
+用你的真人照片做参考，gpt-image-2 把你重绘进新封面场景（人脸保持一致），一句话出封面。
+默认 4 个比例各 2 张，并行生成，约 1 分钟出齐。
 
-## 前置准备
+## 前置准备（首次）
 
-首次使用前需要：
+1. **中转站 key**（已配好则跳过）——脚本自动从密钥存储读，无需手动 export：
+   - `~/项目/自己的应用/密钥存储/.env` 里的 `EO_BASE_URL` 和 `EO_API_KEY`
+   - 也可用同名环境变量覆盖
 
-1. **Gemini API Key** — 在 https://aistudio.google.com/apikey 创建，然后：
-   ```bash
-   export GEMINI_API_KEY=你的key
-   # 或 export GOOGLE_API_KEY=你的key
-   ```
+2. **真人照片**——默认读 `~/Pictures/封面形象/`（放几张本人正脸清晰的照片即可），
+   也可每次用 `--face` 临时指定某张或某目录。
 
-2. **IP 资料目录** — 任意位置建一个目录，放入：
-   - 至少 1 张 `.png` 参考图（建议正面图 + 多视角设定图，文件名随意）
-   - `ip-description.txt` — 一段英文，描述 IP 形象的外形特征（颜色、服饰、表情、风格等）。这段文字会注入到 Gemini prompt 里保证 IP 一致性
-
-   然后设置环境变量：
-   ```bash
-   export CYXJ_IP_REF_DIR=/path/to/your/ip-reference/
-   ```
-
-   `ip-description.txt` 示例：
-   ```
-   A 3D rendered character with a bald head, large blue eyes,
-   wearing an oversized blue hoodie. Smooth vinyl toy finish,
-   friendly and confident expression.
-   ```
-
-3. **Python 依赖**：`pip install google-genai pillow`
+3. **Python 依赖**：仅标准库（urllib），无需 pip 安装。生成结果用系统自带能力查看即可。
 
 ## 工作流
 
 ### Step 1：确认标题
 
-用户可能给出：
-- **明确标题**：直接使用
-- **一段话/主题描述**：提炼为 10-20 字的封面标题
-- **什么都没说**：从当前对话上下文（刚写完的文章、逐字稿、大纲等）推断主题，提炼标题
+- **明确标题**：直接用
+- **一段话/主题**：提炼为 10-20 字的封面标题
+- **什么都没说**：从当前对话上下文（刚写的文章、逐字稿、选题、大纲）推断主题并提炼标题
 
-标题确认后继续。
+### Step 2：场景（通常自动）
 
-### Step 2：场景推断
-
-根据标题自动推断 IP 角色的场景和动作，**不需要问用户**。推断原则：
-
-- 角色的动作/姿态必须与标题语义相关（如「计划模式」→ 看规划面板，「省钱」→ 手持钱袋）
-- 场景中要有与主题匹配的全息 UI / 科技道具
-- 如果用户主动指定了场景描述，用 `--scene` 参数传入
+脚本会根据标题自动安排人物动作和场景（科技工位虚化背景 + 与主题相关的道具），
+**不需要问用户**。用户主动指定时用 `--scene` 传入（如「坐在电脑前敲代码」「手指向屏幕」）。
 
 ### Step 3：调用脚本生成
 
@@ -66,37 +47,54 @@ python3 $SKILL_DIR/scripts/generate.py \
   --output <当前工作目录或用户指定目录>
 ```
 
-可选参数：
-- `--scene "场景描述"` — 手动指定场景（通常不需要）
-- `--ratios "4:3,3:4"` — 自定义比例（默认已是 4:3,3:4）
-- `--model <model>` — 换模型（默认 gemini-3-pro-image-preview）
+常用参数：
+- `--ratios "16:9,3:4"` — 只出指定比例（默认全四个：`16:9,2.35:1,3:4,4:3`）
+- `--n 1` — 每比例只出 1 张（默认 2 张挑）
+- `--face ~/Pictures/封面形象/某张.png` — 临时指定参考照片（默认读 `~/Pictures/封面形象/`）
+- `--scene "场景描述"` — 手动指定人物动作/场景
+- `--model <model>` — 换模型（默认 gpt-image-2）
 
 ### Step 4：展示结果
 
-用 Read 工具打开生成的两张图片展示给用户。
+用 Read 工具打开生成的封面展示给用户。每比例多张时，并列展示让用户挑。
 
-如果用户不满意：
-- 调整 `--scene` 描述角色动作/场景
-- 调整 `--title` 措辞
-- 重新生成
+不满意时：
+- 调 `--scene` 改人物动作/场景
+- 调 `--title` 措辞
+- 换 `--face` 参考照片
+- 重新生成（多出几张挑）
 
 ## 输出规格
 
-| 版本 | 比例 | 文件名 |
-|------|------|--------|
-| 横版 | 4:3 | cover_4x3.png |
-| 竖版 | 3:4 | cover_3x4.png |
+| 用途 | 比例 | 实际尺寸 | 文件名 |
+|------|------|---------|--------|
+| YouTube | 16:9 | ~1672×941 | cover_16x9_N.png |
+| 公众号 | 2.35:1 | ~1923×818 | cover_2_35x1_N.png |
+| 竖版 | 3:4 | ~1086×1448 | cover_3x4_N.png |
+| 横版 | 4:3 | ~1448×1086 | cover_4x3_N.png |
+
+> ⚠️ **尺寸说明**：中转站 `eo.ioll.pp.ua` 的 gpt-image-2 有分辨率天花板（约 157 万像素），
+> 请求再大的 `size` 也会被压到上表尺寸——**比例精确，但拿不到 2K/4K**。
+> 这对 YouTube（推荐 1280×720）和公众号都够用。若以后换了能出大图的源，改脚本里的 `RATIO_SIZE` 即可。
 
 ## 视觉风格（内置，无需用户指定）
 
-- 3D 渲染 IP 角色（光头、蓝眼、金耳坠、蓝色「陈与小金」卫衣）
-- 白色/浅灰背景 + 微网格
-- 全息/半透明科技 UI 面板
-- 左侧大号加粗标题文字（黑色 + 一个强调色）
-- 柔光、轻微景深
+- **真人**：你的照片重绘入场，保持本人长相（写实，不卡通/不 3D 化）
+- 人物在一侧（半身、看镜头、表情生动自信）+ 另一侧大标题留白
+- 背景：干净现代科技工位，柔焦虚化，明亮专业
+- 大号加粗中文标题（高对比、描边），由 gpt-image-2 直接渲染
+- 高点击 YouTube 缩略图调性
+
+## 技术说明
+
+- 模型 **gpt-image-2** @ `eo.ioll.pp.ua` 中转站（OpenAI 兼容）
+- 走 `/v1/images/edits` 端点：传真人照片做参考图重绘，保人脸一致
+- 中文文字渲染准确率高（实测大标题基本不错字），靠每比例多出几张进一步兜底
+- 并行生成（ThreadPoolExecutor），4 比例×2 张约 1 分钟出齐
+- key 从密钥存储自动读取，不写进代码
 
 ## 依赖
 
-- Python 3.11+
-- google-genai, pillow
-- 环境变量：`GEMINI_API_KEY` 或 `GOOGLE_API_KEY`
+- Python 3.11+（仅标准库）
+- 真人照片目录（默认 `~/Pictures/封面形象/`）
+- 密钥存储 `.env` 里的 `EO_BASE_URL` / `EO_API_KEY`

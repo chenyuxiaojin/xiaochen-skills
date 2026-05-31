@@ -91,7 +91,7 @@ python3 -c "import json,os; reg={p['name'] for p in json.load(open('.claude-plug
 | cyxj-youtube-topics | Python + YouTube Data API | requests | ✓ |
 | cyxj-yt-creator | Python + Apify + Obsidian | requests | ✓ |
 | cyxj-notebook-research | Python + Notebook LM | notebooklm-py, python-frontmatter | ✓ |
-| cyxj-video-cover | Python + Gemini API | google-genai, pillow | ✓ |
+| cyxj-video-cover | Python（标准库）+ gpt-image-2（eo.ioll.pp.ua 中转）真人照重绘 | 无第三方（urllib） | ✓ |
 | cyxj-geo | 纯 SKILL.md 指令 | 无 | ✓ |
 | cyxj-roundtable | 纯 SKILL.md 指令（拉起多个 Opus subagent） | 无 | ✓ |
 | cyxj-ai-weekly-news | 纯 SKILL.md 指令（9 步交互式 SOP + references 模板） | 达芬奇 / Obsidian 工作流 | ✓ |

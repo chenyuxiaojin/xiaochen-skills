@@ -46,7 +46,7 @@
     },
     {
       "name": "cyxj-video-cover",
-      "description": "视频封面生成：一句话生成 IP 形象 3D 渲染风格封面，默认 4:3 + 3:4 双版本",
+      "description": "视频封面生成（真人版）：你的照片 + gpt-image-2 重绘入场，一句话出 4 比例高点击封面（16:9/2.35:1/3:4/4:3）",
       "source": "./plugins/cyxj-video-cover"
     },
     {
