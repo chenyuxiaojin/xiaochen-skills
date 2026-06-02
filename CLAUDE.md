@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## 项目概览
 
 这是一个 Claude Code 插件市场仓库（Plugin Marketplace），里面是一组 `cyxj-*` skill，通过
-`/plugin marketplace add chenhuajinchj/xiaochen-skills` 安装到 Claude Code。
+`/plugin marketplace add chenyuxiaojin/xiaochen-skills` 安装到 Claude Code。
 
 **真相源 = `.claude-plugin/marketplace.json`**。判断"有几个/哪些插件、各自路径"时一律以它为准，
 不要相信任何文档里写死的数字（它们会漂移）。`plugins/` 下的目录数 ≥ marketplace 注册数：

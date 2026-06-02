@@ -35,7 +35,7 @@ Claude Code's built-in skills cover general tasks. This collection adds a vertic
 In Claude Code, run:
 
 ```
-/plugin marketplace add chenhuajinchj/xiaochen-skills
+/plugin marketplace add chenyuxiaojin/xiaochen-skills
 ```
 
 To install a single plugin only, you can reference it individually once the marketplace supports per-plugin install (check Claude Code docs for current status).
@@ -67,7 +67,7 @@ No slash command prefix is required for most skills — the trigger phrases list
 ## FAQ
 
 **How do I install?**
-Run `/plugin marketplace add chenhuajinchj/xiaochen-skills` inside Claude Code. All 14 plugins are registered.
+Run `/plugin marketplace add chenyuxiaojin/xiaochen-skills` inside Claude Code. All 14 plugins are registered.
 
 **Can I install only one skill?**
 Yes. Each plugin is self-contained. You can install a single plugin by specifying the plugin name if the marketplace supports it, or copy the individual `plugins/cyxj-{name}/` directory and register it in your own marketplace.

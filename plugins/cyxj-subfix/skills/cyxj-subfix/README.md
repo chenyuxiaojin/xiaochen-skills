@@ -51,7 +51,7 @@ pip install google-genai pysrt
 ### As a Claude Code Skill (Recommended)
 
 ```bash
-/plugin marketplace add chenhuajinchj/xiaochen-skills
+/plugin marketplace add chenyuxiaojin/xiaochen-skills
 ```
 
 Then use it in Claude Code:

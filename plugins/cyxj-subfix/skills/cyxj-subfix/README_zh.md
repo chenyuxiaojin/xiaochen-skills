@@ -51,7 +51,7 @@ pip install google-genai pysrt
 ### 作为 Claude Code Skill 安装（推荐）
 
 ```bash
-/plugin marketplace add chenhuajinchj/xiaochen-skills
+/plugin marketplace add chenyuxiaojin/xiaochen-skills
 ```
 
 在 Claude Code 中使用：
