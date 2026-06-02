@@ -554,14 +554,18 @@ def _trusted_recall_apify(
 
 
 def recall_from_trusted_channels(rotator: KeyRotator | None, published_after: str) -> list[dict]:
-    """信任频道直查。env CYXJ_TRUSTED_BACKEND 切换：youtube_api（默认）/ apify（测试）。"""
-    channels = get_trusted_channels()
+    """白名单（种子）频道直查。env CYXJ_TRUSTED_BACKEND 切换：youtube_api（默认）/ apify（测试）。
+
+    2026-06-02：直查范围从「种子 + 自动晋升」收窄为【仅种子白名单】。自动晋升频道不再获抓取
+    特权（直查 + 关键词豁免）——它只作为「领头羊榜」的排名展示（见 write_topics.py），不再翻它
+    的频道库存。这样只有种子视频带 source=trusted_channel，关键词豁免也只对种子生效。
+    （load_promoted_channels / get_trusted_channels 已退出抓取链路，保留仅备查。）"""
+    channels = list(SEED_TRUSTED_CHANNELS)
     if not channels:
         return []
     backend = os.environ.get("CYXJ_TRUSTED_BACKEND", "youtube_api")
-    promoted_count = len(channels) - len(SEED_TRUSTED_CHANNELS)
     print(
-        f"信任频道：{len(channels)} 个（种子 {len(SEED_TRUSTED_CHANNELS)} + 晋升 {promoted_count}），backend={backend}",
+        f"白名单直查：{len(channels)} 个种子频道，backend={backend}",
         file=sys.stderr,
     )
     if backend == "apify":

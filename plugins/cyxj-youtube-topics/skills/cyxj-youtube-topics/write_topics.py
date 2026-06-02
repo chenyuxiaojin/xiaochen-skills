@@ -12,6 +12,12 @@ from pathlib import Path
 
 from paths import get_state_dir, get_topic_dir
 
+try:
+    # 单一真源：白名单种子频道（用于 📌 白名单栏 + 领头羊榜排除已收编者）
+    from youtube_search import SEED_TRUSTED_CHANNELS
+except Exception:
+    SEED_TRUSTED_CHANNELS = []
+
 VIDEO_ID_PATTERN = re.compile(
     r"(?:youtube\.com/watch\?v=|youtu\.be/|youtube\.com/shorts/|youtube\.com/embed/)"
     r"([0-9A-Za-z_-]{11})"
@@ -34,6 +40,15 @@ ARCHIVE_AFTER_DAYS = 30  # 已沉寂 + 超过 N 天没更新 → 归档
 # 创作者优质判断阈值
 QUALITY_AVG_VIEWS = 5000
 QUALITY_MAX_VIEWS = 20000
+
+# 领头羊榜（晋升候选展示，不发抓取特权；2026-06-02）
+LEADERBOARD_SIZE = 5             # 榜单取前 N
+LEADERBOARD_MIN_VIDEOS = 3       # 入榜门槛：被全网召回过 ≥N 条
+LEADERBOARD_RECENCY_DAYS = 21    # 入榜门槛：最近 N 天内还出现过（last_seen 缺失则放行，过渡期）
+LEADERBOARD_SUGGEST_STREAK = 3   # 连续上榜 ≥N 天且未在白名单 → 提示「建议收编」
+# 综合打分权重（先给一版，跑出来不对再调）
+LB_W_FLAIR = 2000                # D 嗅觉：每次话题首发的加分
+LB_W_CONSISTENCY = 300           # A 频率：每个出现期的加分
 
 
 # ── 原子写：避开 iCloud / 同步盘 advisory lock 死锁 ──────────────
@@ -183,11 +198,14 @@ def update_creator(creators: dict, channel: str, channel_id: str, views: int, to
             "avg_views": 0,
             "max_views": 0,
             "first_seen": today,
+            "last_seen": today,
             "appearances": 0,
             "first_discoveries": 0,
             "is_quality": False,
             "quality_source": "auto",
             "tags": [],
+            "verdict_counts": {},
+            "leaderboard_streak": 0,
         }
     c = creators[channel]
     # Backfill：旧记录没有 channel_id 时补上
@@ -197,6 +215,7 @@ def update_creator(creators: dict, channel: str, channel_id: str, views: int, to
     c["total_views"] += views
     c["max_views"] = max(c.get("max_views", 0), views)
     c["avg_views"] = c["total_views"] // max(c["total_videos"], 1)
+    c["last_seen"] = today  # 喂领头羊榜的「最近活跃」门槛（2026-06-02）
 
 
 def refresh_creator_quality(creators: dict):
@@ -215,6 +234,45 @@ def refresh_creator_quality(creators: dict):
             tags.append("高频创作")
         c["is_quality"] = len(tags) > 0
         c["tags"] = tags
+
+
+def _leaderboard_score(c: dict) -> float:
+    """领头羊榜综合打分：C 质量为主（均播放 ×(1+好评率)）+ D 嗅觉加分 + A 持续加分。"""
+    avg = c.get("avg_views", 0)
+    vc = c.get("verdict_counts", {})
+    judged = sum(vc.values())
+    good = vc.get("值得做", 0) + vc.get("观望", 0)
+    good_rate = (good / judged) if judged else 0.0
+    quality = avg * (1 + good_rate)
+    flair = c.get("first_discoveries", 0) * LB_W_FLAIR
+    consistency = c.get("appearances", 0) * LB_W_CONSISTENCY
+    return quality + flair + consistency
+
+
+def compute_leaderboard(creators: dict, seed_ids: set, today: str) -> list:
+    """选领头羊榜：门槛 = 有 channel_id + 非白名单种子 + 收录≥N + 最近活跃（A+B）；
+    按综合质量分（C+D）降序取前 LEADERBOARD_SIZE。返回 [(name, creator_record), ...]。"""
+    try:
+        today_dt = datetime.strptime(today, "%Y-%m-%d")
+    except ValueError:
+        today_dt = None
+    elig = []
+    for name, c in creators.items():
+        cid = c.get("channel_id", "")
+        if not cid or cid in seed_ids:
+            continue  # 无 channel_id 或已是白名单种子 → 不进榜
+        if c.get("total_videos", 0) < LEADERBOARD_MIN_VIDEOS:
+            continue  # A 频率门槛
+        last_seen = c.get("last_seen")
+        if last_seen and today_dt:  # B 最近活跃门槛；last_seen 缺失则放行（过渡期）
+            try:
+                if (today_dt - datetime.strptime(last_seen, "%Y-%m-%d")).days > LEADERBOARD_RECENCY_DAYS:
+                    continue
+            except ValueError:
+                pass
+        elig.append((name, c))
+    elig.sort(key=lambda nc: _leaderboard_score(nc[1]), reverse=True)
+    return elig[:LEADERBOARD_SIZE]
 
 
 def append_seen_video_ids(new_ids: set):
@@ -698,6 +756,68 @@ cssclasses:
 - 抓取时间：{timestamp}"""
 
     sections = []
+
+    # ── verdict 累计（喂领头羊榜的好评率；本期每条视频按其所属话题判定计一次）──
+    for g, entry in all_pairs:
+        _label = effective_verdict(g)["label"]
+        for v in g["videos"]:
+            _ch = v.get("channel")
+            if _ch in creators:
+                _vc = creators[_ch].setdefault("verdict_counts", {})
+                _vc[_label] = _vc.get(_label, 0) + 1
+
+    seed_ids = {cid for cid, _ in SEED_TRUSTED_CHANNELS}
+    seed_names = {name for _, name in SEED_TRUSTED_CHANNELS}
+
+    # ── 📌 白名单本期视频（助教）：种子频道本期所有视频，单列最前，永不被淹 ──
+    wl_lines = []
+    for g, entry in all_pairs:
+        _label = effective_verdict(g)["label"]
+        _topic = g.get("topic", "")
+        for v in g["videos"]:
+            if v.get("channel_id") in seed_ids or v.get("channel") in seed_names:
+                _t = (v.get("title", "") or "").replace("[", "(").replace("]", ")")
+                _dur = v.get("duration_formatted", "")
+                _durpart = f" · {_dur}" if _dur else ""
+                wl_lines.append(
+                    f"- [ ] [{_t}]({v.get('url', '')}) — {v.get('channel', '')} · "
+                    f"{v.get('relative_time', '')} · {v.get('view_count_formatted', '')}播放{_durpart} "
+                    f"· 「{_topic}/{_label}」"
+                )
+    if wl_lines:
+        sections.append(f"## 📌 白名单本期视频（{len(wl_lines)} 条）\n" + "\n".join(wl_lines))
+
+    # ── ⬆️ 领头羊榜（晋升候选展示，不发抓取特权）──
+    leaderboard = compute_leaderboard(creators, seed_ids, today)
+    # 更新连续上榜天数（在榜 +1，否则归零）
+    _board_ids = {c.get("channel_id") for _, c in leaderboard}
+    for _c in creators.values():
+        _cid = _c.get("channel_id")
+        if _cid and _cid in _board_ids:
+            _c["leaderboard_streak"] = _c.get("leaderboard_streak", 0) + 1
+        else:
+            _c["leaderboard_streak"] = 0
+    if leaderboard:
+        lb = [
+            f"## ⬆️ 领头羊榜（Top {len(leaderboard)}）",
+            "> 全网抓取里「长期 + 最近活跃 + 质量」靠前的创作者，供你考虑收编进白名单。"
+            "上榜只是推荐，不影响抓取。",
+            "",
+        ]
+        for i, (name, c) in enumerate(leaderboard, 1):
+            vc = c.get("verdict_counts", {})
+            judged = sum(vc.values())
+            good = vc.get("值得做", 0) + vc.get("观望", 0)
+            rate = f"{round(good * 100 / judged)}%" if judged else "—"
+            reason = (
+                f"收录 {c.get('total_videos', 0)} 条 · 出现 {c.get('appearances', 0)} 天 · "
+                f"均播放 {c.get('avg_views', 0)} · 首发 {c.get('first_discoveries', 0)} 次 · 好评率 {rate}"
+            )
+            suggest = ""
+            if c.get("leaderboard_streak", 0) >= LEADERBOARD_SUGGEST_STREAK:
+                suggest = f"　🔥 已连续 {c['leaderboard_streak']} 天上榜、未在白名单，建议收编"
+            lb.append(f"{i}. **{name}** — {reason}{suggest}")
+        sections.append("\n".join(lb))
 
     def detail_section(g, entry):
         """值得做 / 观望 的详细块：
