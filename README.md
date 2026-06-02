@@ -73,7 +73,7 @@ Run `/plugin marketplace add chenhuajinchj/xiaochen-skills` inside Claude Code. 
 Yes. Each plugin is self-contained. You can install a single plugin by specifying the plugin name if the marketplace supports it, or copy the individual `plugins/cyxj-{name}/` directory and register it in your own marketplace.
 
 **What does `cyxj-` mean?**
-It is the author's personal naming prefix — short for "陈宇小金" (Chen Yu Xiaojin), a Chinese content creator. The prefix has no functional meaning; it just namespaces skills to avoid conflicts.
+It is the author's personal naming prefix — short for "陈与小金" (Chen Yu Xiaojin), a Chinese content creator. The prefix has no functional meaning; it just namespaces skills to avoid conflicts.
 
 **Which skills work out of the box and which need configuration?**
 

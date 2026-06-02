@@ -61,7 +61,7 @@
     },
     {
       "name": "cyxj-ai-weekly-news",
-      "description": "每周 AI 热点视频：承接陈宇小金栏目，9 步交互式 SOP 端到端制作（选题→旁白→时间码→4K 渲染）",
+      "description": "每周 AI 热点视频：9 步交互式 SOP 端到端制作（选题→旁白→时间码→4K 渲染）",
       "source": "./plugins/cyxj-ai-weekly-news"
     },
     {

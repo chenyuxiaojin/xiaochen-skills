@@ -92,7 +92,7 @@ python3 $SKILL_DIR/scripts/generate.py \
 | 竖版 | 3:4 | ~1086×1448 | cover_3x4_N.png |
 | 横版 | 4:3 | ~1448×1086 | cover_4x3_N.png |
 
-> ⚠️ **尺寸说明**：中转站 `eo.ioll.pp.ua` 的 gpt-image-2 有分辨率天花板（约 157 万像素），
+> ⚠️ **尺寸说明**：中转站 `<your-endpoint>` 的 gpt-image-2 有分辨率天花板（约 157 万像素），
 > 请求再大的 `size` 也会被压到上表尺寸——**比例精确，但拿不到 2K/4K**。
 > 这对 YouTube（推荐 1280×720）和公众号都够用。若以后换了能出大图的源，改脚本里的 `RATIO_SIZE` 即可。
 
@@ -107,7 +107,7 @@ python3 $SKILL_DIR/scripts/generate.py \
 
 ## 技术说明
 
-- 模型 **gpt-image-2** @ `eo.ioll.pp.ua` 中转站（OpenAI 兼容）
+- 模型 **gpt-image-2** @ `<your-endpoint>` 中转站（OpenAI 兼容）
 - 走 `/v1/images/edits` 端点：传真人照片做参考图重绘，保人脸一致
 - 中文文字渲染准确率高（实测大标题基本不错字），靠每比例多出几张进一步兜底
 - 并行生成（ThreadPoolExecutor），4 比例×2 张约 1 分钟出齐
