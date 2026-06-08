@@ -250,8 +250,9 @@ def _leaderboard_score(c: dict) -> float:
 
 
 def compute_leaderboard(creators: dict, seed_ids: set, today: str) -> list:
-    """选领头羊榜：门槛 = 有 channel_id + 非白名单种子 + 收录≥N + 最近活跃（A+B）；
-    按综合质量分（C+D）降序取前 LEADERBOARD_SIZE。返回 [(name, creator_record), ...]。"""
+    """选领头羊榜：门槛 = 有 channel_id + 非白名单种子 + 收录≥N + 最近活跃（A+B）
+    + 至少 1 条被判「值得做/观望」（C 相关性闸门）；
+    按综合质量分（质量+D）降序取前 LEADERBOARD_SIZE。返回 [(name, creator_record), ...]。"""
     try:
         today_dt = datetime.strptime(today, "%Y-%m-%d")
     except ValueError:
@@ -270,6 +271,11 @@ def compute_leaderboard(creators: dict, seed_ids: set, today: str) -> list:
                     continue
             except ValueError:
                 pass
+        # C 相关性闸门（2026-06-08）：至少 1 条视频被判「值得做/观望」才进榜——
+        # 挡掉 Theo 这类高播放但内容不对路（好评率=0）的访谈/新闻号长期霸榜。
+        vc = c.get("verdict_counts") or {}
+        if vc.get("值得做", 0) + vc.get("观望", 0) < 1:
+            continue
         elig.append((name, c))
     elig.sort(key=lambda nc: _leaderboard_score(nc[1]), reverse=True)
     return elig[:LEADERBOARD_SIZE]

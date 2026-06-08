@@ -58,6 +58,9 @@ SEED_TRUSTED_CHANNELS = [
     ("UCxVxcTULO9cFU6SB9qVaisQ", "Jack Roberts"),
     ("UCZRp6-Xvzo_dBFvt9L7y3Qw", "Build Great Products"),
     ("UC4x3CR25WSlvMJUtSPPzwwg", "Chris Raroque"),
+    # 2026-06-08 用户手动收编：连续 6 天领头羊榜、未在白名单
+    ("UClXAalunTPaX1YV185DWUeg", "Vaibhav Sisinty"),
+    ("UCbo-KbSjJDG6JWQ_MTZ_rNA", "Nick Saraev"),
 ]
 
 # 自动晋升阈值
