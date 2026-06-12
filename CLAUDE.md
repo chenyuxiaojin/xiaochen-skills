@@ -51,8 +51,7 @@ plugins/cyxj-foo/skills/cyxj-foo/SKILL.md   ← name: cyxj-foo
 2. **`.claude-plugin/marketplace.json`** — `name` 和 `source` 已同步；新插件**已注册**（漏注册 = 用户装不到）
 3. **README.md** — Skills 表格同步（名称 + 链接路径），且不留指向已删除目录的幽灵条目
 4. **CLAUDE.md** — 下方技术栈速查表同步
-5. **AGENTS.md** — 这是给 Codex 用的 CLAUDE.md 镜像，内容要同步；注意里面路径必须仍是
-   `.claude-plugin/`（别被机械替换成 `.Codex-plugin/` 这种坏路径）
+5. **AGENTS.md** — 已改为指向本文件的重定向（2026-06-13 起单源维护，不再镜像同步），正常情况不需要动它
 6. **push 到 GitHub** — 本地改动不会自动同步给已安装用户，**必须 push 后才对用户生效**
 
 ## 新增 Skill 的流程
@@ -61,7 +60,7 @@ plugins/cyxj-foo/skills/cyxj-foo/SKILL.md   ← name: cyxj-foo
 2. 辅助脚本 / 资源放同级目录或 `scripts/`
 3. 在 `.claude-plugin/marketplace.json` 的 `plugins` 数组注册
 4. 更新 README.md 的 Skills 表格
-5. 更新本文件的技术栈速查表（及 AGENTS.md）
+5. 更新本文件的技术栈速查表（AGENTS.md 是重定向，无需同步）
 6. push 到 GitHub 后生效
 
 ## 常用命令
