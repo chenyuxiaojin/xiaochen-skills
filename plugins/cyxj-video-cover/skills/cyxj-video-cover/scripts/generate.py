@@ -12,6 +12,7 @@
   python3 generate.py --title "封面标题" --face ~/Pictures/封面形象/某张.png
   python3 generate.py --title "封面标题" --ratios 16:9,3:4 --n 1
   python3 generate.py --title "封面标题" --scene "坐在电脑前敲代码"
+  python3 generate.py --title "封面标题" --style arch-stickman   # 俯拍真头火柴人 + 仰望拱形标题
 
 key 与中转站地址自动从密钥存储读取（无需手动 export）：
   ~/项目/自己的应用/密钥存储/.env 里的 GPTIMG2_BASE_URL / GPTIMG2_API_KEY
@@ -109,8 +110,8 @@ def resolve_faces(face_arg: str | None) -> list[Path]:
     sys.exit(1)
 
 
-def build_prompt(title: str, scene: str | None) -> str:
-    """构建封面 prompt。人在一侧、标题留白另一侧，高点击 YouTube 风格。
+def _prompt_default(title: str, scene: str | None) -> str:
+    """默认风格：人在一侧半身、标题留白另一侧，高点击 YouTube 风格。
 
     背景默认走简洁路线（纯色/弱虚化、少道具），让人物和标题主导画面，
     避免背景太花抢视线。需要具体场景时用 --scene 传入。
@@ -138,6 +139,56 @@ def build_prompt(title: str, scene: str | None) -> str:
     )
 
 
+def _prompt_arch_stickman(title: str, scene: str | None) -> str:
+    """arch-stickman 风格：高角度俯拍 + 真头火柴人 + 仰望 + 双行拱形标题 + 大留白。
+
+    人脸保留真实（仍走 edits 端点喂参考照），身体画成火柴人、脚下加柔和投影；
+    标题排成双行拱形罩在小人头顶，小人抬头仰望。极简、大量留白。
+    """
+    scene_line = (
+        f"The figure is doing this: {scene}. " if scene
+        else "CRUCIAL: the figure's head is clearly TILTED BACK so the face looks straight UP "
+             "toward the arched title above — an unmistakable upward gaze, chin raised, eyes "
+             "looking up at the words. The face must NOT look at the camera straight on. "
+    )
+    return (
+        "Create a CLEAN, MINIMALIST YouTube thumbnail with a HIGH-ANGLE composition and LOTS "
+        "of negative space. Calm, simple, premium look. "
+        "Use the SAME real photographic face / head from the reference photo (keep the real "
+        "face clearly recognizable, photorealistic head), BUT render the BODY as a simple "
+        "hand-drawn STICK FIGURE — thin minimalist black drawn lines for the torso, arms and "
+        "legs. The result is a real photo head sitting on a stick-figure body. Give the figure "
+        "a soft cast shadow on the ground beneath it and subtle directional lighting, so it has "
+        "depth and gently pops off the clean background. "
+        "Perspective: a HIGH-ANGLE bird's-eye view looking DOWN from above. "
+        "Composition: the stick-figure person is SMALL but clearly visible (a bit larger, "
+        "occupying roughly the lower third of the frame), alone in the LOWER-CENTER, the head "
+        "tilted back and the face gazing UP at the arched title above. The whole area ABOVE it "
+        "is empty clean space. "
+        f"{scene_line}"
+        "Place the LARGE bold Chinese title in the empty space ABOVE the figure's head, with "
+        "the text arranged in a TWO-LINE ARCHED layout — the title curves like a dome or "
+        f'rainbow across the top in two stacked arcs, arcing over the little figure below: "{title}". Keep the characters '
+        "accurate and readable along the curve; big, clean, high-contrast, with ONE key word "
+        "in a bright orange accent. "
+        "Background: CLEAN, ABSTRACT and MINIMAL — a flat solid light / near-white single color, "
+        "NOT a literal sky or ground. NO props, NO arrows, NO clutter. Lots of breathing room. "
+        "Mood: a tiny person looking up at a huge title — small person, big message."
+    )
+
+
+# 风格 → prompt 构建器
+STYLE_BUILDERS = {
+    "default": _prompt_default,
+    "arch-stickman": _prompt_arch_stickman,
+}
+
+
+def build_prompt(title: str, scene: str | None, style: str = "default") -> str:
+    """按 style 选择封面 prompt 构建器（未知 style 回退 default）。"""
+    return STYLE_BUILDERS.get(style, _prompt_default)(title, scene)
+
+
 def _multipart(fields: dict[str, str], image_paths: list[Path]) -> tuple[bytes, str]:
     """组装 multipart/form-data 请求体。"""
     boundary = "----cyxjvideocover7f3a"
@@ -161,6 +212,7 @@ def _multipart(fields: dict[str, str], image_paths: list[Path]) -> tuple[bytes, 
 def generate_one(
     base: str, key: str, model: str, title: str, scene: str | None,
     ratio: str, idx: int, faces: list[Path], output_dir: Path,
+    style: str = "default",
 ) -> Path | None:
     """生成单张封面。返回保存路径或 None。"""
     size = RATIO_SIZE.get(ratio)
@@ -171,7 +223,7 @@ def generate_one(
     body, boundary = _multipart(
         {
             "model": model,
-            "prompt": build_prompt(title, scene),
+            "prompt": build_prompt(title, scene, style),
             "size": size,
             "n": "1",
             "response_format": "url",
@@ -227,6 +279,10 @@ def main():
                         help=f"参考人脸图，文件或目录（默认 {DEFAULT_FACE_DIR}）")
     parser.add_argument("--model", default=DEFAULT_MODEL, help=f"模型（默认 {DEFAULT_MODEL}）")
     parser.add_argument("--output", default=".", help="输出目录（默认当前目录）")
+    parser.add_argument("--style", default="default",
+                        choices=["default", "arch-stickman"],
+                        help="封面风格：default(人在一侧半身) / "
+                             "arch-stickman(俯拍真头火柴人 + 仰望双行拱形标题 + 大留白)")
     args = parser.parse_args()
 
     base, key = load_credentials()
@@ -237,6 +293,7 @@ def main():
     print("🎬 视频封面生成（真人版）")
     print(f"   标题: {args.title}")
     print(f"   场景: {args.scene or '(按标题自动)'}")
+    print(f"   风格: {args.style}")
     print(f"   比例: {', '.join(ratios)}  ×{args.n} 张")
     print(f"   参考: {', '.join(p.name for p in faces)}")
     print(f"   模型: {args.model} @ {base}")
@@ -248,7 +305,7 @@ def main():
     with ThreadPoolExecutor(max_workers=min(8, len(jobs))) as ex:
         futs = {
             ex.submit(generate_one, base, key, args.model, args.title,
-                      args.scene, r, i, faces, output_dir): (r, i)
+                      args.scene, r, i, faces, output_dir, args.style): (r, i)
             for r, i in jobs
         }
         for fut in as_completed(futs):
