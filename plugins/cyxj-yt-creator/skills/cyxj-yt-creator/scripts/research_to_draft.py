@@ -19,10 +19,10 @@ SEARCH_ACTOR = "streamers~youtube-scraper"
 TRANSCRIPT_ACTOR = "karamelo~youtube-transcripts"
 
 DEFAULT_DRAFT_DIR = Path(
-    "/Users/chenhuajin/Library/Mobile Documents/iCloud~md~obsidian/Documents/灵感库/待发布"
+    "/Users/chenhuajin/obsidian/灵感库/待发布"
 )
 DEFAULT_PROFILE = Path(
-    "/Users/chenhuajin/Library/Mobile Documents/iCloud~md~obsidian/Documents/个人档案.md"
+    "/Users/chenhuajin/obsidian/个人档案.md"
 )
 
 

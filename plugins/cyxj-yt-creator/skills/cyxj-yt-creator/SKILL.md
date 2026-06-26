@@ -30,13 +30,13 @@ description: |
 脚本默认读取个人档案：
 
 ```text
-/Users/chenhuajin/Library/Mobile Documents/iCloud~md~obsidian/Documents/个人档案.md
+/Users/chenhuajin/obsidian/个人档案.md
 ```
 
 默认写入：
 
 ```text
-/Users/chenhuajin/Library/Mobile Documents/iCloud~md~obsidian/Documents/灵感库/待发布/
+/Users/chenhuajin/obsidian/灵感库/待发布/
 ```
 
 ## 使用方式
