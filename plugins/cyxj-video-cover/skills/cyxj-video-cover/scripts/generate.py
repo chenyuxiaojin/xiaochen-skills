@@ -22,6 +22,7 @@ key 与中转站地址自动从密钥存储读取（无需手动 export）：
 
 import argparse
 import base64
+import datetime
 import json
 import os
 import sys
@@ -31,8 +32,11 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 # ---- 默认配置 ----
-DEFAULT_MODEL = "gpt-image-2"
+# 默认 gpt-image-2-vip:同站 gpt-image-2 默认档实测会无视 size/quality、强制 1254² 低质量(缩水);
+# vip 档质量到 medium、能正常出横/竖图、中文渲染准。但仍不认精确比例,需出图后裁切;比例要更稳走 Gemini。
+DEFAULT_MODEL = "gpt-image-2-vip"
 DEFAULT_FACE_DIR = Path.home() / "Pictures" / "封面形象"
+DEFAULT_OUTPUT_DIR = Path.home() / "Pictures" / "封面出图"  # 输出根:每次出图在它下面新建「日期-标签」子文件夹
 KEY_STORE = Path.home() / "项目" / "自己的应用" / "密钥存储" / ".env"
 
 # 比例 → 尺寸（2K 级别；边长均为 16 的倍数、长短比 ≤ 3:1，gpt-image-2 原生支持）
@@ -278,7 +282,10 @@ def main():
     parser.add_argument("--face", default=None,
                         help=f"参考人脸图，文件或目录（默认 {DEFAULT_FACE_DIR}）")
     parser.add_argument("--model", default=DEFAULT_MODEL, help=f"模型（默认 {DEFAULT_MODEL}）")
-    parser.add_argument("--output", default=".", help="输出目录（默认当前目录）")
+    parser.add_argument("--output", default=str(DEFAULT_OUTPUT_DIR),
+                        help=f"输出根目录（默认 {DEFAULT_OUTPUT_DIR}）；实际落到 <根>/<日期-标签>/")
+    parser.add_argument("--label", default="未命名",
+                        help="本批标签（如 测试 / 某视频名）；输出子文件夹名 = <今日日期>-<标签>")
     parser.add_argument("--style", default="default",
                         choices=["default", "arch-stickman"],
                         help="封面风格：default(人在一侧半身) / "
@@ -288,7 +295,9 @@ def main():
     base, key = load_credentials()
     faces = resolve_faces(args.face)
     ratios = [r.strip() for r in args.ratios.split(",") if r.strip()]
-    output_dir = Path(args.output).expanduser().resolve()
+    # 每次出图新建「日期-标签」子文件夹,不同批次不互相覆盖
+    today = datetime.date.today().isoformat()
+    output_dir = Path(args.output).expanduser().resolve() / f"{today}-{args.label}"
 
     print("🎬 视频封面生成（真人版）")
     print(f"   标题: {args.title}")
@@ -297,6 +306,7 @@ def main():
     print(f"   比例: {', '.join(ratios)}  ×{args.n} 张")
     print(f"   参考: {', '.join(p.name for p in faces)}")
     print(f"   模型: {args.model} @ {base}")
+    print(f"   批次: {today}-{args.label}")
     print(f"   输出: {output_dir}")
     print(f"   共 {len(ratios) * args.n} 张，并行生成中...\n")
 
