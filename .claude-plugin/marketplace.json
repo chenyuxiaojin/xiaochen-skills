@@ -5,8 +5,8 @@
     "url": "https://github.com/chenyuxiaojin"
   },
   "metadata": {
-    "description": "小陈的 Claude Code 技能集：达芬奇字幕修正、公众号排版发布、Obsidian 知识库编译、海报设计、YouTube 选题发现、博主用法研究、Notebook LM 研究、逐字稿转文章、Astro 博客发布、PS 批量转 JPG",
-    "version": "1.8.0"
+    "description": "小陈的 Claude Code 技能集：达芬奇字幕修正、公众号排版发布、Obsidian 知识库编译、海报设计、YouTube 选题发现、博主用法研究、Notebook LM 研究、逐字稿转文章、Astro 博客发布、PS 批量转 JPG、知识视频开头优化、知识视频内容诊断、抖音数据复盘诊断",
+    "version": "1.9.0"
   },
   "plugins": [
     {
@@ -78,6 +78,21 @@
       "name": "cyxj-psjpg",
       "description": "真 PS 批量导出 JPG + 清理转换痕迹：质量可配、嵌 sRGB、抹掉 PNG→JPG 来源痕迹",
       "source": "./plugins/cyxj-psjpg"
+    },
+    {
+      "name": "cyxj-hook",
+      "description": "知识视频开头/钩子优化（3 分钟+ 冲抖音精选）：诊断开头 + 生成方案，结果先行 / 认知落差 / 身份反差 / 结构预告四型",
+      "source": "./plugins/cyxj-hook"
+    },
+    {
+      "name": "cyxj-content",
+      "description": "知识视频内容诊断（3 分钟+ 冲抖音精选）：六维诊断（文字洁癖/封面标题/完播价值密度/认知落差/可复用资产+落点/AI辅助）",
+      "source": "./plugins/cyxj-content"
+    },
+    {
+      "name": "cyxj-data-review",
+      "description": "抖音平台数据复盘诊断：盘点→时间序列对比→分档诊断→下一步，围绕 KPI 链（收藏→涨粉→进精选），每条结论标【事实】【推断】【未知】，北极星=收藏率",
+      "source": "./plugins/cyxj-data-review"
     }
   ]
 }
