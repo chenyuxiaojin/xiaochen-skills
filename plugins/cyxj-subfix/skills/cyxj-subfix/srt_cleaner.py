@@ -2,7 +2,7 @@
 """SRT 字幕结构清理工具 - 达芬奇字幕修正 Skill v4
 
 处理流程：strip_html → deduplicate → replace_punctuation → merge_short → split_long → renumber
-导出功能：--export-txt 从 SRT 提取纯文本供 IntelliScript 使用
+导出功能：--export-md 生成分段逐字稿 Markdown（写回 Obsidian）；--export-txt 纯文本（IntelliScript，按需）
 所有时间码操作基于精确计算，不做语义判断。
 """
 
@@ -61,6 +61,25 @@ def text_overlap_ratio(a: str, b: str) -> float:
     return lcs_length(a, b) / min(len(a), len(b))
 
 
+def longest_common_substring_len(a: str, b: str) -> int:
+    """最长公共"连续子串"长度。用于判断两条字幕是否真重复 / 达芬奇桥接片段
+    （连续重叠），区别于中文短句因高频字共享导致 LCS（子序列）虚高的伪重复。"""
+    if not a or not b:
+        return 0
+    m, n = len(a), len(b)
+    prev = [0] * (n + 1)
+    best = 0
+    for i in range(1, m + 1):
+        curr = [0] * (n + 1)
+        for j in range(1, n + 1):
+            if a[i - 1] == b[j - 1]:
+                curr[j] = prev[j - 1] + 1
+                if curr[j] > best:
+                    best = curr[j]
+        prev = curr
+    return best
+
+
 def sub_duration_seconds(sub) -> float:
     """字幕条目时长（秒）。"""
     return (sub.end.ordinal - sub.start.ordinal) / 1000.0
@@ -90,8 +109,11 @@ def strip_html_tags(subs):
 
 # ── Stage 2: 去重 ────────────────────────────────────────────────────────
 
-def deduplicate(subs, overlap_threshold=0.6, ghost_duration=0.3):
-    """去除重复和幽灵条目。返回 (cleaned_list, removed_count)。"""
+def deduplicate(subs, overlap_threshold=0.8, ghost_duration=0.3):
+    """去除重复和幽灵条目。返回 (cleaned_list, removed_count)。
+
+    overlap_threshold：最长公共"连续子串"占较短句的比例阈值（不是子序列）。
+    中文短句常因共享高频字令 LCS 虚高，故改用连续子串判真重复，避免误删。"""
     if not subs:
         return [], 0
 
@@ -131,10 +153,16 @@ def deduplicate(subs, overlap_threshold=0.6, ghost_duration=0.3):
                     to_remove.add(i)
                 continue
 
-            # 高度重叠且间隔很小
+            # 高度重叠且间隔很小：仅当一条几乎是另一条的"连续片段"才判重复。
+            # 不可用最长公共子序列（LCS）——中文短句因共享高频字令 LCS 虚高，
+            # 会把"是越准越好" / "不是越多越好"这类承前启后的非重复句误删。
             if gap < 0.5:
-                ratio = text_overlap_ratio(text_i, text_j)
-                if ratio > overlap_threshold:
+                short_t = text_i if len(text_i) <= len(text_j) else text_j
+                long_t = text_j if len(text_i) <= len(text_j) else text_i
+                s_clean = short_t.replace(' ', '')
+                l_clean = long_t.replace(' ', '')
+                contiguous = longest_common_substring_len(s_clean, l_clean)
+                if s_clean and contiguous / len(s_clean) > overlap_threshold:
                     # 保留更长的文本，时间取并集
                     if len(text_i) >= len(text_j):
                         items[i].start = min(items[i].start, items[j].start)
@@ -350,6 +378,52 @@ def export_intelliscript_txt(srt_path, output_path=None):
     return output_path
 
 
+def export_transcript_md(srt_path, output_path=None, title=None,
+                         para_gap=1.0, target_chars=200):
+    """从（已修正的）SRT 生成分段逐字稿 Markdown，供写回 Obsidian。
+
+    文字一字不改，仅做分段：遇到自然停顿（相邻条目间隔 >= para_gap 秒），
+    或当前段累计字数 >= target_chars 时另起一段。比一整段纯文本更可读，
+    且对说话连贯、停顿稀少的口播也能切出均匀段落。供 Phase 3 写回 Obsidian。
+    """
+    subs = pysrt.open(srt_path, encoding='utf-8')
+    paras = []
+    cur = []
+    prev_end = None
+    for sub in subs:
+        t = sub.text.strip()
+        if not t:
+            continue
+        big_gap = prev_end is not None and (sub.start.ordinal - prev_end) / 1000.0 >= para_gap
+        cur_chars = sum(len(x) for x in cur)
+        if cur and (big_gap or cur_chars >= target_chars):
+            paras.append(cur)
+            cur = []
+        cur.append(t)
+        prev_end = sub.end.ordinal
+    if cur:
+        paras.append(cur)
+
+    if title is None:
+        title = Path(srt_path).stem.replace('_fixed', '')
+
+    lines = [f"# {title}", "", "> 成片逐字稿（视频实录，已校对）", "", ""]
+    for p in paras:
+        lines.append(' '.join(p))
+        lines.append("")
+    md = "\n".join(lines).rstrip() + "\n"
+
+    if output_path is None:
+        p = Path(srt_path)
+        output_path = str(p.parent / (p.stem.replace('_fixed', '') + '_transcript.md'))
+
+    with open(output_path, 'w', encoding='utf-8') as f:
+        f.write(md)
+
+    print(f"逐字稿 Markdown: {output_path} ({len(paras)} 段，写回 Obsidian 用)")
+    return output_path
+
+
 def build_operation_map(original_count, merge_ops, split_ops, dedup_removed):
     """构建操作映射表（简化版，记录关键操作）。"""
     ops = []
@@ -458,10 +532,15 @@ def main():
     parser.add_argument('--stats', action='store_true', help='打印统计信息')
     parser.add_argument('--export-txt', action='store_true',
                         help='从 SRT 导出纯文本（供 IntelliScript 使用）')
+    parser.add_argument('--export-md', action='store_true',
+                        help='生成分段逐字稿 Markdown（写回 Obsidian 用）')
+    parser.add_argument('--title', help='逐字稿 Markdown 的标题（默认用文件名）')
 
     args = parser.parse_args()
 
-    if args.export_txt:
+    if args.export_md:
+        export_transcript_md(args.input, args.output, title=args.title)
+    elif args.export_txt:
         export_intelliscript_txt(args.input, args.output)
     else:
         process(args.input, args.output, args.soft_limit, args.hard_limit,
