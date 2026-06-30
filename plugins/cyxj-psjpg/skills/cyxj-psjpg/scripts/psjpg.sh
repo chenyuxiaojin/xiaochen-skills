@@ -84,8 +84,10 @@ osascript -e "tell application \"$PS_APP\" to do javascript file \"$JSX\"" >/dev
 # 让下面所有 grep '^\[OK' 锚定行首匹配不到。先把 \r 统一成 \n 再处理。
 LOG=/tmp/cyxj_psjpg_export.log
 if [ -f "$LOG" ]; then
-    tr '\r' '\n' < "$LOG" > "$LOG.norm" && mv "$LOG.norm" "$LOG"
-    grep -E '^\[(OK|FAIL)' "$LOG" || true
+    # 日志里 PS 把中文路径写成了非 UTF-8 字节，UTF-8 locale 下 tr/grep 会当二进制崩，
+    # 故所有处理日志的 tr/grep 一律 LC_ALL=C（按字节）+ grep -a（强制当文本）。
+    LC_ALL=C tr '\r' '\n' < "$LOG" > "$LOG.norm" && mv "$LOG.norm" "$LOG"
+    LC_ALL=C grep -a -E '^\[(OK|FAIL)' "$LOG" || true
 fi
 
 echo ""
@@ -98,8 +100,8 @@ ELAPSED=$((END - START))
 
 echo ""
 echo "===== 完成（耗时 ${ELAPSED} 秒）====="
-SUCCESS=$(grep -c '^\[OK' /tmp/cyxj_psjpg_export.log 2>/dev/null; true)
-FAIL=$(grep -c '^\[FAIL' /tmp/cyxj_psjpg_export.log 2>/dev/null; true)
+SUCCESS=$(LC_ALL=C grep -a -c '^\[OK' /tmp/cyxj_psjpg_export.log 2>/dev/null; true)
+FAIL=$(LC_ALL=C grep -a -c '^\[FAIL' /tmp/cyxj_psjpg_export.log 2>/dev/null; true)
 SUCCESS=${SUCCESS:-0}
 FAIL=${FAIL:-0}
 OUT_COUNT=$(ls "$OUT"/*.jpg 2>/dev/null | wc -l | xargs)
@@ -111,7 +113,7 @@ echo "输出位置: $OUT"
 if [ "$FAIL" -gt 0 ]; then
     echo ""
     echo "===== 失败清单 ====="
-    grep '^\[FAIL' /tmp/cyxj_psjpg_export.log || true
+    LC_ALL=C grep -a '^\[FAIL' /tmp/cyxj_psjpg_export.log || true
 fi
 
 if [ "$OUT_COUNT" -lt "$SUCCESS" ]; then
