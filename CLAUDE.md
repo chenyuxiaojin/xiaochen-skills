@@ -86,7 +86,7 @@ python3 -c "import json,os; reg={p['name'] for p in json.load(open('.claude-plug
 | cyxj-wechat-pub | CSS + HTML 模板 + juice（npm），内置 3 套主题 | juice (npm) | ✓ |
 | cyxj-obsidian-build | 纯 SKILL.md 指令 | Obsidian 库访问 | ✓ |
 | cyxj-poster | Python + gpt-image-2 生图（GPTIMG2 中转）+ Gemini 文字扩写 | requests, google-genai, pillow | ✓ |
-| cyxj-youtube-topics | Python + YouTube Data API | requests | ✓ |
+| cyxj-youtube-topics | Python + YouTube Data API + Apify（字幕主路径） | requests、APIFY_API_TOKEN、Supadata（可选兜底） | ✓ |
 | cyxj-yt-creator | Python + Apify + Obsidian | requests | ✓ |
 | cyxj-notebook-research | Python + Notebook LM | notebooklm-py, python-frontmatter | ✓ |
 | cyxj-video-cover | Python（标准库）+ gpt-image-2（<your-endpoint> 中转）真人照重绘 | 无第三方（urllib） | ✓ |

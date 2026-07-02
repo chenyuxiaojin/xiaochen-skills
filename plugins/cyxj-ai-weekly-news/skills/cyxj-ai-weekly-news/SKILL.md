@@ -5,7 +5,7 @@ description: |
   按 9 步 SOP 走完：AI 出新闻候选 → 用户拍板 → 用户手抓截图 → AI 填 NEWS → AI 写旁白稿 →
   用户达芬奇录音+导字幕 SRT → 用户填 subtitleRange → AI 跑脚本生成时间码 → AI 跑素材核对 → 渲染 4K。
   每个决策点停下等用户确认，不一把梭。
-  触发方式：/AI每周热点、/做下一期、/每周AI视频、「做这周的 AI 视频」「做下一期 AI 热点」
+  触发词：AI每周热点、做下一期、每周AI视频、「做这周的 AI 视频」「做下一期 AI 热点」
 ---
 
 # cyxj-ai-weekly-news：每周 AI 热点视频制作
@@ -14,13 +14,13 @@ description: |
 
 ## 项目路径
 
-固定项目位置：
+项目根目录读环境变量 `CYXJ_AIWEEKLY_PROJECT`；未设置则默认：
 
 ```text
 ~/项目/试验区/ai-weekly-flash-video
 ```
 
-后续所有命令默认在此目录下执行。
+后续所有命令默认在项目根目录（`$CYXJ_AIWEEKLY_PROJECT`）下执行。
 
 ## 节目档案（先核对一遍，避免飘）
 
@@ -49,7 +49,7 @@ description: |
 
 ### Step 1 — 收集本周 AI 新闻候选（AI 做）
 
-抓本周（周一-周日）AI 圈热点候选 ≥ 20 条，整理成一份候选清单，每条带：
+抓本周（周一-周日）AI 圈热点候选 ≥ 20 条。时间窗默认最近 7 天；跨周执行时开跑前和用户确认时间窗。整理成一份候选清单，每条带：
 
 - 日期（MM.DD）
 - 公司 / 主体
@@ -59,7 +59,7 @@ description: |
 - 截图源 URL（首选官方页 / 推文 / 发布会截屏链接）
 - region：GLOBAL / CHINA / TREND
 
-抓取时优先用：grok-search 的 web_search（带 extra_sources=2） + Tavily web_fetch 钉事实。**关键事实需要两源交叉验证**。详见用户全局 CLAUDE.md 的"证据协议"。
+抓取时优先用 grok-search / Tavily 等已配置的 MCP 搜索工具（如 grok-search 的 web_search 带 extra_sources=2 + Tavily web_fetch 钉事实）；不可用时用内置 WebSearch / WebFetch。**关键事实需两个独立来源交叉验证**。详见用户全局 CLAUDE.md 的"证据协议"。
 
 候选清单输出给用户后**停**，等用户从中选 8-12 条 + 排顺序。
 
@@ -75,9 +75,9 @@ description: |
 
 ### Step 3 — 填 NEWS 数组（AI 做）
 
-按用户给的入选清单 + 截图文件名，覆盖 `src/Composition.tsx` 第 30 行起的 `NEWS` 数组。
+按用户给的入选清单 + 截图文件名，在 `src/Composition.tsx` 里定位 `NEWS = [` 数组声明处整体替换。
 
-每条结构（参考 `references/news-template.md`）：
+每条结构（参考 `${CLAUDE_PLUGIN_ROOT}/skills/cyxj-ai-weekly-news/references/news-template.md`）：
 
 ```ts
 {
@@ -97,11 +97,11 @@ description: |
 
 ### Step 4 — 写旁白稿（AI 写初稿 + 用户改）
 
-参考 `references/voiceover-template.md` 的写作规则：
+参考 `${CLAUDE_PLUGIN_ROOT}/skills/cyxj-ai-weekly-news/references/voiceover-template.md` 的写作规则：
 
 - 开头：1-2 句钩子 + 本周关键词
 - 主体：用 `那么第一件事 / 第二件事 / 接下来 / 同天 / 同时` 把新闻串起来
-- 结尾固定句式：`OK，我是陈与小金。每周 AI 热点，每周一期，我们下周再见`
+- 结尾固定句以 voiceover-template.md「结尾固定句（不要改）」区的版本为准，不要改动
 - 字数目标：3 分钟左右 ≈ 600-660 字
 
 写好后保存到 `docs/voiceover-script-zh.md`，让用户审阅修改。
@@ -118,7 +118,7 @@ description: |
 2. 导出 SRT 到 `docs/transcripts/voiceover.fixed.srt`
 3. 单独导出音频到 `public/audio/voiceover.wav`（48000Hz 双声道）
 
-详见 `references/davinci-srt-export.md`。
+详见 `${CLAUDE_PLUGIN_ROOT}/skills/cyxj-ai-weekly-news/references/davinci-srt-export.md`。
 
 AI 等用户告知"已导出"再继续。
 
@@ -199,9 +199,11 @@ ffprobe -v error -select_streams v:0 \
 
 ## 引用
 
-- 详细 SOP：`~/项目/试验区/ai-weekly-flash-video/docs/制作SOP.md`
-- 视觉禁区：`~/项目/试验区/ai-weekly-flash-video/CLAUDE.md`
-- 第一期复盘：`~/项目/试验区/ai-weekly-flash-video/docs/每周AI资讯栏目制作记录-2026-05-24.md`（5/24 v0 验证版反思）
+以下都在项目根目录（`$CYXJ_AIWEEKLY_PROJECT`）下：
+
+- 详细 SOP：`$CYXJ_AIWEEKLY_PROJECT/docs/制作SOP.md`
+- 视觉禁区：`$CYXJ_AIWEEKLY_PROJECT/CLAUDE.md`
+- 第一期复盘：`$CYXJ_AIWEEKLY_PROJECT/docs/每周AI资讯栏目制作记录-2026-05-24.md`（5/24 v0 验证版反思）
 
 ## 文件清单
 

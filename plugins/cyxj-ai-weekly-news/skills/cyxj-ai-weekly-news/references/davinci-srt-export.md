@@ -47,7 +47,7 @@ Gemini / Codex / Claude / DeepSeek / Anthropic / Antigravity / MiniMax / Hailuo
 3. 保存路径：
 
 ```
-~/项目/试验区/ai-weekly-flash-video/docs/transcripts/voiceover.fixed.srt
+$CYXJ_AIWEEKLY_PROJECT/docs/transcripts/voiceover.fixed.srt
 ```
 
 ⚠️ 文件名必须是 `voiceover.fixed.srt`，build-schedule.mjs 写死读这个路径。
@@ -66,7 +66,7 @@ Gemini / Codex / Claude / DeepSeek / Anthropic / Antigravity / MiniMax / Hailuo
 4. 保存路径：
 
 ```
-~/项目/试验区/ai-weekly-flash-video/public/audio/voiceover.wav
+$CYXJ_AIWEEKLY_PROJECT/public/audio/voiceover.wav
 ```
 
 ⚠️ 文件名必须是 `voiceover.wav`，Remotion 写死读这个路径。
@@ -76,7 +76,7 @@ Gemini / Codex / Claude / DeepSeek / Anthropic / Antigravity / MiniMax / Hailuo
 导出后跑：
 
 ```bash
-cd ~/项目/试验区/ai-weekly-flash-video
+cd "$CYXJ_AIWEEKLY_PROJECT"
 ffprobe -v error \
   -show_entries format=duration:stream=codec_name,sample_rate,channels \
   -of default=noprint_wrappers=1 \
@@ -97,6 +97,6 @@ wc -l docs/transcripts/voiceover.fixed.srt
 head -10 docs/transcripts/voiceover.fixed.srt
 ```
 
-期望：行数 = 句数 × 4（每段 4 行）+ 末尾空行。头几行能看到时间码格式 `00:00:00,000 --> 00:00:02,280`。
+期望：行数 ≈ 句数 × 4（双行字幕的块是 5 行，以块数校验更准）+ 末尾空行。头几行能看到时间码格式 `00:00:00,000 --> 00:00:02,280`。
 
 通过验证后回到 SKILL.md Step 7 继续。

@@ -1,6 +1,6 @@
 # NEWS 数组结构参考
 
-每周新闻数据放在 `src/Composition.tsx` 第 30 行起的 `NEWS = [...] as const;` 数组里。
+每周新闻数据放在 `src/Composition.tsx` 里的 `NEWS = [...] as const;` 数组里（定位 `NEWS = [` 数组声明处）。
 
 ## 字段说明
 
