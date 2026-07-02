@@ -20,6 +20,7 @@ from pathlib import Path
 import requests
 
 from paths import get_state_dir, load_youtube_api_key
+from write_topics import atomic_write
 
 CREATOR_INDEX_PATH = get_state_dir() / "创作者索引.json"
 API_BASE = "https://www.googleapis.com/youtube/v3"
@@ -115,9 +116,9 @@ def main():
 
     if not args.dry_run and (filled_manual or filled_api):
         data["creators"] = creators
-        CREATOR_INDEX_PATH.write_text(
+        atomic_write(
+            CREATOR_INDEX_PATH,
             json.dumps(data, ensure_ascii=False, indent=2),
-            encoding="utf-8",
         )
         print(f"\n已写入 {CREATOR_INDEX_PATH}")
     elif args.dry_run:

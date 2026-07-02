@@ -8,7 +8,7 @@ Fallback：Supadata（独立服务商，独立 IP 池）。
 设计约束：
 - 入口签名 fetch_subtitle(video_url_or_id, max_seconds=180) 不变
 - 失败返回 None 不抛异常
-- 默认前 180 秒纯文本（足够判断角度）
+- 返回约前 max_seconds*60 字符的纯文本（粗估，无时间戳按字符数截断；足够判断角度）
 - stderr 打印耗时和失败原因
 """
 
@@ -56,7 +56,7 @@ def _fetch_via_karamelo(vid: str, max_seconds: int):
     )
     try:
         with urllib.request.urlopen(req, timeout=60) as r:
-            if r.status != 201:
+            if not (200 <= r.status < 300):
                 print(f"warn karamelo {vid}: HTTP {r.status}", file=sys.stderr)
                 return None
             items = json.loads(r.read())
@@ -116,7 +116,7 @@ def _fetch_via_supadata(vid: str, max_seconds: int):
 
 
 def fetch_subtitle(video_url_or_id: str, max_seconds: int = DEFAULT_MAX_SECONDS):
-    """拉前 max_seconds 秒字幕纯文本。失败返回 None。
+    """拉字幕纯文本，截取约前 max_seconds*60 字符（粗估）。失败返回 None。
     主路径 Apify karamelo，失败 fallback 到 Supadata。"""
     vid, _ = _normalize(video_url_or_id)
     if not vid:

@@ -6,6 +6,7 @@ import os
 import re
 import sys
 from datetime import datetime, timedelta, timezone
+from functools import lru_cache
 from pathlib import Path
 
 import requests
@@ -84,9 +85,16 @@ NON_ENGLISH_PATTERN = re.compile(
     r"\u0600-\u06ff\u0e00-\u0e7f\u0900-\u097f]"
 )
 
-TOPIC_DIR = get_topic_dir()           # iCloud / Obsidian：.md 总览（去重兜底扫这里）
 STATE_DIR = get_state_dir()           # 本地非同步：状态文件（与 write_topics.py 同源）
 SEEN_IDS_PATH = STATE_DIR / ".seen_video_ids.json"
+
+
+@lru_cache(maxsize=1)
+def _topic_dir() -> Path:
+    """iCloud / Obsidian：.md 总览（去重兜底扫这里）。
+    惰性求值：未设 CYXJ_TOPIC_DIR 时 get_topic_dir() 会 sys.exit，
+    推迟到真正用到才求值，保证 `import youtube_search`（如 chinese_reference.py）不会因此退出。"""
+    return get_topic_dir()
 
 # 匹配 YouTube URL 中的 11 位 Video ID
 VIDEO_ID_PATTERN = re.compile(
@@ -356,8 +364,9 @@ def load_seen_ids() -> set[str]:
             pass
 
     # 兜底：扫描选题库 markdown
-    if TOPIC_DIR.exists():
-        for md_file in TOPIC_DIR.glob("**/*.md"):
+    topic_dir = _topic_dir()
+    if topic_dir.exists():
+        for md_file in topic_dir.glob("**/*.md"):
             try:
                 content = md_file.read_text(encoding="utf-8")
                 seen.update(VIDEO_ID_PATTERN.findall(content))
@@ -548,8 +557,21 @@ def _apify_recall_batch(
         duration_s = _parse_apify_duration(item.get("lengthSeconds") or item.get("duration"))
         view_count = int(item.get("viewCount") or 0)
         pub_raw = item.get("date") or item.get("publishedAt") or ""
-        if pub_raw and pub_raw < published_after:
-            continue
+        if pub_raw:
+            # 用 datetime 解析后再比较——Apify 的 date 格式不保证是 ISO，
+            # 字符串直接比会静默误判。解析失败按「保留」处理，交给下游过滤。
+            try:
+                pub_dt = datetime.fromisoformat(pub_raw.replace("Z", "+00:00"))
+                if pub_dt.tzinfo is None:
+                    pub_dt = pub_dt.replace(tzinfo=timezone.utc)
+                cutoff_dt = datetime.fromisoformat(published_after.replace("Z", "+00:00"))
+                if pub_dt < cutoff_dt:
+                    continue
+            except (ValueError, TypeError):
+                print(
+                    f"警告：无法解析发布时间 '{pub_raw}'（{vid}），按保留处理",
+                    file=sys.stderr,
+                )
         out.append({
             "video_id": vid,
             "title": item.get("title", ""),

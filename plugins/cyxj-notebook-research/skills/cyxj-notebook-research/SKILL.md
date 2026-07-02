@@ -3,7 +3,7 @@ name: cyxj-notebook-research
 description: |
   Notebook LM 批量研究。将选题库中的 YouTube 视频提交给 Google Notebook LM，
   生成综合研究报告，写入 Obsidian 研究报告目录。
-  触发方式：「帮我研究一下 XXX 话题」「研究一下这个选题」「把选题提交给 Notebook LM」
+  触发方式：「研究选题库里的 XXX」「把这个选题提交给 Notebook LM」「用 Notebook LM 研究这个选题」「拉取 Notebook LM 的研究结果」
 ---
 
 # notebook-research：Notebook LM 批量研究
@@ -31,6 +31,12 @@ description: |
 4. **平台说明**：脚本用 macOS 专属的 `brctl download` 处理 iCloud 占位文件。如果你的 Obsidian 库不在 iCloud 上（推荐本地路径或软链接），这部分会自动跳过、不影响使用。
 
 ## 流程
+
+流程开头先定义 skill 目录（后续命令依赖它；`CLAUDE_PLUGIN_ROOT` 由 Claude Code 注入）：
+
+```bash
+SKILL_DIR="${CLAUDE_PLUGIN_ROOT}/skills/cyxj-notebook-research"
+```
 
 ### 第一步：确定选题文件
 
@@ -87,10 +93,10 @@ python3 "$SKILL_DIR/notebook_research.py" fetch "$CYXJ_VAULT_BASE/选题库/XXX.
 1. 检查所有源的索引状态
 2. 如果有未完成的源，输出提示并以 exit code 2 退出
 3. 如果全部完成，触发 Notebook LM 生成综合报告，轮询等待完成后下载
-4. 写入研究报告文件到 `$CYXJ_VAULT_BASE/研究报告/XXX.md`（包含视频来源列表 + 综合报告）
+4. 写入研究报告文件到 `$CYXJ_VAULT_BASE/研究报告/XXX.md`（包含视频来源列表 + 综合报告；同名文件已存在时自动加时间戳后缀，不覆盖）
 5. 更新选题文件 status 为"已完成"
 
-**注意：** 脚本内部会自动等待报告生成完成（最多 5 分钟），不需要手动轮询。
+**注意：** 脚本内部会自动等待报告生成完成（最多 5 分钟），不需要手动轮询。若报告生成失败/超时，摘要 JSON 的 status 为 `report_failed`，选题文件 status 保持「研究中」——告诉用户稍后再说一次即可重试拉取，不要当成已完成。
 
 **如果 exit code 为 2（索引未完成）：**
 

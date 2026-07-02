@@ -11,8 +11,6 @@ import re
 import sys
 from datetime import datetime, timedelta, timezone
 
-import requests
-
 from paths import load_youtube_api_keys
 from youtube_search import KeyRotator, youtube_get
 

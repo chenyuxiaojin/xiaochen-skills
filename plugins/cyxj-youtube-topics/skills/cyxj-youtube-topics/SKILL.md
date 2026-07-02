@@ -25,8 +25,11 @@ description: |
 上一次跑可能在中间某步失败（budget 烧光 / 网络挂 / Ctrl+C），失败时 `/tmp/yt_*.json` 中间产物可能还在。**每步开始前先检查对应输出文件**，存在且新鲜则跳过该步：
 
 ```bash
-# 模板：每一步开头先这样判断
-if [ -f /tmp/yt_videos.json ] && [ $(($(date +%s) - $(stat -f %m /tmp/yt_videos.json))) -lt 21600 ]; then
+# 全流程都会用到 $SKILL_DIR，先定义（CLAUDE_PLUGIN_ROOT 由 Claude Code 注入）
+SKILL_DIR="${CLAUDE_PLUGIN_ROOT}/skills/cyxj-youtube-topics"
+
+# 模板：每一步开头先这样判断（stat -f 是 BSD/macOS 写法，Linux 兜底用 stat -c）
+if [ -f /tmp/yt_videos.json ] && [ $(($(date +%s) - $(stat -f %m /tmp/yt_videos.json 2>/dev/null || stat -c %Y /tmp/yt_videos.json))) -lt 21600 ]; then
   echo "复用现有 /tmp/yt_videos.json（6h 内）"
 else
   python3 "$SKILL_DIR/youtube_search.py" > /tmp/yt_videos.json
@@ -82,7 +85,20 @@ fi
    - 必需：`requests`
    - 不再需要 `youtube-transcript-api`（主路径已换 Apify 代理，不走 YouTube 内部接口）
 
+### 高级环境变量（可选，从脚本实际行为归纳）
+
+- `CYXJ_STATE_DIR`：覆盖状态目录（话题索引 / 创作者索引 / 判断日志 / `.seen_video_ids.json` 的存放处；默认 `~/Library/Application Support/cyxj-youtube-topics/state`，为避 iCloud 文件锁不放同步目录）
+- `CYXJ_TRUSTED_BACKEND`：信任频道直查后端，`youtube_api`（默认）或 `apify`（测试用，不烧 YouTube quota，且会跳过关键词召回）
+- `CYXJ_LOOKBACK_HOURS`：召回回看窗口小时数，默认 48，取值范围 1–168
+- `CYXJ_PHASE`：两段式 cron 专用；`=1` 时 `write_topics.py` 硬锁拒绝写盘（防廉价模型越界），`=2` 或不设则放行
+
 ## 流程
+
+流程开头先定义 skill 目录（后续所有命令依赖它；`CLAUDE_PLUGIN_ROOT` 由 Claude Code 注入）：
+
+```bash
+SKILL_DIR="${CLAUDE_PLUGIN_ROOT}/skills/cyxj-youtube-topics"
+```
 
 ### 第一步：运行搜索脚本
 
@@ -109,8 +125,11 @@ python3 "$SKILL_DIR/chinese_reference.py" > /tmp/yt_zh_reference.json
 
 ### 第二步：读取话题索引与个人档案
 
+话题索引**不在** `$CYXJ_TOPIC_DIR`——它是机器状态，已迁到本地状态目录 STATE_DIR（迁移原因：iCloud 同步目录的文件锁会导致写盘死锁）。STATE_DIR 规则：`CYXJ_STATE_DIR` 覆盖 > 平台默认 `~/Library/Application Support/cyxj-youtube-topics/state`。路径统一通过 `paths.py` 获取，不要手拼：
+
 ```bash
-cat "$CYXJ_TOPIC_DIR/话题索引.json"
+STATE_DIR=$(cd "$SKILL_DIR" && python3 -c "from paths import get_state_dir; print(get_state_dir())")
+cat "$STATE_DIR/话题索引.json"
 ```
 
 话题索引每条 topic 现在包含：
@@ -238,7 +257,7 @@ write_topics.py 会：
 - frontmatter 用 4 个独立 Number 字段（verdict_worth_doing / verdict_watching / verdict_follow / verdict_skip），便于 Bases 视图筛选
 - 更新话题索引的 `top_3_videos`、`signals`、`last_judgment`
 - 更新创作者索引
-- 追加写入 `判断日志.jsonl`（每行一条判断快照，两周后回看准不准）
+- 更新 `判断日志.jsonl`（每行一条判断快照，按 (timestamp, topic_id) 去重合并后重写，两周后回看准不准）
 - **最后**才更新 `.seen_video_ids.json`——总览写入成功后才标"已见"，中途失败下次仍能捞回
 
 最后清理临时文件：

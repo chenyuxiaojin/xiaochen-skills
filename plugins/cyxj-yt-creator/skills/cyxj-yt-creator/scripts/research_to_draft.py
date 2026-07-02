@@ -18,11 +18,12 @@ import requests
 SEARCH_ACTOR = "streamers~youtube-scraper"
 TRANSCRIPT_ACTOR = "karamelo~youtube-transcripts"
 
+# 环境变量优先（CYXJ_DRAFT_DIR / CYXJ_USER_PROFILE），否则用 ~ 下的默认目录结构
 DEFAULT_DRAFT_DIR = Path(
-    "/Users/chenhuajin/obsidian/灵感库/待发布"
+    os.environ.get("CYXJ_DRAFT_DIR") or Path.home() / "obsidian" / "灵感库" / "待发布"
 )
 DEFAULT_PROFILE = Path(
-    "/Users/chenhuajin/obsidian/个人档案.md"
+    os.environ.get("CYXJ_USER_PROFILE") or Path.home() / "obsidian" / "个人档案.md"
 )
 
 
@@ -90,6 +91,19 @@ def canonical_url(url: str) -> str:
     if not url:
         return ""
     return url.split("&")[0]
+
+
+def video_id_from_item(item: dict[str, Any]) -> str:
+    """从 Apify 返回 item 里提取 11 位 video id（url/videoId/id 字段兜底）。"""
+    url = str(item.get("url") or item.get("videoUrl") or "")
+    match = re.search(r"(?:v=|youtu\.be/|/shorts/|/embed/)([0-9A-Za-z_-]{11})", url)
+    if match:
+        return match.group(1)
+    for key in ("videoId", "id"):
+        value = str(item.get(key) or "")
+        if re.fullmatch(r"[0-9A-Za-z_-]{11}", value):
+            return value
+    return ""
 
 
 def dedupe_videos(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -172,10 +186,12 @@ def build_markdown(
     subtitles: dict[str, str],
     profile: str,
     search_queries: list[str],
+    subtitle_count: int,
 ) -> str:
     today = datetime.now().strftime("%Y-%m-%d")
     positioning = infer_positioning(profile)
-    top_videos = choose_subtitle_targets(videos, min(8, len(videos)))
+    # 重点视频数与 --subtitle-count 对齐：正好是抓过字幕的那批 top 播放视频
+    top_videos = choose_subtitle_targets(videos, min(subtitle_count, len(videos)))
 
     lines: list[str] = []
     add = lines.append
@@ -284,8 +300,25 @@ def run(args: argparse.Namespace) -> Path:
     if subtitle_payload["urls"]:
         try:
             subtitle_items = apify_post(TRANSCRIPT_ACTOR, token, subtitle_payload, timeout=args.timeout)
-            for video, subtitle_item in zip(subtitle_targets, subtitle_items):
+            # 不能按顺序 zip 配对：任一视频抓取失败/返回乱序时字幕会张冠李戴。
+            # 改为按返回 item 自带的视频标识（url/videoId）建索引匹配。
+            items_by_vid: dict[str, dict[str, Any]] = {}
+            for subtitle_item in subtitle_items:
+                vid = video_id_from_item(subtitle_item)
+                if vid:
+                    items_by_vid[vid] = subtitle_item
+                else:
+                    print(
+                        f"warn: transcript item has no recognizable video id, keys={sorted(subtitle_item)}",
+                        file=sys.stderr,
+                    )
+            for video in subtitle_targets:
                 url = canonical_url(str(video.get("url") or ""))
+                subtitle_item = items_by_vid.get(video_id_from_item(video))
+                if subtitle_item is None:
+                    print(f"warn: no transcript matched for {url}", file=sys.stderr)
+                    subtitles[url] = ""
+                    continue
                 subtitles[url] = plain_transcript(subtitle_item, args.subtitle_chars)
         except Exception as exc:
             print(f"warn: subtitle actor failed: {exc}", file=sys.stderr)
@@ -299,6 +332,7 @@ def run(args: argparse.Namespace) -> Path:
         subtitles=subtitles,
         profile=profile,
         search_queries=queries,
+        subtitle_count=args.subtitle_count,
     )
 
     if args.output:
@@ -335,7 +369,7 @@ def main() -> None:
         run(args)
     except requests.RequestException as exc:
         print(f"Apify 请求失败：{exc}", file=sys.stderr)
-        print("如果是网络/TLS 问题，可重试：HTTPS_PROXY=http://127.0.0.1:7897 HTTP_PROXY=http://127.0.0.1:7897 python3 scripts/research_to_draft.py ...", file=sys.stderr)
+        print("如果是网络/TLS 问题，可设置代理环境变量后重试：HTTPS_PROXY=<你的代理地址> HTTP_PROXY=<你的代理地址> python3 scripts/research_to_draft.py ...", file=sys.stderr)
         raise SystemExit(2)
 
 

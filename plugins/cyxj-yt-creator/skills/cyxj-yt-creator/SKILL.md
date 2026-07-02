@@ -27,24 +27,24 @@ description: |
 2. 当前 skill 目录下 `.env`
 3. `~/.config/cyxj/.env`
 
-脚本默认读取个人档案：
+脚本默认读取个人档案（环境变量 `CYXJ_USER_PROFILE` 优先，未设置时用 `~` 下默认路径）：
 
 ```text
-/Users/chenhuajin/obsidian/个人档案.md
+$CYXJ_USER_PROFILE，默认 ~/obsidian/个人档案.md
 ```
 
-默认写入：
+默认写入（环境变量 `CYXJ_DRAFT_DIR` 优先，未设置时用 `~` 下默认路径）：
 
 ```text
-/Users/chenhuajin/obsidian/灵感库/待发布/
+$CYXJ_DRAFT_DIR，默认 ~/obsidian/灵感库/待发布/
 ```
 
 ## 使用方式
 
-从 skill 根目录运行：
+直接用插件根路径运行（`CLAUDE_PLUGIN_ROOT` 由 Claude Code 注入）：
 
 ```bash
-python3 scripts/research_to_draft.py \
+python3 "${CLAUDE_PLUGIN_ROOT}/skills/cyxj-yt-creator/scripts/research_to_draft.py" \
   --topic "Open Design + HyperFrames" \
   --query "Open Design Claude Design" \
   --query "Open Design HyperFrames" \
@@ -53,17 +53,17 @@ python3 scripts/research_to_draft.py \
   --subtitle-count 8
 ```
 
-如果 Apify 直连失败，在这台 Mac 上优先走本地代理：
+如果 Apify 直连失败，如需代理设置 `HTTPS_PROXY`（requests 会自动读取）：
 
 ```bash
-HTTPS_PROXY=http://127.0.0.1:7897 HTTP_PROXY=http://127.0.0.1:7897 \
-python3 scripts/research_to_draft.py --topic "Open Design + HyperFrames"
+HTTPS_PROXY=<你的代理地址> HTTP_PROXY=<你的代理地址> \
+python3 "${CLAUDE_PLUGIN_ROOT}/skills/cyxj-yt-creator/scripts/research_to_draft.py" --topic "Open Design + HyperFrames"
 ```
 
 验证时先 dry-run：
 
 ```bash
-python3 scripts/research_to_draft.py \
+python3 "${CLAUDE_PLUGIN_ROOT}/skills/cyxj-yt-creator/scripts/research_to_draft.py" \
   --topic "Open Design + HyperFrames" \
   --max-results 5 \
   --subtitle-count 2 \

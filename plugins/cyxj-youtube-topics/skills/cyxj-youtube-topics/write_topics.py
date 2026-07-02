@@ -683,7 +683,7 @@ def main():
     for entry in index_map.values():
         this_run_count = run_counts.get(entry["id"], 0)
         entry["signals"] = compute_signals(entry, today, this_run_count)
-        # last_judgment 占位——由 topic_judge.py 填充
+        # last_judgment 占位——由第 5 步 LLM 判断后经 write_topics 落盘
         entry.setdefault("last_judgment", {})
 
     # 更新创作者索引

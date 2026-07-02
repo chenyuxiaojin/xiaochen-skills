@@ -8,7 +8,7 @@ import subprocess
 import sys
 import tempfile
 import time
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 
 import frontmatter
@@ -29,10 +29,14 @@ def _get_vault_base() -> Path:
     return Path(env_path).expanduser()
 
 
-# ── 常量 ──────────────────────────────────────────────
-VAULT_BASE = _get_vault_base()
-TOPIC_DIR = VAULT_BASE / "选题库"
-REPORT_DIR = VAULT_BASE / "研究报告"
+# ── 目录（惰性求值：无参运行先看到 usage，不因缺 CYXJ_VAULT_BASE 直接退出）──
+
+def get_topic_dir() -> Path:
+    return _get_vault_base() / "选题库"
+
+
+def get_report_dir() -> Path:
+    return _get_vault_base() / "研究报告"
 
 # 匹配 YouTube URL（完整 URL 和 Video ID）
 YOUTUBE_URL_PATTERN = re.compile(
@@ -161,9 +165,14 @@ def extract_notebook_id(output: str) -> str | None:
     match = id_pattern.search(output)
     if match:
         return match.group(1)
-    # 格式 3: 整行就是 ID（去除空白）
+    # 格式 3: 整行就是 ID（去除空白；必须是合法 ID 字符集，避免把报错文案当成 ID）
     stripped = output.strip()
-    if stripped and "\n" not in stripped and len(stripped) < 100:
+    if (
+        stripped
+        and "\n" not in stripped
+        and len(stripped) < 100
+        and re.fullmatch(r"[A-Za-z0-9_-]+", stripped)
+    ):
         return stripped
     return None
 
@@ -431,11 +440,13 @@ def cmd_fetch(topic_file: Path):
         # 轮询等待报告生成完成
         print(f"  报告生成中（任务 {task_id[:8]}...），等待完成...", file=sys.stderr)
         max_polls = 30  # 最多等 5 分钟（30 × 10 秒）
+        generated = False
         for attempt in range(max_polls):
             time.sleep(10)
             poll_result = run_notebooklm(["artifact", "poll", task_id], timeout=30)
             if poll_result.returncode == 0 and "completed" in poll_result.stdout.lower():
                 print("  报告生成完成", file=sys.stderr)
+                generated = True
                 break
             if poll_result.returncode != 0 or "failed" in poll_result.stdout.lower():
                 print("  警告：报告生成失败", file=sys.stderr)
@@ -443,32 +454,39 @@ def cmd_fetch(topic_file: Path):
         else:
             print("  警告：报告生成超时（5 分钟）", file=sys.stderr)
 
-        # 下载报告内容
-        with tempfile.NamedTemporaryFile(suffix=".md", delete=False, mode="w") as tmp:
-            tmp_path = tmp.name
-        dl_result = run_notebooklm(
-            ["download", "report", "-a", task_id, "--force", tmp_path], timeout=60
-        )
-        if dl_result.returncode == 0:
+        # 下载报告内容（仅在轮询确认生成完成后；超时/失败走「综合报告生成失败」分支）
+        if generated:
+            with tempfile.NamedTemporaryFile(suffix=".md", delete=False, mode="w") as tmp:
+                tmp_path = tmp.name
+            dl_result = run_notebooklm(
+                ["download", "report", "-a", task_id, "--force", tmp_path], timeout=60
+            )
+            if dl_result.returncode == 0:
+                try:
+                    briefing = Path(tmp_path).read_text(encoding="utf-8").strip()
+                    print(f"  报告已下载（{len(briefing)} 字符）", file=sys.stderr)
+                except Exception:
+                    print("  警告：无法读取下载的报告文件", file=sys.stderr)
+            else:
+                print("  警告：报告下载失败", file=sys.stderr)
+            # 清理临时文件
             try:
-                briefing = Path(tmp_path).read_text(encoding="utf-8").strip()
-                print(f"  报告已下载（{len(briefing)} 字符）", file=sys.stderr)
+                Path(tmp_path).unlink(missing_ok=True)
             except Exception:
-                print("  警告：无法读取下载的报告文件", file=sys.stderr)
-        else:
-            print("  警告：报告下载失败", file=sys.stderr)
-        # 清理临时文件
-        try:
-            Path(tmp_path).unlink(missing_ok=True)
-        except Exception:
-            pass
+                pass
 
-    if not briefing:
+    briefing_failed = not briefing
+    if briefing_failed:
         briefing = "（综合报告生成失败）"
 
-    # 6. 写入研究报告文件
-    REPORT_DIR.mkdir(parents=True, exist_ok=True)
-    report_file = REPORT_DIR / f"{topic_name}.md"
+    # 6. 写入研究报告文件（同名已存在时加时间戳后缀，不静默覆盖）
+    report_dir = get_report_dir()
+    report_dir.mkdir(parents=True, exist_ok=True)
+    report_file = report_dir / f"{topic_name}.md"
+    if report_file.exists():
+        stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+        report_file = report_dir / f"{topic_name} {stamp}.md"
+        print(f"  同名报告已存在，改写入: {report_file.name}", file=sys.stderr)
 
     today = date.today().isoformat()
     # 收集视频来源信息
@@ -509,21 +527,24 @@ def cmd_fetch(topic_file: Path):
     report_file.write_text(report_content, encoding="utf-8")
     print(f"研究报告已写入: {report_file.name}", file=sys.stderr)
 
-    # 8. 更新选题文件状态
-    post.metadata["status"] = "已完成"
-    # 清除可能残留的 error 字段
-    post.metadata.pop("error", None)
-    save_topic_file(topic_file, post)
+    # 8. 更新选题文件状态（报告生成失败/超时不置「已完成」，保持「研究中」可重跑 fetch）
+    if briefing_failed:
+        print("  综合报告生成失败：status 保持「研究中」，稍后可重新运行 fetch 重试", file=sys.stderr)
+    else:
+        post.metadata["status"] = "已完成"
+        # 清除可能残留的 error 字段
+        post.metadata.pop("error", None)
+        save_topic_file(topic_file, post)
 
     # 9. 输出摘要
     summary = {
         "action": "fetch",
-        "status": "completed",
+        "status": "report_failed" if briefing_failed else "completed",
         "topic": topic_name,
         "sources_count": len(done_sources),
         "failed_sources_count": len(failed_sources),
         "report_file": str(report_file),
-        "has_briefing": briefing != "（综合报告生成失败）",
+        "has_briefing": not briefing_failed,
     }
     print(json.dumps(summary, ensure_ascii=False, indent=2))
 
