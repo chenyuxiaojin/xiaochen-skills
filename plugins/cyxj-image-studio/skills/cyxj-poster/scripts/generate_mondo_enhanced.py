@@ -16,6 +16,10 @@ import requests
 from google import genai
 from google.genai import types
 
+# 插件级共享模块（凭据加载 + base 规整），位于 <插件根>/lib/
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "lib"))
+import imgapi
+
 # API Configuration
 # Image generation backend: GPTIMG2 (gpt-image-2 @ api.chatgpt-code.com, OpenAI-compatible HTTP)
 DEFAULT_IMAGE_MODEL = 'gpt-image-2'
@@ -131,36 +135,9 @@ def _load_gptimg2():
     Returns:
         (base, key) tuple. base has NO trailing slash and NO trailing /v1.
     """
-    base = os.environ.get("GPTIMG2_BASE_URL")
-    key = os.environ.get("GPTIMG2_API_KEY")
-
-    if not base or not key:
-        # GPTIMG2_ENV_FILE overrides the default .env location (default unchanged)
-        env_path = os.path.expanduser(
-            os.environ.get("GPTIMG2_ENV_FILE") or "~/项目/自己的应用/密钥存储/.env")
-        try:
-            with open(env_path, encoding="utf-8") as f:
-                for ln in f:
-                    ln = ln.strip()
-                    if ln.startswith("GPTIMG2_BASE_URL=") and not base:
-                        base = ln.split("=", 1)[1].strip()
-                    elif ln.startswith("GPTIMG2_API_KEY=") and not key:
-                        key = ln.split("=", 1)[1].strip()
-        except FileNotFoundError:
-            pass
-
-    if not base or not key:
-        print("Error: GPTIMG2_BASE_URL and GPTIMG2_API_KEY are required for image generation.")
-        print("Set them as environment variables or in ~/项目/自己的应用/密钥存储/.env")
-        print("(a custom .env path can be given via GPTIMG2_ENV_FILE)")
-        sys.exit(1)
-
-    # Normalize: strip trailing slash, then strip a trailing /v1 if present.
-    # URLs are always built as f"{base}/v1/images/..." by callers.
-    base = base.rstrip("/")
-    if base.endswith("/v1"):
-        base = base[:-3]
-    return base, key
+    # Delegates to the plugin-shared imgapi (env vars first, then the .env
+    # key store; GPTIMG2_ENV_FILE overrides the .env location).
+    return imgapi.load_gptimg2()
 
 
 def ai_enhance_prompt(original_subject, design_type, user_preferences=""):

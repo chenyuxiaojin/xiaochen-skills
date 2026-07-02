@@ -2,7 +2,7 @@
 
 # xiaochen-skills
 
-> xiaochen-skills is a Claude Code plugin marketplace bundling 16 plugins (17 skills) for video production, content publishing, and knowledge management.
+> xiaochen-skills is a Claude Code plugin marketplace bundling 15 plugins (17 skills) for video production, content publishing, and knowledge management.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-plugin-blueviolet)](https://claude.ai/code)
@@ -18,11 +18,10 @@ Claude Code's built-in skills cover general tasks. This collection adds a vertic
 | [cyxj-subfix](./plugins/cyxj-subfix/) | Fix ASR subtitles from DaVinci Resolve: SRT cleanup → Gemini semantic correction → Claude Opus review | `/字幕修正`, `修正字幕`, `字幕错别字`, `SRT 修正` | `GEMINI_API_KEY`; Python: `google-genai`, `pysrt` |
 | [cyxj-wechat-pub](./plugins/cyxj-wechat-pub/) | Convert Obsidian Markdown to WeChat Official Account HTML with 3 built-in CSS themes (TATALAB blue / noir-gold / orange editorial) | `发布到公众号`, `公众号排版`, `微信发布`, `排版文章` | npm: `juice`; WeChat backend access |
 | [cyxj-obsidian-build](./plugins/cyxj-obsidian-build/) | Compile an Obsidian vault into a 3-tier knowledge architecture (Ingest / Query / Lint) inspired by Karpathy's LLM Wiki methodology | `整理 Obsidian`, `编译知识库`, `摄入笔记`, `查知识库`, `健康度检查` | Obsidian vault path configured; no API key |
-| [cyxj-poster](./plugins/cyxj-poster/) | Generate master-level poster / book cover / album art from one sentence — 33+ designer styles + 10 photography styles | `生成海报`, `封面设计`, `做个封面` | `GPTIMG2_BASE_URL`/`GPTIMG2_API_KEY` (gpt-image-2 生图) + `GEMINI_API_KEY` (文字扩写); Python: `requests`, `google-genai`, `pillow` |
+| [cyxj-image-studio](./plugins/cyxj-image-studio/) | Image studio (gpt-image-2), one plugin with two skills sharing credential loading: **cyxj-poster** (master-level poster / book cover / album art, 33+ designer + 10 photography styles) and **cyxj-video-cover** (real-person video thumbnails from your photo, 4 aspect ratios; can borrow poster's style library) | `生成海报`, `封面设计`, `/封面`, `生成封面`, `做个视频封面` | `GPTIMG2_BASE_URL`/`GPTIMG2_API_KEY`; poster additionally `GEMINI_API_KEY` + Python `requests`, `google-genai`, `pillow`; video-cover is stdlib-only (Pillow optional) |
 | [cyxj-youtube-topics](./plugins/cyxj-youtube-topics/) | Discover YouTube videos published in the last 48 hours on a topic, cluster by theme, score each with verdict (make / wait / follow / skip), write to Obsidian topic library | `选题`, `找选题`, `YouTube 最近有什么`, `有什么新视频` | `YOUTUBE_DATA_API_KEY`; Python: `requests`; Obsidian vault path |
 | [cyxj-yt-creator](./plugins/cyxj-yt-creator/) | Research how YouTubers cover a tool/topic via Apify: fetch transcripts, rank by date/views, write differentiation notes to Obsidian draft queue | `查博主怎么用`, `用 Apify 搜 YouTube`, `研究这个工具的 YouTube 视频` | `APIFY_API_TOKEN`; Python: `requests`; Obsidian vault path |
 | [cyxj-notebook-research](./plugins/cyxj-notebook-research/) | Submit videos from Obsidian topic library to Google Notebook LM in batch, pull transcripts and research reports back to Obsidian | `帮我研究一下 XXX 话题`, `研究一下这个选题`, `把选题提交给 Notebook LM` | Google account with Notebook LM access; Python: `notebooklm-py`, `python-frontmatter`; `CYXJ_VAULT_BASE` env var |
-| [cyxj-video-cover](./plugins/cyxj-video-cover/) | Generate real-person video thumbnails: your photo + gpt-image-2 repaints you into the scene; outputs 4 aspect ratios (16:9 / 2.35:1 / 3:4 / 4:3), 2 picks each | `/封面`, `/video-cover`, `生成封面`, `做个视频封面`, `做个 YouTube 封面` | OpenAI-compatible API key (proxy configured in the shared key store); Python stdlib only |
 | [cyxj-geo](./plugins/cyxj-geo/) | Generative Engine Optimization: keyword matrix → article brief → cross-platform publishing list → monitoring SOP so your name/product appears in AI answers | `做 GEO`, `让豆包/DeepSeek/Kimi 提到我`, `AI 时代 SEO`, `个人 IP 出现在 AI 回答里` | No API key required (instruction-only skill) |
 | [cyxj-roundtable](./plugins/cyxj-roundtable/) | Convene 6 independent Claude Opus subagents playing adversarial roles (Socrates / harsh peer / biased investor / historian / future-regretful-you / ally) to pressure-test a decision; save to Obsidian | `/圆桌`, `开个圆桌`, `开圆桌`, `/roundtable` | No extra API key (uses Claude Opus via Claude Code); Obsidian vault path |
 | [cyxj-ai-weekly-news](./plugins/cyxj-ai-weekly-news/) | End-to-end 9-step SOP for a weekly AI news video: news selection → narration → timecodes → 4K render in DaVinci Resolve; pauses at each human decision point | `/AI每周热点`, `/做下一期`, `/每周AI视频`, `做这周的 AI 视频` | DaVinci Resolve installed locally; Obsidian vault path; **video project path is hardcoded to author's machine — must be updated before use** |
@@ -60,7 +59,7 @@ No slash command prefix is required for most skills — the trigger phrases list
 | | xiaochen-skills | [anthropic/claude-code-skills](https://github.com/anthropics/claude-code) (official examples) | [awesome-claude-code](https://github.com/hesreallyhim/awesome-claude-code) community list |
 |---|---|---|---|
 | Focus | Video production + WeChat publishing + Obsidian knowledge management | General-purpose demos and patterns | Curated links to many community skills |
-| Skill count | 17 skills / 16 plugins | Varies (reference examples) | Many repos, not a single install |
+| Skill count | 17 skills / 15 plugins | Varies (reference examples) | Many repos, not a single install |
 | Install method | Single `/plugin marketplace add` command | Copy individual files | Each repo installs separately |
 | Multi-agent | Yes (roundtable spawns 6 Opus subagents) | Depends on example | Varies |
 | Script automation | Yes (Python + Bash, Photoshop, Gemini, Apify) | Minimal | Varies |
@@ -69,7 +68,7 @@ No slash command prefix is required for most skills — the trigger phrases list
 ## FAQ
 
 **How do I install?**
-Run `/plugin marketplace add chenyuxiaojin/xiaochen-skills` inside Claude Code. All 16 plugins (17 skills) are registered.
+Run `/plugin marketplace add chenyuxiaojin/xiaochen-skills` inside Claude Code. All 15 plugins (17 skills) are registered.
 
 **Can I install only one skill?**
 Yes. Each plugin is self-contained. You can install a single plugin by specifying the plugin name if the marketplace supports it, or copy the individual `plugins/cyxj-{name}/` directory and register it in your own marketplace.
@@ -84,10 +83,9 @@ Skills that work with minimal setup (only Obsidian vault path needed):
 
 Skills that require API keys:
 - `cyxj-subfix` → `GEMINI_API_KEY`
-- `cyxj-poster` → `GPTIMG2_BASE_URL`/`GPTIMG2_API_KEY` (gpt-image-2 生图) + `GEMINI_API_KEY` (文字扩写)
+- `cyxj-image-studio` → `GPTIMG2_BASE_URL`/`GPTIMG2_API_KEY` (both skills); poster additionally `GEMINI_API_KEY` (文字扩写)
 - `cyxj-youtube-topics` → `YOUTUBE_DATA_API_KEY`
 - `cyxj-yt-creator` → `APIFY_API_TOKEN`
-- `cyxj-video-cover` → OpenAI-compatible API key (proxy endpoint)
 - `cyxj-notebook-research` → Google account with Notebook LM access
 
 Skills with **hardcoded paths or dependencies tied to the author's machine** — you must update paths before use:

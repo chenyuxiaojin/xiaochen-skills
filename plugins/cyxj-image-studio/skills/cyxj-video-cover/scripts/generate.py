@@ -31,13 +31,16 @@ import urllib.error
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
+# 插件级共享模块（凭据加载 + base 规整），位于 <插件根>/lib/
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "lib"))
+import imgapi
+
 # ---- 默认配置 ----
 # 默认 gpt-image-2-vip:同站 gpt-image-2 默认档实测会无视 size/quality、强制 1254² 低质量(缩水);
 # vip 档质量到 medium、能正常出横/竖图、中文渲染准。但仍不认精确比例,需出图后裁切;比例要更稳走 Gemini。
 DEFAULT_MODEL = "gpt-image-2-vip"
 DEFAULT_FACE_DIR = Path.home() / "Pictures" / "封面形象"
 DEFAULT_OUTPUT_DIR = Path.home() / "Pictures" / "封面出图"  # 输出根:每次出图在它下面新建「日期-标签」子文件夹
-KEY_STORE = Path.home() / "项目" / "自己的应用" / "密钥存储" / ".env"
 
 # 比例 → 尺寸（2K 级别；边长均为 16 的倍数、长短比 ≤ 3:1，gpt-image-2 原生支持）
 RATIO_SIZE = {
@@ -49,50 +52,13 @@ RATIO_SIZE = {
 DEFAULT_RATIOS = "16:9,2.35:1,3:4,4:3"
 
 
-def _api_base(base: str) -> str:
-    """把读到的 base 规整成可直接拼端点的形式：补全到以 /v1 结尾。
-
-    GPTIMG2_BASE_URL = https://api.chatgpt-code.com（末尾【没有】/v1），需自己补；
-    但若用户万一填了带 /v1 的，则不重复加。返回值不含末尾斜杠，
-    端点直接 base + "/images/generations" / "/images/edits" 即可。
-    """
-    base = base.rstrip("/")
-    if not base.endswith("/v1"):
-        base = base + "/v1"
-    return base
-
-
 def load_credentials() -> tuple[str, str]:
-    """读 base_url 和 api_key：环境变量优先，否则从密钥存储 .env 解析。
+    """读 base_url 和 api_key（走插件共享的 imgapi，支持 GPTIMG2_ENV_FILE 覆盖）。
 
     返回的 base 已规整到以 /v1 结尾，调用方直接拼 /images/edits 等端点。
     """
-    base = os.environ.get("GPTIMG2_BASE_URL")
-    key = os.environ.get("GPTIMG2_API_KEY")
-    if base and key:
-        return _api_base(base), key
-
-    if KEY_STORE.exists():
-        for line in KEY_STORE.read_text(encoding="utf-8").splitlines():
-            line = line.strip()
-            if line.startswith("#") or "=" not in line:
-                continue
-            k, _, v = line.partition("=")
-            k, v = k.strip(), v.strip().strip('"').strip("'")
-            if k == "GPTIMG2_BASE_URL" and not base:
-                base = v
-            elif k == "GPTIMG2_API_KEY" and not key:
-                key = v
-
-    if not base or not key:
-        print(
-            "❌ 找不到中转站配置。需要 GPTIMG2_BASE_URL 和 GPTIMG2_API_KEY。\n"
-            f"   已查找：环境变量 + {KEY_STORE}\n"
-            "   请在密钥存储 .env 里确认这两行存在，或先 export。",
-            file=sys.stderr,
-        )
-        sys.exit(1)
-    return _api_base(base), key
+    base, key = imgapi.load_gptimg2()
+    return imgapi.api_base(base), key
 
 
 def resolve_faces(face_arg: str | None) -> list[Path]:

@@ -133,6 +133,13 @@ python3 ${CLAUDE_PLUGIN_ROOT}/skills/cyxj-video-cover/scripts/generate.py \
 - 背景纯浅色、**大量留白**，极简
 - 人脸仍走 edits 端点保真，只把身体抽象成火柴人；"渺小的人 + 巨大的标题" 反差感，辨识度高、可做系列招牌
 
+### 借用 poster 的风格库（同插件福利）
+
+想要设计感更强的封面（如 Saul Bass 极简几何、胶片摄影质感），可读同插件的
+`${CLAUDE_PLUGIN_ROOT}/skills/cyxj-poster/references/artist-styles.md`，把选中的风格描述拼进 `--scene`
+作为背景/构图指令。**注意保真红线不变**：真人长相仍由 edits 端点保证，风格只作用于背景与排版，
+不要让风格描述把人物卡通化/抽象化（`arch-stickman` 除外）。
+
 ## 技术说明
 
 - `generate.py` 默认模型 **`gpt-image-2-vip`** @ GPTIMG2 中转 `api.chatgpt-code.com`（OpenAI 兼容）；

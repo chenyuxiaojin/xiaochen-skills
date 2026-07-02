@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "小陈的 Claude Code 技能集：达芬奇字幕修正、公众号排版发布、Obsidian 知识库编译、海报设计、YouTube 选题发现、博主用法研究、Notebook LM 研究、真人视频封面、GEO 优化、圆桌决策压测、每周 AI 热点视频、逐字稿转文章、Astro 博客发布、PS 批量转 JPG、知识视频开头优化、知识视频内容诊断、抖音数据复盘诊断",
-    "version": "1.11.0"
+    "version": "1.12.0"
   },
   "plugins": [
     {
@@ -25,9 +25,9 @@
       "source": "./plugins/cyxj-obsidian-build"
     },
     {
-      "name": "cyxj-poster",
-      "description": "海报设计：33+ 大师风格 + 10 摄影风格，支持 IP 角色参考图、文字渲染、多比例输出",
-      "source": "./plugins/cyxj-poster"
+      "name": "cyxj-image-studio",
+      "description": "生图工坊（gpt-image-2 中转）：含 cyxj-poster（33+ 大师风格海报/书封/专辑封面）和 cyxj-video-cover（真人照重绘视频封面，4 比例输出）两个 skill，共享凭据加载，封面可借用海报风格库",
+      "source": "./plugins/cyxj-image-studio"
     },
     {
       "name": "cyxj-youtube-topics",
@@ -43,11 +43,6 @@
       "name": "cyxj-notebook-research",
       "description": "Notebook LM 批量研究：将选题库视频提交 Google Notebook LM，拉取转录稿和报告",
       "source": "./plugins/cyxj-notebook-research"
-    },
-    {
-      "name": "cyxj-video-cover",
-      "description": "视频封面生成（真人版）：你的照片 + gpt-image-2 重绘入场，一句话出 4 比例高点击封面（16:9/2.35:1/3:4/4:3）",
-      "source": "./plugins/cyxj-video-cover"
     },
     {
       "name": "cyxj-geo",

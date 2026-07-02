@@ -43,9 +43,11 @@ plugins/cyxj-foo/skills/cyxj-foo/SKILL.md   ← name: cyxj-foo
 .claude-plugin/marketplace.json             ← "name": "cyxj-foo", "source": "./plugins/cyxj-foo"
 ```
 
-**例外：多 skill 插件**（目前只有 `cyxj-video-doctor`，含 cyxj-content + cyxj-hook 两个 skill）。
+**例外：多 skill 插件**（目前有 `cyxj-video-doctor`（cyxj-content + cyxj-hook）和
+`cyxj-image-studio`（cyxj-poster + cyxj-video-cover）两个）。
 此时插件名不等于技能名，但**每个技能文件夹名仍必须 = 其 SKILL.md 的 `name`**；插件级共享资源放
-`plugins/{插件}/references/`，skill 里用 `${CLAUDE_PLUGIN_ROOT}/references/...` 引用。
+`plugins/{插件}/references/`（文档）或 `plugins/{插件}/lib/`（Python 模块，脚本里按
+`Path(__file__).resolve().parents[3] / "lib"` 定位），skill 里用 `${CLAUDE_PLUGIN_ROOT}/...` 引用。
 只有需要共享文件的强关联 skill 才合并进同一插件，不要为省注册条目乱合。
 
 ## 改 Skill 后的同步检查清单
@@ -90,11 +92,10 @@ python3 -c "import json,os; reg={p['name'] for p in json.load(open('.claude-plug
 | cyxj-subfix | Python + Gemini API + Opus 审查 | google-genai, pysrt | ✓ |
 | cyxj-wechat-pub | CSS + HTML 模板 + juice（npm），内置 3 套主题 | juice (npm) | ✓ |
 | cyxj-obsidian-build | 纯 SKILL.md 指令 | Obsidian 库访问 | ✓ |
-| cyxj-poster | Python + gpt-image-2 生图（GPTIMG2 中转）+ Gemini 文字扩写 | requests, google-genai, pillow | ✓ |
+| cyxj-image-studio | 一插件双 skill：cyxj-poster（Python + gpt-image-2 + Gemini 扩写）+ cyxj-video-cover（标准库 urllib 真人照重绘），共享 lib/imgapi.py 凭据加载 | poster: requests, google-genai, pillow；video-cover: 无第三方（Pillow 可选） | ✓ |
 | cyxj-youtube-topics | Python + YouTube Data API + Apify（字幕主路径） | requests、APIFY_API_TOKEN、Supadata（可选兜底） | ✓ |
 | cyxj-yt-creator | Python + Apify + Obsidian | requests | ✓ |
 | cyxj-notebook-research | Python + Notebook LM | notebooklm-py, python-frontmatter | ✓ |
-| cyxj-video-cover | Python（标准库）+ gpt-image-2（<your-endpoint> 中转）真人照重绘 | 无第三方（urllib） | ✓ |
 | cyxj-geo | 纯 SKILL.md 指令 | 无 | ✓ |
 | cyxj-roundtable | 纯 SKILL.md 指令（拉起多个 Opus subagent） | 无 | ✓ |
 | cyxj-ai-weekly-news | 纯 SKILL.md 指令（9 步交互式 SOP + references 模板） | 达芬奇 / Obsidian 工作流 | ✓ |
