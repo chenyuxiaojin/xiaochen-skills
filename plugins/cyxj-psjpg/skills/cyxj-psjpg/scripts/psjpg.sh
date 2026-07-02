@@ -23,7 +23,7 @@ if [ -z "$SRC" ]; then
     echo "用法: psjpg.sh <源目录> [输出目录] [质量 1-12]"
     echo ""
     echo "示例:"
-    echo "  psjpg.sh /Users/chenhuajin/Pictures/AI生成"
+    echo "  psjpg.sh ~/Pictures/AI生成"
     echo "  psjpg.sh ~/Pictures/foo ~/Desktop/foo_out 11"
     exit 1
 fi
@@ -78,7 +78,8 @@ printf '%s\n%s\n%s\n' "$SRC" "$OUT" "$QUALITY" > /tmp/cyxj_psjpg_cfg.txt
 echo "===== 1/2 Photoshop 导出 JPG ====="
 echo "Photoshop 启动中（会占用 PS 界面，每张约 2-4 秒）..."
 START=$(date +%s)
-osascript -e "tell application \"$PS_APP\" to do javascript file \"$JSX\"" >/dev/null
+osascript -e "tell application \"$PS_APP\" to do javascript file \"$JSX\"" >/dev/null \
+    || { echo "Photoshop 执行失败：检查 系统设置→隐私与安全性→自动化 权限，或 PS 是否有弹窗阻塞" >&2; exit 1; }
 
 # ExtendScript 在 Mac 上写日志用的是老式 \r 换行，整个日志会挤成一行，
 # 让下面所有 grep '^\[OK' 锚定行首匹配不到。先把 \r 统一成 \n 再处理。

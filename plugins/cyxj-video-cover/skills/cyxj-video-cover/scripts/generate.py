@@ -193,6 +193,42 @@ def build_prompt(title: str, scene: str | None, style: str = "default") -> str:
     return STYLE_BUILDERS.get(style, _prompt_default)(title, scene)
 
 
+_PIL_MISSING_NOTED = False
+
+
+def _center_crop_to_size(out_path: Path, size: str) -> None:
+    """可选中心裁切：模型不认精确比例，装了 Pillow 就把落地图裁到 RATIO_SIZE 目标尺寸。
+
+    未装 Pillow 则保持原图并提示一句——本脚本卖点是仅标准库，Pillow 不是硬依赖。
+    """
+    global _PIL_MISSING_NOTED
+    if size == "auto" or "x" not in size:
+        return
+    try:
+        from PIL import Image
+    except ImportError:
+        if not _PIL_MISSING_NOTED:
+            _PIL_MISSING_NOTED = True
+            print("   ℹ 未装 Pillow：跳过中心裁切，以实际出图尺寸为准"
+                  "（pip install pillow 可自动裁到目标尺寸）")
+        return
+    tw, th = (int(x) for x in size.split("x"))
+    try:
+        with Image.open(out_path) as im:
+            w, h = im.size
+            if (w, h) == (tw, th):
+                return
+            # 先按"盖住目标"的最小比例缩放，再中心裁切到目标尺寸
+            scale = max(tw / w, th / h)
+            nw, nh = max(tw, round(w * scale)), max(th, round(h * scale))
+            im = im.resize((nw, nh), Image.LANCZOS)
+            left, top = (nw - tw) // 2, (nh - th) // 2
+            im.crop((left, top, left + tw, top + th)).save(out_path)
+    except Exception as e:
+        print(f"⚠ {out_path.name}: 中心裁切失败，保持原图 ({type(e).__name__} {e})",
+              file=sys.stderr)
+
+
 def _multipart(fields: dict[str, str], image_paths: list[Path]) -> tuple[bytes, str]:
     """组装 multipart/form-data 请求体。"""
     boundary = "----cyxjvideocover7f3a"
@@ -257,15 +293,17 @@ def generate_one(
             with urllib.request.urlopen(dl_req, timeout=120) as ir:
                 output_dir.mkdir(parents=True, exist_ok=True)
                 out_path.write_bytes(ir.read())
+            _center_crop_to_size(out_path, size)
             return out_path
         if item.get("b64_json"):
             output_dir.mkdir(parents=True, exist_ok=True)
             out_path.write_bytes(base64.b64decode(item["b64_json"]))
+            _center_crop_to_size(out_path, size)
             return out_path
         print(f"⚠ {ratio} #{idx}: 返回里没有图片", file=sys.stderr)
         return None
     except urllib.error.HTTPError as e:
-        print(f"❌ {ratio} #{idx}: HTTP {e.code} {e.read().decode()[:200]}", file=sys.stderr)
+        print(f"❌ {ratio} #{idx}: HTTP {e.code} {e.read().decode('utf-8', 'replace')[:200]}", file=sys.stderr)
         return None
     except Exception as e:
         print(f"❌ {ratio} #{idx}: {type(e).__name__} {str(e)[:200]}", file=sys.stderr)
@@ -320,7 +358,12 @@ def main():
         }
         for fut in as_completed(futs):
             r, i = futs[fut]
-            p = fut.result()
+            try:
+                p = fut.result()
+            except Exception as e:  # 单任务异常不掀翻整个汇总
+                print(f"❌ {r} #{i}: 任务异常 {type(e).__name__} {str(e)[:200]}",
+                      file=sys.stderr)
+                continue
             if p:
                 results.append(p)
                 print(f"  ✅ {r} #{i} → {p.name}")

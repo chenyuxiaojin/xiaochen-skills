@@ -279,8 +279,18 @@ def merge_short(subs, gap_limit=0.5, soft_limit=18):
 # ── Stage 5: 强制拆分 ────────────────────────────────────────────────────
 
 def find_split_point(text: str) -> int:
-    """找最佳拆分点。优先级：？！ > 空格 > 中点强拆。"""
-    mid = len(text) // 2
+    """找最佳拆分点。优先级：？！ > 空格 > 中点强拆。
+
+    中点按显示宽度（count_display_chars 同款权重：中文=1, ASCII=0.5）累计计算，
+    与超限判断口径一致，避免中英文混排时按字符数取中导致两半宽度悬殊。"""
+    total_width = sum(1.0 if ord(ch) > 0x7F else 0.5 for ch in text)
+    mid = len(text) // 2  # 兜底
+    acc = 0.0
+    for i, ch in enumerate(text):
+        acc += 1.0 if ord(ch) > 0x7F else 0.5
+        if acc >= total_width / 2:
+            mid = i + 1
+            break
     best = -1
 
     # 优先级 1：？！
@@ -363,7 +373,7 @@ def export_intelliscript_txt(srt_path, output_path=None):
 
     去掉时间码和编号，所有字幕文字用空格连接为一段连续文本。
     """
-    subs = pysrt.open(srt_path, encoding='utf-8')
+    subs = pysrt.open(srt_path, encoding='utf-8-sig')
     texts = [sub.text.strip() for sub in subs if sub.text.strip()]
     script = ' '.join(texts)
 
@@ -386,7 +396,7 @@ def export_transcript_md(srt_path, output_path=None, title=None,
     或当前段累计字数 >= target_chars 时另起一段。比一整段纯文本更可读，
     且对说话连贯、停顿稀少的口播也能切出均匀段落。供 Phase 3 写回 Obsidian。
     """
-    subs = pysrt.open(srt_path, encoding='utf-8')
+    subs = pysrt.open(srt_path, encoding='utf-8-sig')
     paras = []
     cur = []
     prev_end = None
@@ -440,7 +450,7 @@ def build_operation_map(original_count, merge_ops, split_ops, dedup_removed):
 def process(input_path, output_path=None, soft_limit=18, hard_limit=25,
             gap=0.5, no_regroup=False, show_stats=False):
     """主处理流程。"""
-    subs = pysrt.open(input_path, encoding='utf-8')
+    subs = pysrt.open(input_path, encoding='utf-8-sig')
     input_count = len(subs)
     stats = {'input_count': input_count}
 

@@ -1,6 +1,6 @@
 ---
 name: cyxj-poster
-description: 一句话生成大师级海报/封面设计。33+设计师风格+10种摄影风格，支持多平台比例、AI提示词优化、风格对比、图生图。
+description: 一句话生成大师级海报/封面设计。33+设计师风格+10种摄影风格，支持多平台比例、AI提示词优化、风格对比、图生图。触发：做海报、海报设计、书籍封面、专辑封面、活动海报。视频/YouTube 封面请找 cyxj-video-cover。
 ---
 
 # Poster Design Generator
@@ -26,6 +26,9 @@ python3 ${CLAUDE_PLUGIN_ROOT}/scripts/generate_mondo_enhanced.py "subject" "type
 | `subject` | 设计主题 | `"Blade Runner"`, `"Jazz Festival"` |
 | `type` | 设计类型 | `movie`, `book`, `album`, `event` |
 
+> 两个位置参数实际都可选：`type` 省略时默认 `movie`；`subject` 省略则只打印帮助退出（`--list-styles` 除外）。
+> `--compare` 模式只吃 subject/type/比例/配色，会忽略 `--style`/`--input`/`--ip-ref`/`--output`。
+
 ### 可选参数
 
 | 参数 | 说明 | 默认值 |
@@ -37,7 +40,7 @@ python3 ${CLAUDE_PLUGIN_ROOT}/scripts/generate_mondo_enhanced.py "subject" "type
 | `--ip-ref` | IP 角色参考图目录 | 无 |
 | `--title` | 直接渲染在海报上的标题文字 | 无 |
 | `--colors` | 配色偏好 | AI 建议 |
-| `--aspect-ratio` | 画幅比例 | `9:16` |
+| `--aspect-ratio` | 画幅比例 | `9:16`（`album` 未显式指定时默认 `1:1`） |
 | `--output` | 自定义输出路径 | `outputs/` |
 | `--no-generate` | 只输出 prompt，不生成图片 | 关闭 |
 | `--list-styles` | 列出所有可用风格 | — |

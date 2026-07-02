@@ -27,14 +27,28 @@ lc() { tr 'A-Z' 'a-z'; }
 
 clean_one() {
   local f="$1"
-  local CD MD IID2 ODID IID1 SA
+  local CD MD IID2 ODID IID1 SA META
 
-  CD=$(exiftool -s3 -XMP-xmp:CreateDate "$f" 2>/dev/null || true)
-  MD=$(exiftool -s3 -XMP-xmp:ModifyDate "$f" 2>/dev/null || true)
-  IID2=$(exiftool -s3 -XMP-xmpMM:InstanceID "$f" 2>/dev/null || true)
-  ODID=$(exiftool -s3 -XMP-xmpMM:OriginalDocumentID "$f" 2>/dev/null || true)
+  # 一次 exiftool 读全 5 个字段（原来每字段起一个进程太慢）。
+  # -f 让缺失字段也输出占位行 "-"，保证 5 行顺序固定、可按行对齐解析；解析后把 "-" 还原为空。
+  META=$(exiftool -s3 -f \
+    -XMP-xmp:CreateDate \
+    -XMP-xmp:ModifyDate \
+    -XMP-xmpMM:InstanceID \
+    -XMP-xmpMM:OriginalDocumentID \
+    -IFD0:Software \
+    "$f" 2>/dev/null || true)
+  CD=$(printf '%s\n' "$META" | sed -n '1p')
+  MD=$(printf '%s\n' "$META" | sed -n '2p')
+  IID2=$(printf '%s\n' "$META" | sed -n '3p')
+  ODID=$(printf '%s\n' "$META" | sed -n '4p')
   # 真实 PS 版本（如 "Adobe Photoshop 27.7 (Macintosh)"），动态读取避免写死
-  SA=$(exiftool -s3 -IFD0:Software "$f" 2>/dev/null || true)
+  SA=$(printf '%s\n' "$META" | sed -n '5p')
+  [ "$CD" = "-" ] && CD=""
+  [ "$MD" = "-" ] && MD=""
+  [ "$IID2" = "-" ] && IID2=""
+  [ "$ODID" = "-" ] && ODID=""
+  [ "$SA" = "-" ] && SA=""
   [ -z "$SA" ] && SA="$SA_FALLBACK"
 
   # 兜底：字段缺失时生成/回退，保证写入合法
@@ -68,7 +82,7 @@ for arg in "$@"; do
   if [ -d "$arg" ]; then
     while IFS= read -r -d '' j; do
       clean_one "$j"; count=$((count+1))
-    done < <(find "$arg" -maxdepth 1 -type f -iname '*.jpg' -print0)
+    done < <(find "$arg" -maxdepth 1 -type f \( -iname '*.jpg' -o -iname '*.jpeg' \) -print0)
   elif [ -f "$arg" ]; then
     clean_one "$arg"; count=$((count+1))
   else

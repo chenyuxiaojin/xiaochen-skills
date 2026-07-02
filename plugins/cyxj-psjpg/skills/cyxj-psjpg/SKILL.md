@@ -60,6 +60,7 @@ exiftool -s -XMP-xmpMM:HistoryAction -XMP-xmpMM:HistoryParameters -IFD0:Software
 - **exiftool**（`brew install exiftool`），清理痕迹用；缺失时脚本会提前报错。
 - 去痕迹的 `softwareAgent` 从导出 JPG 的 `IFD0:Software` **动态读取真实版本**，不写死版本号。
 - 跑的过程中 PS 被占用，不能同时手动用 PS；每张约 2-4 秒。
+- **不可并发跑两批**：参数配置与导出日志是固定 `/tmp` 路径（`/tmp/cyxj_psjpg_cfg.txt`、`/tmp/cyxj_psjpg_export.log`），同时跑会互相覆盖。
 - 输出到单独目录，源目录里若有同名 `foo.png` 和 `foo.jpeg`，导出的 `foo.jpg` 会互相覆盖（脚本会提示差额）。
 - `OriginalDocumentID`、`SlicesGroupName` 是真实 PS 文件本就有的字段，不暴露 PNG 来源，保留更自然，脚本不动它们。
 

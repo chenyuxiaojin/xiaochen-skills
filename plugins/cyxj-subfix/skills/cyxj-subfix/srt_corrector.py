@@ -107,8 +107,8 @@ def build_batch_prompt(subs_batch: list[tuple[int, str]]) -> str:
     return "请检查以下字幕并修正错误：\n\n" + "\n".join(lines)
 
 
-def parse_gemini_response(response_text: str) -> list[dict]:
-    """解析 Gemini 返回的 JSON 修改清单。"""
+def parse_gemini_response(response_text: str) -> list[dict] | None:
+    """解析 Gemini 返回的 JSON 修改清单。解析失败返回 None（区别于"无需修正"的 []）。"""
     text = response_text.strip()
 
     # 去掉可能的 markdown 代码块标记
@@ -124,7 +124,7 @@ def parse_gemini_response(response_text: str) -> list[dict]:
         result = json.loads(text)
         if isinstance(result, list):
             return result
-        return []
+        return None
     except json.JSONDecodeError:
         # 尝试提取 JSON 数组
         match = re.search(r'\[.*\]', text, re.DOTALL)
@@ -134,12 +134,12 @@ def parse_gemini_response(response_text: str) -> list[dict]:
             except json.JSONDecodeError:
                 pass
         print(f"  ⚠ 无法解析 Gemini 响应，跳过此批", file=sys.stderr)
-        return []
+        return None
 
 
 def call_gemini_batch(client, model: str, system_prompt: str,
-                      batch: list[tuple[int, str]]) -> list[dict]:
-    """调用 Gemini API 处理一批字幕。"""
+                      batch: list[tuple[int, str]]) -> list[dict] | None:
+    """调用 Gemini API 处理一批字幕。失败（重试耗尽/解析失败）返回 None。"""
     user_prompt = build_batch_prompt(batch)
 
     for attempt in range(MAX_RETRIES):
@@ -165,7 +165,7 @@ def call_gemini_batch(client, model: str, system_prompt: str,
                 time.sleep(RETRY_DELAY * (attempt + 1))
             else:
                 print(f"  ✗ API 失败，跳过此批: {e}", file=sys.stderr)
-                return []
+                return None
 
 
 # ── 主处理流程 ────────────────────────────────────────────────────────────
@@ -183,7 +183,7 @@ def process_srt(input_path: str, topic: str, model: str = DEFAULT_MODEL,
     client = genai.Client(api_key=api_key)
 
     # 加载文件和词典
-    subs = pysrt.open(input_path, encoding="utf-8")
+    subs = pysrt.open(input_path, encoding="utf-8-sig")
     error_map = load_dictionary()
     dict_text = format_dictionary_for_prompt(error_map)
     system_prompt = build_system_prompt(topic, dict_text)
@@ -203,6 +203,7 @@ def process_srt(input_path: str, topic: str, model: str = DEFAULT_MODEL,
     # 逐批处理
     all_changes = []
     total_fixed = 0
+    failed_batches = 0
 
     for batch_idx, batch in enumerate(batches):
         start_idx = batch[0][0]
@@ -212,7 +213,10 @@ def process_srt(input_path: str, topic: str, model: str = DEFAULT_MODEL,
 
         changes = call_gemini_batch(client, model, system_prompt, batch)
 
-        if changes:
+        if changes is None:
+            failed_batches += 1
+            print("✗ 本批处理失败，字幕保持原样")
+        elif changes:
             all_changes.extend(changes)
             total_fixed += len(changes)
             print(f"✓ {len(changes)} 处修正")
@@ -225,6 +229,9 @@ def process_srt(input_path: str, topic: str, model: str = DEFAULT_MODEL,
 
     print()
     print(f"📊 总计: {total_fixed} 处修正 / {len(subs)} 条字幕")
+    if failed_batches:
+        print(f"⚠ {failed_batches}/{len(batches)} 批未处理"
+              f"（JSON 解析失败或重试耗尽），对应字幕保持原样", file=sys.stderr)
 
     # 应用修正到 SRT
     changes_map = {}
@@ -235,7 +242,19 @@ def process_srt(input_path: str, topic: str, model: str = DEFAULT_MODEL,
 
     for sub in subs:
         if sub.index in changes_map:
-            sub.text = changes_map[sub.index]["fixed"]
+            change = changes_map[sub.index]
+            fixed = change.get("fixed")
+            if not isinstance(fixed, str):
+                print(f"  ⚠ #{sub.index} 缺少有效的 fixed 字段，跳过", file=sys.stderr)
+                continue
+            original = change.get("original")
+            # 宽松的包含性校验：original 与当前字幕文本对不上说明 index 错位，跳过防误伤
+            if isinstance(original, str) and original.strip() \
+                    and original.strip() not in sub.text:
+                print(f"  ⚠ #{sub.index} original 与当前字幕文本不符，跳过: {original}",
+                      file=sys.stderr)
+                continue
+            sub.text = fixed
 
     # 输出文件
     p = Path(input_path)
@@ -249,6 +268,7 @@ def process_srt(input_path: str, topic: str, model: str = DEFAULT_MODEL,
         "topic": topic,
         "total_subtitles": len(subs),
         "total_changes": len(all_changes),
+        "failed_batches": failed_batches,
         "changes": all_changes,
     }
     with open(output_json, "w", encoding="utf-8") as f:

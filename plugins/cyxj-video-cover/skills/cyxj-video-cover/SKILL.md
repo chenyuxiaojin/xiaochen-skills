@@ -23,7 +23,7 @@ description: |
    - 也可用同名环境变量覆盖
 
 2. **真人照片**——默认读 `~/Pictures/封面形象/`（放几张本人正脸清晰的照片即可），
-   也可每次用 `--face` 临时指定某张或某目录。
+   也可每次用 `--face` 临时指定某张或某目录。注意：指定目录时脚本按文件名排序**只取第一张照片**做参考。
 
 3. **Python 依赖**：仅标准库（urllib），无需 pip 安装。生成结果用系统自带能力查看即可。
 
@@ -33,28 +33,10 @@ description: |
 
 **本 skill 不把任何风格固化成死预设**。每次要封面：先用 API 现场探测出几张样片，**验证中文不错字、标题没被裁切**；
 如果 API 出的不达标（中文错字 / 标题被裁 / 质量不够），**别在 API 上死磕——直接把干净的提示词交给小陈，
-他去网页（ChatGPT / Gemini）自己生成，更快更稳**（见文末「网页生成提示词模板」）。
+他去网页（ChatGPT / Gemini）自己生成，更快更稳**（模板见 `${CLAUDE_PLUGIN_ROOT}/skills/cyxj-video-cover/references/web-prompts.md`）。
 
-**引擎对照（全部 2026-06-26 实测，按需选，禁止凭记忆）：**
-
-| 引擎 / 模型 | key | 比例 | 质量 | 中文标题 | 喂脸 |
-|---|---|---|---|---|---|
-| **`gemini-3-pro-image-preview`** | `GEMINI_API_KEY`（一手） | ✅认(16:9→1.79) | 高 | ✅基本准 | ✅ inline_data |
-| `gpt-image-2-vip` | `GPTIMG2_API_KEY` | ⚠️只16:9稳 | medium | ✅准 | ✅ edits |
-| `gpt-image-2`（默认档） | `GPTIMG2_API_KEY` | ❌强制1254² | ❌low | ✅准 | ✅ |
-| `gemini-2.5-flash-image` | `GEMINI_API_KEY` | ✅ | 高 | ❌乱码 | ✅ |
-| `imagen-4.0-*` | `GEMINI_API_KEY` | ✅原生档 | 高 | ⚠️CJK未测 | ❌ |
-
-- **多比例(16:9+4:3+3:4)首选 `gemini-3-pro-image-preview`**：三比例构图都干净、脸还原好。
-- **只要 16:9、想要粗描边正宗涂鸦质感**：`gpt-image-2-vip` 也行；但它 **4:3/3:4 会把标题裁切**，别用它出非 16:9。
-- ❌ 避开：`gpt-image-2` 默认档（无视 size/quality 缩水）、`gemini-2.5-flash-image`（中文乱码）。
-- **两个引擎中文都不是 100%**（gemini 偶把「五个」出成「三个」）：每张多出 2–3 版挑文字对的，或文字单独叠层。
-- `generate.py` 走 GPTIMG2(`gpt-image-2-vip`)；要 Gemini 引擎目前现写探测脚本调（速记见下）。
-
-**Gemini 调用速记**（探测用）：
-`POST .../v1beta/models/gemini-3-pro-image-preview:generateContent?key=$GEMINI_API_KEY`，body =
-`{"contents":[{"parts":[{"text":"<prompt>"},{"inline_data":{"mime_type":"image/png","data":"<脸b64>"}}]}],"generationConfig":{"responseModalities":["IMAGE"],"imageConfig":{"aspectRatio":"16:9"}}}`；
-出图在 `candidates[0].content.parts[].inlineData.data`(b64)；不喂脸就去掉 inline_data 那个 part；出图后用 Pillow 中心裁到精确比例。
+**脚本主路径 = `gpt-image-2-vip`**（`generate.py` 唯一支撑的引擎）；`gemini-3-pro-image-preview` 是**实验性手动路径**（无脚本支撑，按速记现场调用）。
+引擎实测对照表、选型建议与 Gemini 调用速记见：`${CLAUDE_PLUGIN_ROOT}/skills/cyxj-video-cover/references/engines.md`。
 
 ### Step 1：确认标题
 
@@ -70,7 +52,7 @@ description: |
 ### Step 3：调用脚本生成（先探 API，下方「引擎与工作流」是这一步的总纲）
 
 ```bash
-python3 $SKILL_DIR/scripts/generate.py \
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/cyxj-video-cover/scripts/generate.py \
   --title "封面标题" \
   --label "测试"        # 本批标签：测试 / 某视频名
 ```
@@ -119,14 +101,16 @@ python3 $SKILL_DIR/scripts/generate.py \
 
 ## 输出规格
 
-| 用途 | 比例 | 实际尺寸 | 文件名 |
+| 用途 | 比例 | 目标尺寸 | 文件名 |
 |------|------|---------|--------|
 | YouTube | 16:9 | 2560×1440 | cover_16x9_N.png |
 | 公众号 | 2.35:1 | 2560×1088 | cover_2_35x1_N.png |
 | 竖版 | 3:4 | 1536×2048 | cover_3x4_N.png |
 | 横版 | 4:3 | 2048×1536 | cover_4x3_N.png |
 
-> ℹ️ **尺寸说明**：GPTIMG2（`api.chatgpt-code.com`）的 gpt-image-2 出 **2K 级别**大图，
+> ℹ️ **尺寸说明**：表内是**目标尺寸**——如 Step 0 所说，模型不认精确比例，实际出图可能有偏差。
+> 装了 Pillow 时脚本会把落地图**自动中心裁切**到表内尺寸；未装 Pillow 则保持原图、以实际出图为准（脚本会提示一句）。
+> GPTIMG2（`api.chatgpt-code.com`）的 gpt-image-2 出 **2K 级别**大图，
 > 边长均对齐 16 的倍数、长短比 ≤ 3:1。图片走 `response_format=url` 返回，脚本拿到 url 后下载落地为 PNG。
 > 想改尺寸/比例改脚本里的 `RATIO_SIZE` 即可。
 
@@ -152,7 +136,7 @@ python3 $SKILL_DIR/scripts/generate.py \
 ## 技术说明
 
 - `generate.py` 默认模型 **`gpt-image-2-vip`** @ GPTIMG2 中转 `api.chatgpt-code.com`（OpenAI 兼容）；
-  引擎选型与各引擎实测能力见 **Step 0 引擎对照表**（多比例优先 Gemini 3）
+  引擎选型与各引擎实测能力见 `references/engines.md` 引擎对照表（Gemini 3 为实验性手动路径）
 - 走 `{base}/v1/images/edits` 端点：传真人照片做参考图重绘，保人脸一致
   （`GPTIMG2_BASE_URL` 末尾无 `/v1`，脚本读到 base 后自动补全到 `/v1`）
 - `response_format=url` 返回 url，脚本下载后落地为 PNG（与 b64 同尺寸，实测）
@@ -162,19 +146,11 @@ python3 $SKILL_DIR/scripts/generate.py \
 ## 依赖
 
 - Python 3.11+（仅标准库）
+- **可选**：Pillow（装了会把出图自动中心裁切到目标尺寸，不装也能跑）
 - 真人照片目录（默认 `~/Pictures/封面形象/`）
 - 密钥存储 `.env` 里的 `GPTIMG2_BASE_URL` / `GPTIMG2_API_KEY`
 - **可选**：`cyxj-psjpg` skill（Step 5 把选定封面转上传用 JPG；它本身需 Photoshop + exiftool）
 
-## 网页生成提示词模板（API 不达标时，填好标题直接交给小陈去网页生成）
+## 网页生成提示词模板（API 不达标时用）
 
-把 `不被AI取代的 五个能力` 换成本次标题、`16:9` 换成需要的比例，整段发给小陈。
-**竖版(3:4)**追加一句：「竖版构图，标题分两行排在上方，人物在下方」。
-
-**火柴人风格**（小陈在网页上传自己的正脸照后用）：
-> 用我这张照片的真实人脸（保留眼镜、清晰可认、写实，别卡通化），身体画成简单手绘黑色火柴人（细线条、正面站立、手臂微张），脚下加柔和灰色投影。纯奶白色背景，大量留白。顶部放大号加粗中文标题，排成活泼略带弧度的版式，文字必须正好是：不被AI取代的 五个能力。笔画厚重、高对比，其中「AI」和「五个能力」用亮橙色，其余黑色。高点击率 YouTube 封面风格，16:9 横版。
-
-**无脸涂鸦风格**（不用上传照片）：
-> 画一张手绘卡通涂鸦风格的 YouTube 封面：一个短黑发的简笔卡通小人竖起大拇指，旁边一只橙色方块身体的小螃蟹（两个小黑点眼睛、两只钳子）。粗黑描边 + 平涂色块，纯白底，无阴影无渐变，像 MS Paint 随手画的童趣涂鸦。大号中文标题正好是：不被AI取代的 五个能力，其中「AI」用亮橙色，中文笔画要准确、大而清楚，16:9 横版。
-
-> 叮嘱小陈：网页也偶尔出错字，**一次出 2–3 张挑中文对的那张**。
+火柴人 / 无脸涂鸦两大段模板与叮嘱见：`${CLAUDE_PLUGIN_ROOT}/skills/cyxj-video-cover/references/web-prompts.md`。

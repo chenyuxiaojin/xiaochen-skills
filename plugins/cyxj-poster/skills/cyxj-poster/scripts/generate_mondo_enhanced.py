@@ -44,9 +44,17 @@ PHOTO_STYLES = (
     "desert-sunset", "classical-garden"
 )
 
+# "auto" style resolves to a sensible per-type default (never injected verbatim into prompts)
+AUTO_STYLE_BY_TYPE = {
+    "movie": "saul-bass",
+    "book": "chip-kidd",
+    "album": "reid-miles",
+    "event": "milton-glaser",
+}
+
 # 33+ Design Styles: Poster Artists + Book Cover + Album Cover + Social Media + Photography
 ARTIST_STYLES = {
-    "auto": "let AI choose best style",
+    "auto": "auto — resolved per design type (movie→saul-bass, book→chip-kidd, album→reid-miles, event→milton-glaser)",
     # === Poster Artists (20) ===
     "saul-bass": "Saul Bass minimalist geometric abstraction, 2-3 colors, visual metaphor",
     "olly-moss": "Olly Moss ultra-minimal negative space, clever hidden imagery, 2 colors",
@@ -127,7 +135,9 @@ def _load_gptimg2():
     key = os.environ.get("GPTIMG2_API_KEY")
 
     if not base or not key:
-        env_path = os.path.expanduser("~/项目/自己的应用/密钥存储/.env")
+        # GPTIMG2_ENV_FILE overrides the default .env location (default unchanged)
+        env_path = os.path.expanduser(
+            os.environ.get("GPTIMG2_ENV_FILE") or "~/项目/自己的应用/密钥存储/.env")
         try:
             with open(env_path, encoding="utf-8") as f:
                 for ln in f:
@@ -142,6 +152,7 @@ def _load_gptimg2():
     if not base or not key:
         print("Error: GPTIMG2_BASE_URL and GPTIMG2_API_KEY are required for image generation.")
         print("Set them as environment variables or in ~/项目/自己的应用/密钥存储/.env")
+        print("(a custom .env path can be given via GPTIMG2_ENV_FILE)")
         sys.exit(1)
 
     # Normalize: strip trailing slash, then strip a trailing /v1 if present.
@@ -238,6 +249,13 @@ def generate_prompt(subject, design_type, style="auto", ai_enhance=False, color_
     """
     format_desc = get_format_description(aspect_ratio)
 
+    # Resolve "auto" to a per-type default style — never inject the meta
+    # instruction ("let AI choose...") verbatim into the image prompt
+    if style == "auto":
+        style = AUTO_STYLE_BY_TYPE.get(design_type, "minimal")
+
+    prompt = None
+
     # Photography style path — photorealistic base
     if style in PHOTO_STYLES:
         style_desc = ARTIST_STYLES.get(style, "")
@@ -251,7 +269,7 @@ def generate_prompt(subject, design_type, style="auto", ai_enhance=False, color_
         elif design_type == "book":
             prompt = f"{subject} book cover photograph, {base}, {style_desc}, {format_desc}"
         elif design_type == "album":
-            prompt = f"{subject} album cover photograph, {base}, {style_desc}, square 1:1 format"
+            prompt = f"{subject} album cover photograph, {base}, {style_desc}, {format_desc}"
         elif design_type == "event":
             prompt = f"{subject} event photograph, {base}, {style_desc}, {format_desc}"
         else:
@@ -259,36 +277,38 @@ def generate_prompt(subject, design_type, style="auto", ai_enhance=False, color_
 
         if color_hint:
             prompt += f", color palette: {color_hint}"
-        return prompt
 
     # AI Enhancement path (respects user intent)
-    if ai_enhance:
+    elif ai_enhance:
         user_prefs = f"Style: {style}, Colors: {color_hint}" if color_hint else f"Style: {style}"
         enhanced = ai_enhance_prompt(subject, design_type, user_prefs)
         if enhanced:
-            return enhanced + f", Mondo poster style, screen print aesthetic, {format_desc}"
+            prompt = enhanced + f", Mondo poster style, screen print aesthetic, {format_desc}"
 
-    # Standard Mondo poster template path
-    base_elements = "Mondo poster style, screen print aesthetic, limited edition poster art"
+    if prompt is None:
+        # Standard Mondo poster template path
+        base_elements = "Mondo poster style, screen print aesthetic, limited edition poster art"
 
-    # Get style modifier
-    style_desc = ARTIST_STYLES.get(style, ARTIST_STYLES['minimal'])
+        # Get style modifier
+        style_desc = ARTIST_STYLES.get(style, ARTIST_STYLES['minimal'])
 
-    # Build prompt based on type
-    if design_type == "movie":
-        prompt = f"{subject} in {base_elements}, {style_desc}, {format_desc}, clean focused composition, vintage poster aesthetic"
-    elif design_type == "book":
-        prompt = f"{subject} book cover in {base_elements}, {style_desc}, {format_desc}, clean typography, literary design"
-    elif design_type == "album":
-        prompt = f"{subject} album cover in {base_elements}, {style_desc}, square 1:1 format, vintage vinyl aesthetic"
-    elif design_type == "event":
-        prompt = f"{subject} event poster in {base_elements}, {style_desc}, {format_desc}, bold memorable design"
-    else:
-        prompt = f"{subject} in {base_elements}, {style_desc}, vintage print aesthetic"
+        # Build prompt based on type
+        if design_type == "movie":
+            prompt = f"{subject} in {base_elements}, {style_desc}, {format_desc}, clean focused composition, vintage poster aesthetic"
+        elif design_type == "book":
+            prompt = f"{subject} book cover in {base_elements}, {style_desc}, {format_desc}, clean typography, literary design"
+        elif design_type == "album":
+            prompt = f"{subject} album cover in {base_elements}, {style_desc}, {format_desc}, vintage vinyl aesthetic"
+        elif design_type == "event":
+            prompt = f"{subject} event poster in {base_elements}, {style_desc}, {format_desc}, bold memorable design"
+        else:
+            prompt = f"{subject} in {base_elements}, {style_desc}, vintage print aesthetic"
 
-    # Add color hint if provided
-    if color_hint:
-        prompt += f", color palette: {color_hint}"
+        # Add color hint if provided
+        if color_hint:
+            prompt += f", color palette: {color_hint}"
+
+    # ── Unified exit: ip_ref / title blocks apply to ALL branches above ──
 
     # Add IP character instructions
     if ip_ref:
@@ -616,8 +636,8 @@ Examples:
                        help='Input image for image-to-image transformation')
     parser.add_argument('--colors', type=str, default='',
                        help='Color preferences (e.g., "orange, teal, black")')
-    parser.add_argument('--aspect-ratio', '--ratio', dest='aspect_ratio', default='9:16',
-                       help='Aspect ratio (default: 9:16)')
+    parser.add_argument('--aspect-ratio', '--ratio', dest='aspect_ratio', default=None,
+                       help='Aspect ratio (default: 9:16; album defaults to 1:1)')
     parser.add_argument('--output', help='Output file path')
     parser.add_argument('--model', default=DEFAULT_IMAGE_MODEL, help='Model to use')
     parser.add_argument('--ip-ref', type=str,
@@ -659,6 +679,11 @@ Examples:
     if not args.subject:
         parser.print_help()
         sys.exit(1)
+
+    # Album covers default to square 1:1 unless the user explicitly set a ratio,
+    # keeping the prompt's format description consistent with the actual size
+    if args.aspect_ratio is None:
+        args.aspect_ratio = '1:1' if args.type == 'album' else '9:16'
 
     # Comparison mode
     if args.compare:
