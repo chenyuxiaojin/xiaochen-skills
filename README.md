@@ -2,7 +2,7 @@
 
 # xiaochen-skills
 
-> xiaochen-skills is a Claude Code plugin marketplace bundling 14 personal automation skills for video production, content publishing, and knowledge management.
+> xiaochen-skills is a Claude Code plugin marketplace bundling 17 personal automation skills for video production, content publishing, and knowledge management.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-plugin-blueviolet)](https://claude.ai/code)
@@ -29,6 +29,9 @@ Claude Code's built-in skills cover general tasks. This collection adds a vertic
 | [cyxj-transcript](./plugins/cyxj-transcript/) | Turn a raw transcript (video voiceover, recording transcription) into a structured article draft: de-spoken, headings added, data tabulated, original preserved at the end — outputs Obsidian Markdown | `转稿`, `逐字稿整理`, `把这个稿子整理成文章`, `口播稿成文` | Obsidian vault path; no API key |
 | [cyxj-blog-pub](./plugins/cyxj-blog-pub/) | Publish an article to an Astro blog: validate frontmatter, enforce kebab-case filenames, replace images with CDN URLs, then build and deploy | `发布到博客`, `发博客`, `博客发文`, `上博客`, `Astro 发布` | Astro blog repo configured locally; image CDN configured; **deploy target is author's server — must be updated before use** |
 | [cyxj-psjpg](./plugins/cyxj-psjpg/) | Batch-export images to JPG using real local Photoshop (quality configurable, sRGB embedded, Progressive), then strip XMP metadata that reveals PNG/AI-generated origin | `/批量过PS`, `/PS批处理`, `/转jpg`, `png 转 jpg`, `封面转 jpg`, `去掉图片的转换痕迹` | **Adobe Photoshop installed locally (macOS)**; `exiftool` on PATH |
+| [cyxj-hook](./plugins/cyxj-hook/) | Diagnose and rewrite the opening hook of a 3-min+ knowledge video (aimed at Douyin featured): 4 hook archetypes — result-first / cognition-gap / identity-contrast / structure-preview | `/cyxj-hook`, `优化我的视频开头`, `帮我看开头`, `开头钩子` | None (instruction-only skill) |
+| [cyxj-content](./plugins/cyxj-content/) | Six-dimension content diagnosis for a 3-min+ knowledge video (copy hygiene / cover & title / watch-through value density / cognition gap / reusable assets / AI-assist) | `/内容诊断`, `这个内容怎么做`, `帮我看看这条稿` | None (instruction-only skill) |
+| [cyxj-data-review](./plugins/cyxj-data-review/) | Evidence-driven Douyin analytics review around the KPI chain (saves → followers → featured); every conclusion tagged 【事实】【推断】【未知】 | `复盘我的数据`, `数据复盘`, `看看我最近数据`, `精选诊断` | Douyin analytics export from the user; no API key |
 
 ## Install
 
@@ -58,7 +61,7 @@ No slash command prefix is required for most skills — the trigger phrases list
 | | xiaochen-skills | [anthropic/claude-code-skills](https://github.com/anthropics/claude-code) (official examples) | [awesome-claude-code](https://github.com/hesreallyhim/awesome-claude-code) community list |
 |---|---|---|---|
 | Focus | Video production + WeChat publishing + Obsidian knowledge management | General-purpose demos and patterns | Curated links to many community skills |
-| Skill count | 14 | Varies (reference examples) | Many repos, not a single install |
+| Skill count | 17 | Varies (reference examples) | Many repos, not a single install |
 | Install method | Single `/plugin marketplace add` command | Copy individual files | Each repo installs separately |
 | Multi-agent | Yes (roundtable spawns 6 Opus subagents) | Depends on example | Varies |
 | Script automation | Yes (Python + Bash, Photoshop, Gemini, Apify) | Minimal | Varies |
@@ -67,7 +70,7 @@ No slash command prefix is required for most skills — the trigger phrases list
 ## FAQ
 
 **How do I install?**
-Run `/plugin marketplace add chenyuxiaojin/xiaochen-skills` inside Claude Code. All 14 plugins are registered.
+Run `/plugin marketplace add chenyuxiaojin/xiaochen-skills` inside Claude Code. All 17 plugins are registered.
 
 **Can I install only one skill?**
 Yes. Each plugin is self-contained. You can install a single plugin by specifying the plugin name if the marketplace supports it, or copy the individual `plugins/cyxj-{name}/` directory and register it in your own marketplace.
@@ -78,7 +81,7 @@ It is the author's personal naming prefix — short for "陈与小金" (Chen Yu 
 **Which skills work out of the box and which need configuration?**
 
 Skills that work with minimal setup (only Obsidian vault path needed):
-- `cyxj-obsidian-build`, `cyxj-geo`, `cyxj-roundtable`, `cyxj-transcript`
+- `cyxj-obsidian-build`, `cyxj-geo`, `cyxj-roundtable`, `cyxj-transcript`, `cyxj-hook`, `cyxj-content`, `cyxj-data-review`
 
 Skills that require API keys:
 - `cyxj-subfix` → `GEMINI_API_KEY`
