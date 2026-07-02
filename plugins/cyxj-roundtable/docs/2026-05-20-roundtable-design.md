@@ -1,6 +1,6 @@
 ---
 date: 2026-05-20
-status: 已实施 v0.1，通过层 1-3 测试，marketplace 发布暂缓（2026-06-21 复盘）
+status: 已实施 v0.1，通过层 1-3 测试，已注册进 marketplace 发布（2026-07-02 更新）
 author: 小陈
 skill: cyxj-roundtable
 ---

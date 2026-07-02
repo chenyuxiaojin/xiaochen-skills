@@ -27,7 +27,7 @@ Seat 7 (real user) is explicitly NOT AI-played.
 
 ## Tech Stack
 
-- Claude Code Skill (SKILL.md format, no external dependencies)
+- Claude Code Skill (SKILL.md format; seat 4 web verification prefers a configured search MCP such as grok-search, degrades to built-in WebSearch/WebFetch)
 - Agent tool with `model: opus` for parallel subagent dispatch
 - File output to Obsidian vault at `~/obsidian/灵感库/决策记录/`
 

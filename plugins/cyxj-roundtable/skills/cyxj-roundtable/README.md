@@ -45,4 +45,4 @@
 
 ## 设计文档
 
-完整设计见 `docs/2026-05-20-roundtable-design.md`。
+完整设计见 `../../docs/2026-05-20-roundtable-design.md`。
