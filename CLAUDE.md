@@ -43,6 +43,11 @@ plugins/cyxj-foo/skills/cyxj-foo/SKILL.md   ← name: cyxj-foo
 .claude-plugin/marketplace.json             ← "name": "cyxj-foo", "source": "./plugins/cyxj-foo"
 ```
 
+**例外：多 skill 插件**（目前只有 `cyxj-video-doctor`，含 cyxj-content + cyxj-hook 两个 skill）。
+此时插件名不等于技能名，但**每个技能文件夹名仍必须 = 其 SKILL.md 的 `name`**；插件级共享资源放
+`plugins/{插件}/references/`，skill 里用 `${CLAUDE_PLUGIN_ROOT}/references/...` 引用。
+只有需要共享文件的强关联 skill 才合并进同一插件，不要为省注册条目乱合。
+
 ## 改 Skill 后的同步检查清单
 
 文档与注册表极易漂移（本仓库历史上多次出现）。任何对 skill 的改动（增 / 删 / 改名 / 改内容）做完都要逐项核对：
@@ -96,6 +101,5 @@ python3 -c "import json,os; reg={p['name'] for p in json.load(open('.claude-plug
 | cyxj-transcript | 纯 SKILL.md 指令（逐字稿转文章） | Obsidian 工作流 | ✓ |
 | cyxj-blog-pub | 纯 SKILL.md 指令（Astro 博客发布） | Astro / 图床 | ✓ |
 | cyxj-psjpg | 本机 Photoshop + Bash + exiftool（导出 JPG + 去 XMP 转换痕迹） | Photoshop（本地 app）、exiftool | ✓ |
-| cyxj-hook | 纯 SKILL.md 指令（知识视频开头/钩子诊断 + 四型方案） | 无 | ✓ |
-| cyxj-content | 纯 SKILL.md 指令（知识视频六维内容诊断） | 无 | ✓ |
+| cyxj-video-doctor | 纯 SKILL.md 指令，一插件双 skill：cyxj-content（六维内容诊断）+ cyxj-hook（开头钩子四型方案），共享 references/track-truth.md | 无 | ✓ |
 | cyxj-data-review | 纯 SKILL.md 指令（抖音数据复盘，KPI 链收藏→涨粉→精选） | 用户导出的抖音数据 | ✓ |

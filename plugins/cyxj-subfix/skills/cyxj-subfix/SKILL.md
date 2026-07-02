@@ -111,6 +111,8 @@ python3 "${CLAUDE_PLUGIN_ROOT}/skills/cyxj-subfix/srt_cleaner.py" "<_fixed.srt>"
 
 > `.txt`（`--export-txt` → `_script.txt`）已不是默认产物——它过去仅用于把逐字稿转回 Obsidian，现在直接写回。只有用户明确要把逐字稿导回 DaVinci IntelliScript 时才用 `--export-txt`。
 
+**交接**：逐字稿写回后，若用户想把这期视频再做成图文，提示可用 `cyxj-transcript`（转稿）把逐字稿整理成文章草稿。
+
 ### Phase 4: 输出汇总
 
 向用户说明最终输出：

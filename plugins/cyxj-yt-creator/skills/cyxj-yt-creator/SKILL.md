@@ -89,3 +89,7 @@ python3 "${CLAUDE_PLUGIN_ROOT}/skills/cyxj-yt-creator/scripts/research_to_draft.
 - 如果英文区已经拥挤，不要做「中文复述版」；要转成 Claude Code/Codex 工作流、非程序员视角、内容生产链路。
 - 如果中文区有视频但角度浅，可以做「更深工作流」。
 - 如果字幕抓取失败，不要阻塞；降级用标题、描述和播放数据判断，并在稿件里说明。
+
+## 交接
+
+待发布稿写入后，提示用户：差异化切口定了、想把这条做成能冲精选的视频，用 `cyxj-content` 做六维诊断；开头单独打磨用 `cyxj-hook`。

@@ -250,6 +250,7 @@ fs.writeFileSync('/tmp/wechat-output.html', juice.inlineContent(html, css));
    - 截图看完后 `rm -rf .playwright-mcp` 清理，避免污染工作区。
 7. Ask: "排版满意吗？需要调整什么？"
 8. If user wants changes, go back to Phase 2
+9. 交接：文章发布后，若这篇想被 AI 搜索（豆包/DeepSeek/Kimi）引用，提示可用 `cyxj-geo` 出投放与监控方案
 
 
 ## Auto-Recognition Rules

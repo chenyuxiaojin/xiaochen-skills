@@ -62,6 +62,7 @@ draft: false              # 可选；true 则不发布
    - build 完成后用 `ls` 确认 `dist/` 的实际位置，再执行拷贝（如 `cp -r dist/* landing/`）；拷贝目标不确定时停下问用户。
    - 最后 `bash deploy.sh blog`。
 6. **报告**：给出文章路径 + 部署结果；失败就贴报错原文，别说「成功了」。
+7. **交接**：文章上线后，若这篇想被 AI 搜索（豆包/DeepSeek/Kimi）引用，提示可用 `cyxj-geo` 出投放与监控方案。
 
 ## 红线
 

@@ -156,6 +156,7 @@ description: |
 ## 四、下一步
 1. {围绕北极星的产能动作}
 2. 精选归因数据动作：{发布后 3/7/14 天固定节奏导出，追单条曲线}
+3. 结论回流：{若本轮定性结论与 cyxj-video-doctor 插件 `references/track-truth.md` 的账号画像冲突，提醒用户更新该文件——它是 cyxj-content / cyxj-hook 共用的校准单源}
 
 ## 一句话
 {犀利总结，落在收藏率上}

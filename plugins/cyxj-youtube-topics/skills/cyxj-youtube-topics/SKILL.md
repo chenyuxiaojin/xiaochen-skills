@@ -285,3 +285,5 @@ rm /tmp/yt_videos.json /tmp/yt_zh_reference.json /tmp/yt_clusters.json /tmp/yt_e
 ```
 
 重点只突出"值得做"。观望简短列出，跟风/跳过合并一行带过。
+
+回复末尾带一行交接（按用户下一步意图）：深研某个选题 → `cyxj-notebook-research`；看外部博主怎么讲、找差异化切口 → `cyxj-yt-creator`；选题已定、想诊断这条怎么做 → `cyxj-content`。

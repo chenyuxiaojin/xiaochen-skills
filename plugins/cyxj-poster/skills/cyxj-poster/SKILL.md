@@ -138,6 +138,7 @@ python3 ${CLAUDE_PLUGIN_ROOT}/scripts/generate_mondo_enhanced.py --list-styles
 4. **确认参数** — 画幅比例、是否需要标题文字等
 5. **生成并展示** — 调用脚本生成，展示结果
 6. **迭代调整** — 不满意可以换风格/配色重新生成
+7. **交接** — 选定的图要发平台时，提示可用 `cyxj-psjpg` 转 JPG 并清理 AI 生成痕迹（需本机 Photoshop）
 
 如果用户想看风格对比，用 `--compare` 生成 3 种风格并排对比图。
 
