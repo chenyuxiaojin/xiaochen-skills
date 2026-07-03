@@ -4,9 +4,15 @@
     "name": "小陈",
     "url": "https://github.com/chenyuxiaojin"
   },
+  "renames": {
+    "cyxj-hook": "cyxj-video-doctor",
+    "cyxj-content": "cyxj-video-doctor",
+    "cyxj-poster": "cyxj-image-studio",
+    "cyxj-video-cover": "cyxj-image-studio"
+  },
   "metadata": {
     "description": "小陈的 Claude Code 技能集：达芬奇字幕修正、公众号排版发布、Obsidian 知识库编译、海报设计、YouTube 选题发现、博主用法研究、Notebook LM 研究、真人视频封面、GEO 优化、圆桌决策压测、每周 AI 热点视频、逐字稿转文章、Astro 博客发布、PS 批量转 JPG、知识视频开头优化、知识视频内容诊断、抖音数据复盘诊断",
-    "version": "1.12.0"
+    "version": "1.12.1"
   },
   "plugins": [
     {

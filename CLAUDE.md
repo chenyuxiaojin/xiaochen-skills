@@ -55,7 +55,9 @@ plugins/cyxj-foo/skills/cyxj-foo/SKILL.md   ← name: cyxj-foo
 文档与注册表极易漂移（本仓库历史上多次出现）。任何对 skill 的改动（增 / 删 / 改名 / 改内容）做完都要逐项核对：
 
 1. **SKILL.md frontmatter** — `name` 与文件夹名一致
-2. **`.claude-plugin/marketplace.json`** — `name` 和 `source` 已同步；新插件**已注册**（漏注册 = 用户装不到）
+2. **`.claude-plugin/marketplace.json`** — `name` 和 `source` 已同步；新插件**已注册**（漏注册 = 用户装不到）；
+   插件**改名/合并/删除**时必须在顶层 `renames` 字段加映射（改名 → 新名，删除 → null），已装用户才能自动迁移。
+   `renames` 是 append-only 历史，旧条目**永不删除**（Claude Code 会沿改名链跟踪）
 3. **README.md** — Skills 表格同步（名称 + 链接路径），且不留指向已删除目录的幽灵条目
 4. **CLAUDE.md** — 下方技术栈速查表同步
 5. **AGENTS.md** — 已改为指向本文件的重定向（2026-06-13 起单源维护，不再镜像同步），正常情况不需要动它
