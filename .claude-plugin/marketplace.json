@@ -5,6 +5,7 @@
     "url": "https://github.com/chenyuxiaojin"
   },
   "renames": {
+    "cyxj-wechat-mask": null,
     "cyxj-hook": "cyxj-video-doctor",
     "cyxj-content": "cyxj-video-doctor",
     "cyxj-poster": "cyxj-image-studio",
