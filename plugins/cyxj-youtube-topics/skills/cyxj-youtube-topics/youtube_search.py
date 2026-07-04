@@ -5,6 +5,7 @@ import json
 import os
 import re
 import sys
+import time
 from datetime import datetime, timedelta, timezone
 from functools import lru_cache
 from pathlib import Path
@@ -147,13 +148,40 @@ def _is_quota_error(resp: requests.Response) -> bool:
         return False
 
 
+# 网络层退避重试的间隔（秒）。2026-07-04 教训：代理未就绪时 SSL 握手被掐，
+# 14 个关键词 40 秒内连败——之前一次异常就判死该词，一次退避都没给。
+NETWORK_RETRY_DELAYS = [5, 20]
+
+
+def _mask_keys(text: str) -> str:
+    """把错误信息里的 API key 打码。requests 异常自带完整 URL（含 key=...），
+    不打码会明文进当天日志和 failures/ 失败现场（2026-07-04 实锤泄漏）。"""
+    return re.sub(r"key=[A-Za-z0-9_-]{10,}", "key=***", text)
+
+
 def youtube_get(rotator: KeyRotator, endpoint: str, params: dict, **kwargs) -> requests.Response:
-    """带配额轮询的 GET。403 quotaExceeded 时切下一个 key 重试，所有 key 耗尽则抛最后一次的 HTTPError。"""
-    last_resp = None
+    """带配额轮询 + 网络退避重试的 GET。
+
+    - 网络层异常（连接/SSL/超时）按 NETWORK_RETRY_DELAYS 退避重试，仍失败抛 key 已打码的 RuntimeError；
+    - 403 quotaExceeded / 429 时切下一个 key 重试，所有 key 耗尽则抛（HTTP 错误信息同样打码）。"""
     while True:
         params["key"] = rotator.current
-        resp = requests.get(f"{API_BASE}{endpoint}", params=params, **kwargs)
-        last_resp = resp
+        resp = None
+        for attempt in range(len(NETWORK_RETRY_DELAYS) + 1):
+            try:
+                resp = requests.get(f"{API_BASE}{endpoint}", params=params, **kwargs)
+                break
+            except (requests.ConnectionError, requests.Timeout) as e:
+                if attempt >= len(NETWORK_RETRY_DELAYS):
+                    # from None：不链原始异常，避免未打码的 URL 随 traceback 泄漏
+                    raise RuntimeError(_mask_keys(f"{type(e).__name__}: {e}")) from None
+                delay = NETWORK_RETRY_DELAYS[attempt]
+                print(
+                    f"警告：{endpoint} 网络异常（{_mask_keys(str(e))[:120]}），{delay}s 后重试"
+                    f"（第 {attempt + 2}/{len(NETWORK_RETRY_DELAYS) + 1} 次）",
+                    file=sys.stderr,
+                )
+                time.sleep(delay)
         if _is_quota_error(resp):
             print(
                 f"警告：key #{rotator.idx + 1} 配额耗尽，尝试切换下一个 key", file=sys.stderr
@@ -163,7 +191,10 @@ def youtube_get(rotator: KeyRotator, endpoint: str, params: dict, **kwargs) -> r
             print(
                 f"错误：所有 {len(rotator)} 个 YouTube API key 都已耗尽配额", file=sys.stderr
             )
-        resp.raise_for_status()
+        try:
+            resp.raise_for_status()
+        except requests.HTTPError as e:
+            raise RuntimeError(_mask_keys(str(e))) from None
         return resp
 
 
