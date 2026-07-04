@@ -1,69 +1,340 @@
 {
   "corrections": {
-    "Claude Code": ["Color Code", "Closet Code", "Colored code", "Colortico", "clotco", "CaterCode", "Colored Code", "客户口的", "Cloud Code"],
-    "Claude": ["Cloud"],
-    "上下文": ["善夏文", "善效文", "三项文", "三下文", "上下纹"],
-    "上下文窗口": ["善夏文窗口"],
-    "skill": ["Scale", "Scales"],
-    "Skill Creator": ["Scale Cater"],
-    "agent": ["恩敬的", "NG"],
-    "终端": ["中端"],
-    "token": ["偷肯"],
-    "context": ["看条是"],
-    "CLAUDE.md": ["clotco.md"],
-    "worktree": ["工作数", "工夫"],
-    "sub-agent": ["指诞进", "指Agent"],
-    "prompt engineering": ["提示实工程"],
-    "精力": ["经济"],
-    "入门": ["石油"],
-    "AI 味": ["AI位"],
-    "均值回归": ["君子回归"],
-    "提示词": ["提示实", "提示事"],
-    "协作": ["写作", "协干"],
-    "/init": ["Init"],
-    "递减收益": ["地级收益"],
-    "效率": ["消耘"],
-    "护城河": ["护程"],
-    "敏感度": ["人民"],
-    "会话": ["绘画"],
-    "根目录": ["根部录"],
-    "状态栏": ["缠续", "状态"],
-    "部署": ["不俗"],
-    "模块": ["五块"],
-    "代码": ["代母", "代理"],
-    "组件": ["组建"],
-    "逆向": ["立向"],
-    "回车": ["回撤", "密密"],
-    "指引": ["质疑"],
-    "左上角": ["左三角"],
-    "仓库": ["残酷"],
-    "commit": ["comment"],
-    "智谱": ["字谱"],
-    "遍历": ["便利"],
-    "初始化": ["出死话", "粗糙化"],
-    "软件": ["转件"],
-    "反代": ["反贷"],
-    "教会": ["交会"],
-    "命令行": ["命令函"],
-    "PowerShell": ["PowerShield"],
-    "Dynamic Workflows": ["Dynamic Worker Flows", "Dynamic Worker Flow"]
+    "Claude Code": [
+      "Color Code",
+      "Closet Code",
+      "Colored code",
+      "Colortico",
+      "clotco",
+      "CaterCode",
+      "Colored Code",
+      "客户口的",
+      "Cloud Code"
+    ],
+    "Claude": [
+      "Cloud"
+    ],
+    "上下文": [
+      "善夏文",
+      "善效文",
+      "三项文",
+      "三下文",
+      "上下纹"
+    ],
+    "上下文窗口": [
+      "善夏文窗口"
+    ],
+    "skill": [
+      "Scale",
+      "Scales"
+    ],
+    "Skill Creator": [
+      "Scale Cater"
+    ],
+    "agent": [
+      "恩敬的",
+      "NG"
+    ],
+    "终端": [
+      "中端"
+    ],
+    "token": [
+      "偷肯"
+    ],
+    "context": [
+      "看条是"
+    ],
+    "CLAUDE.md": [
+      "clotco.md"
+    ],
+    "worktree": [
+      "工作数",
+      "工夫"
+    ],
+    "sub-agent": [
+      "指诞进",
+      "指Agent"
+    ],
+    "prompt engineering": [
+      "提示实工程"
+    ],
+    "精力": [
+      "经济"
+    ],
+    "入门": [
+      "石油"
+    ],
+    "AI 味": [
+      "AI位"
+    ],
+    "均值回归": [
+      "君子回归"
+    ],
+    "提示词": [
+      "提示实",
+      "提示事"
+    ],
+    "协作": [
+      "写作",
+      "协干"
+    ],
+    "/init": [
+      "Init"
+    ],
+    "递减收益": [
+      "地级收益"
+    ],
+    "效率": [
+      "消耘"
+    ],
+    "护城河": [
+      "护程"
+    ],
+    "敏感度": [
+      "人民"
+    ],
+    "会话": [
+      "绘画"
+    ],
+    "根目录": [
+      "根部录"
+    ],
+    "状态栏": [
+      "缠续",
+      "状态"
+    ],
+    "部署": [
+      "不俗"
+    ],
+    "模块": [
+      "五块"
+    ],
+    "代码": [
+      "代母",
+      "代理"
+    ],
+    "组件": [
+      "组建"
+    ],
+    "逆向": [
+      "立向"
+    ],
+    "回车": [
+      "回撤",
+      "密密"
+    ],
+    "指引": [
+      "质疑"
+    ],
+    "左上角": [
+      "左三角"
+    ],
+    "仓库": [
+      "残酷"
+    ],
+    "commit": [
+      "comment"
+    ],
+    "智谱": [
+      "字谱"
+    ],
+    "遍历": [
+      "便利"
+    ],
+    "初始化": [
+      "出死话",
+      "粗糙化"
+    ],
+    "软件": [
+      "转件"
+    ],
+    "反代": [
+      "反贷"
+    ],
+    "教会": [
+      "交会"
+    ],
+    "命令行": [
+      "命令函"
+    ],
+    "PowerShell": [
+      "PowerShield"
+    ],
+    "Dynamic Workflows": [
+      "Dynamic Worker Flows",
+      "Dynamic Worker Flow"
+    ]
   },
-  "user_additions": {},
+  "user_additions": {
+    "Remotion": [
+      "人物形",
+      "准备性"
+    ],
+    "HyperFrames": [
+      "Hyperfirmes"
+    ],
+    "热点资讯": [
+      "热恋之心",
+      "热点之行",
+      "热点咨询"
+    ],
+    "待发布": [
+      "代发布"
+    ],
+    "素材池": [
+      "素材词"
+    ],
+    "全栈": [
+      "权战"
+    ],
+    "聚类": [
+      "居住",
+      "据类",
+      "驱住"
+    ],
+    "Agent": [
+      "Egent",
+      "enget"
+    ],
+    "token": [
+      "投肯"
+    ],
+    "段永平": [
+      "段有平"
+    ],
+    "李录": [
+      "李璐"
+    ],
+    "四大师": [
+      "斯大师",
+      "斯大斯"
+    ],
+    "回车": [
+      "回说"
+    ]
+  },
   "feedback": {
     "gemini_missed": [
-      {"original": "交会", "correct": "教会", "context": "同音字：交会→教会（教会我使用）", "date": "2026-03-31"},
-      {"original": "命令函", "correct": "命令行", "context": "近音字：命令函→命令行", "date": "2026-03-31"},
-      {"original": "总类", "correct": "种类", "context": "近音字：总类→种类", "date": "2026-03-31"},
-      {"original": "左三角", "correct": "左上角", "context": "近音字：左三角→左上角", "date": "2026-04-01"},
-      {"original": "弹入", "correct": "跳转", "context": "ASR错误：弹入到网页→跳转到网页", "date": "2026-04-01"},
-      {"original": "蝉了", "correct": "长了", "context": "同音字：蝉→长（有点长了）", "date": "2026-04-01"},
-      {"original": "站", "correct": "张", "context": "同音字：站→张（量词，50张60张图片）", "date": "2026-04-01"},
-      {"original": "质疑", "correct": "指引", "context": "近音字：质疑→指引（它会指引你登录）", "date": "2026-04-01"},
-      {"original": "看了一个", "correct": "看另一个", "context": "ASR错误：看了→看另（想看另一个部分）", "date": "2026-04-01"},
-      {"original": "GPT-4.5/GPT-4o", "correct": "GPT-5.5", "context": "Gemini主动把口播的GPT 5 5(GPT-5.5)改成旧版本GPT-4.5/4o——训练数据偏老的典型，模型版本号属时效性事实，每次需人工核当前版本", "date": "2026-05-30"},
-      {"original": "Claude加GPT", "correct": "Codex加GPT", "context": "Gemini把对手阵营的Codex误改成Claude，破坏对比语义（原句说Opus比对手强，对手不可能是Claude）", "date": "2026-05-30"},
-      {"original": "Dynamic Worker Flows", "correct": "Dynamic Workflows", "context": "Claude Code功能名，ASR把Workflows拆成Worker Flows，已加入corrections", "date": "2026-05-30"},
-      {"original": "敏感度", "correct": "思考强度", "context": "Gemini受词典误导把'思想难度'改成'敏感度'，实为thinking档位语境(超高/中/低)，应为思考强度", "date": "2026-05-30"}
+      {
+        "original": "交会",
+        "correct": "教会",
+        "context": "同音字：交会→教会（教会我使用）",
+        "date": "2026-03-31"
+      },
+      {
+        "original": "命令函",
+        "correct": "命令行",
+        "context": "近音字：命令函→命令行",
+        "date": "2026-03-31"
+      },
+      {
+        "original": "总类",
+        "correct": "种类",
+        "context": "近音字：总类→种类",
+        "date": "2026-03-31"
+      },
+      {
+        "original": "左三角",
+        "correct": "左上角",
+        "context": "近音字：左三角→左上角",
+        "date": "2026-04-01"
+      },
+      {
+        "original": "弹入",
+        "correct": "跳转",
+        "context": "ASR错误：弹入到网页→跳转到网页",
+        "date": "2026-04-01"
+      },
+      {
+        "original": "蝉了",
+        "correct": "长了",
+        "context": "同音字：蝉→长（有点长了）",
+        "date": "2026-04-01"
+      },
+      {
+        "original": "站",
+        "correct": "张",
+        "context": "同音字：站→张（量词，50张60张图片）",
+        "date": "2026-04-01"
+      },
+      {
+        "original": "质疑",
+        "correct": "指引",
+        "context": "近音字：质疑→指引（它会指引你登录）",
+        "date": "2026-04-01"
+      },
+      {
+        "original": "看了一个",
+        "correct": "看另一个",
+        "context": "ASR错误：看了→看另（想看另一个部分）",
+        "date": "2026-04-01"
+      },
+      {
+        "original": "GPT-4.5/GPT-4o",
+        "correct": "GPT-5.5",
+        "context": "Gemini主动把口播的GPT 5 5(GPT-5.5)改成旧版本GPT-4.5/4o——训练数据偏老的典型，模型版本号属时效性事实，每次需人工核当前版本",
+        "date": "2026-05-30"
+      },
+      {
+        "original": "Claude加GPT",
+        "correct": "Codex加GPT",
+        "context": "Gemini把对手阵营的Codex误改成Claude，破坏对比语义（原句说Opus比对手强，对手不可能是Claude）",
+        "date": "2026-05-30"
+      },
+      {
+        "original": "Dynamic Worker Flows",
+        "correct": "Dynamic Workflows",
+        "context": "Claude Code功能名，ASR把Workflows拆成Worker Flows，已加入corrections",
+        "date": "2026-05-30"
+      },
+      {
+        "original": "敏感度",
+        "correct": "思考强度",
+        "context": "Gemini受词典误导把'思想难度'改成'敏感度'，实为thinking档位语境(超高/中/低)，应为思考强度",
+        "date": "2026-05-30"
+      },
+      {
+        "original": "人物形/准备性",
+        "correct": "Remotion",
+        "context": "批次失败未过 Gemini;专有名词整批漏修",
+        "date": "2026-07-04"
+      },
+      {
+        "original": "热点之行/热恋之心",
+        "correct": "热点资讯",
+        "context": "同一词多变体,词典只录了'咨询'一种",
+        "date": "2026-07-04"
+      },
+      {
+        "original": "显得清单",
+        "correct": "写成清单",
+        "context": "需前文'写成一份清单'呼应才能判,Gemini 猜成'选题清单'",
+        "date": "2026-07-04"
+      },
+      {
+        "original": "老子(每天用同一个老子跑)",
+        "correct": "脑子",
+        "context": "Gemini 猜'逻辑';whisper 第二信源明写'脑子'——两源交叉才钉死",
+        "date": "2026-07-04"
+      },
+      {
+        "original": "go命令→被误改成/loop",
+        "correct": "go命令(保留)",
+        "context": "Gemini 过度贴主题改错:内容讲的是 loop 之前的进阶层级",
+        "date": "2026-07-04"
+      },
+      {
+        "original": "全收→被误改成全自动",
+        "correct": "全收(保留)",
+        "context": "中文区参考确实是'完全全收录',需懂系统才不误改",
+        "date": "2026-07-04"
+      },
+      {
+        "original": "进化→被误改成计划",
+        "correct": "进化(保留)",
+        "context": "'进化'是用户选题库的真实概念词,Gemini 不识",
+        "date": "2026-07-04"
+      }
     ]
   }
 }
