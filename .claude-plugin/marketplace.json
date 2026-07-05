@@ -12,8 +12,8 @@
     "cyxj-video-cover": "cyxj-image-studio"
   },
   "metadata": {
-    "description": "小陈的 Claude Code 技能集：达芬奇字幕修正、公众号排版发布、Obsidian 知识库编译、海报设计、YouTube 选题发现、博主用法研究、Notebook LM 研究、真人视频封面、GEO 优化、圆桌决策压测、每周 AI 热点视频、逐字稿转文章、Astro 博客发布、PS 批量转 JPG、知识视频开头优化、知识视频内容诊断、抖音数据复盘诊断、抖音精选申请文案",
-    "version": "1.13.0"
+    "description": "小陈的 Claude Code 技能集：达芬奇字幕修正、公众号排版发布、Obsidian 知识库编译、海报设计、YouTube 选题发现、博主用法研究、Notebook LM 研究、真人视频封面、GEO 优化、圆桌决策压测、每周 AI 热点视频、逐字稿转文章、Astro 博客发布、PS 批量转 JPG、知识视频开头优化、知识视频内容诊断、抖音数据复盘诊断、抖音精选申请文案、视频发布物料一条龙",
+    "version": "1.14.0"
   },
   "plugins": [
     {
@@ -95,6 +95,11 @@
       "name": "cyxj-jingxuan",
       "description": "抖音精选申请文案：读成片字幕/逐字稿，按四段式（原创定性→深度证明→受众价值→平台对齐）写 150-250 字纯文本申请，每条理由可在视频中核验，数据不编",
       "source": "./plugins/cyxj-jingxuan"
+    },
+    {
+      "name": "cyxj-release-kit",
+      "description": "视频发布物料一条龙：6 平台标题+简介（体裁匹配、时间戳核对字幕）+ HTML 封面工作台三比例出图（无字底图+浏览器排字，零错字零裁切）+ 上传 JPG",
+      "source": "./plugins/cyxj-release-kit"
     }
   ]
 }

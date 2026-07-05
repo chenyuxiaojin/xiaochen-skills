@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>封面工作台</title>
+<style>
+  /* 得意黑:优先用系统已装(~/Library/Fonts),同目录 ttf 兜底 */
+  @font-face { font-family: "Smiley Sans";
+               src: local("Smiley Sans Oblique"), local("Smiley Sans"), url("SmileySans-Oblique.ttf"); }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #17110b; font-family: "PingFang SC", sans-serif; }
+
+  /* ---------- 画布通用(自然尺寸,由 JS 生成) ---------- */
+  .canvas { position: relative; background: #33220f; overflow: hidden; flex: none; }
+  .bg { position: absolute; inset: -80px;
+        background: url("plate_16x9.png") right center / cover no-repeat;
+        filter: blur(60px) brightness(0.92); }
+  .plate-wrap { position: absolute; bottom: 0; left: 0;
+        -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 200px);
+        mask-image: linear-gradient(to bottom, transparent 0, #000 200px); }
+  .plate-wrap img { display: block;
+        -webkit-mask-image: linear-gradient(to left, transparent 0, #000 150px);
+        mask-image: linear-gradient(to left, transparent 0, #000 150px); }
+  .plate-wrap img.nofade { -webkit-mask-image: none; mask-image: none; }
+  .title { position: absolute; text-align: center;
+        font-family: "Smiley Sans", "PingFang SC", sans-serif;
+        color: #fff; letter-spacing: 0;
+        text-shadow: 0 14px 34px rgba(0,0,0,.55), 0 4px 10px rgba(0,0,0,.35); }
+  .title div { white-space: nowrap; line-height: 1.1; }
+  .title .o { color: #ff8a00;
+        text-shadow: 0 14px 34px rgba(0,0,0,.6), 0 4px 10px rgba(0,0,0,.4); }
+  .underline { display: inline-block; border-bottom-style: solid; border-bottom-color: #ff8a00; }
+  .star, .arrow { position: absolute; }
+
+  /* ---------- 画廊 ---------- */
+  .gallery { display: flex; flex-wrap: wrap; gap: 28px; padding: 28px 28px 120px; }
+  .card { cursor: pointer; border: 4px solid #3a2e20; border-radius: 14px;
+          padding: 10px; background: #241b10; transition: border-color .15s; }
+  .card.picked { border-color: #ff8a00; }
+  .card .thumb { overflow: hidden; border-radius: 8px; }
+  .card .cap { color: #d8c5a5; font-size: 15px; padding: 10px 4px 2px; display: flex; justify-content: space-between; }
+  .card.picked .cap::after { content: "✅ 已选"; color: #ff8a00; font-weight: 600; }
+  .bar { position: fixed; left: 0; right: 0; bottom: 0; background: rgba(20,14,8,.96);
+         color: #e8d9bd; padding: 14px 28px; font-size: 15px; border-top: 1px solid #4a3a24; }
+  .bar b { color: #ff8a00; }
+</style>
+</head>
+<body>
+<script>
+/* ============ 每期只改这里 ============
+   L1/L2/L3 = 标题三段(A/C 样式三行;B 样式 L1+L2 连排一行)。
+   字数与默认(5/4/4 字)差很多时,按「字数×字号≈可用宽度」调下方 RATIOS 的 s1/s3。
+   底图固定命名 plate_16x9.png 放同目录(16:9 无文字)。 */
+const L1 = "循环工程:", L2 = "你睡觉,", L3 = "AI 干活";
+
+const STAR = '<svg class="star" viewBox="0 0 100 100" style="{POS}"><polygon fill="#ff8a00" points="50,0 57,32 82,12 66,40 100,42 70,55 92,80 60,66 56,100 44,68 16,86 32,58 0,50 32,44 14,16 44,34"/></svg>';
+const ARROW = '<svg class="arrow" viewBox="0 0 400 340" style="{POS}"><defs><marker id="h{ID}" markerWidth="9" markerHeight="9" refX="4.5" refY="4.5" orient="auto"><path d="M1,1 L8,4.5 L1,8" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker></defs><path d="{PATH}" fill="none" stroke="#fff" stroke-width="16" stroke-linecap="round" marker-end="url(#h{ID})"/></svg>';
+
+const RATIOS = {
+  "16x9": { w: 2560, h: 1440, plateW: 1900, fade: true,
+            star: "top:60px;right:55px;width:150px;height:150px",
+            arrow: { pos: "top:1010px;left:950px;width:400px;height:340px", path: "M 360,30 C 300,180 210,250 60,290" },
+            A: { box: "top:120px;right:60px;width:1520px", s1: 300, s3: 390 },
+            B: { box: "top:110px;left:60px;right:60px", s1: 235, s3: 520 },
+            C: { box: "top:150px;right:60px;width:1520px", s1: 290, s3: 375 } },
+  "4x3":  { w: 2048, h: 1536, plateW: 1500, fade: true,
+            star: "top:60px;right:45px;width:130px;height:130px",
+            arrow: { pos: "top:1030px;left:800px;width:380px;height:330px", path: "M 340,30 C 280,170 200,240 60,280" },
+            A: { box: "top:120px;right:40px;width:1300px", s1: 260, s3: 345 },
+            B: { box: "top:110px;left:40px;right:40px", s1: 200, s3: 450 },
+            C: { box: "top:150px;right:40px;width:1300px", s1: 250, s3: 330 } },
+  "3x4":  { w: 1536, h: 2048, plateW: 1536, fade: false,
+            star: "top:80px;right:60px;width:130px;height:130px",
+            arrow: { pos: "top:1150px;left:950px;width:360px;height:380px", path: "M 320,30 C 270,170 190,260 60,320" },
+            A: { box: "top:150px;left:0;width:1536px", s1: 280, s3: 365 },
+            B: { box: "top:130px;left:40px;right:40px", s1: 250, s3: 450 },
+            C: { box: "top:170px;left:0;width:1536px", s1: 270, s3: 350 } }
+};
+const STYLES = { A: "右栏三行+星芒箭头", B: "通栏大字版", C: "微倾斜+橙底线(无箭头)" };
+
+function buildCanvas(rk, sk) {
+  const r = RATIOS[rk], c = r[sk], uid = rk + sk;
+  const el = document.createElement("div");
+  el.className = "canvas";
+  el.style.width = r.w + "px"; el.style.height = r.h + "px";
+
+  let inner = '<div class="bg"></div>'
+    + '<div class="plate-wrap"><img class="' + (r.fade ? "" : "nofade") + '" src="plate_16x9.png" style="width:' + r.plateW + 'px"></div>';
+
+  if (sk !== "C") inner += STAR.replace("{POS}", r.star);
+  if (sk === "A") inner += ARROW.replace("{POS}", r.arrow.pos).replace("{PATH}", r.arrow.path).replaceAll("{ID}", uid);
+
+  let lines;
+  if (sk === "A") {
+    lines = '<div style="font-size:' + c.s1 + 'px">' + L1 + '</div>'
+          + '<div style="font-size:' + c.s1 + 'px">' + L2 + '</div>'
+          + '<div class="o" style="font-size:' + c.s3 + 'px">' + L3 + '</div>';
+  } else if (sk === "B") {
+    const head = (rk === "3x4")
+      ? '<div style="font-size:' + c.s1 + 'px">' + L1 + '</div><div style="font-size:' + c.s1 + 'px">' + L2 + '</div>'
+      : '<div style="font-size:' + c.s1 + 'px">' + L1 + L2 + '</div>';
+    lines = head + '<div class="o" style="font-size:' + c.s3 + 'px">' + L3 + '</div>';
+  } else {
+    lines = '<div style="font-size:' + c.s1 + 'px">' + L1 + '</div>'
+          + '<div style="font-size:' + c.s1 + 'px">' + L2 + '</div>'
+          + '<div class="o underline" style="font-size:' + c.s3 + 'px;border-bottom-width:' + Math.round(c.s3/14) + 'px;padding-bottom:12px">' + L3 + '</div>';
+  }
+  const rot = (sk === "C") ? "transform:rotate(-2deg);" : "";
+  inner += '<div class="title" style="' + c.box.split(";").map(s=>s+";").join("") + rot + '">' + lines + '</div>';
+
+  el.innerHTML = inner;
+  return el;
+}
+
+/* ============ 模式分发 ============ */
+const params = new URLSearchParams(location.search);
+const v = params.get("v"); // 形如 16x9-A → 导出模式;无参数 → 画廊模式
+
+if (v) {
+  const [rk, sk] = v.split("-");
+  const r = RATIOS[rk];
+  document.documentElement.style.cssText = document.body.style.cssText =
+    "width:" + r.w + "px;height:" + r.h + "px;overflow:hidden;";
+  document.body.appendChild(buildCanvas(rk, sk));
+} else {
+  const gal = document.createElement("div");
+  gal.className = "gallery";
+  const THUMB_W = 600;
+  for (const rk of Object.keys(RATIOS)) {
+    for (const sk of Object.keys(STYLES)) {
+      const r = RATIOS[rk], id = rk + "-" + sk, scale = THUMB_W / r.w;
+      const card = document.createElement("div");
+      card.className = "card"; card.dataset.id = id;
+      const thumb = document.createElement("div");
+      thumb.className = "thumb";
+      thumb.style.width = THUMB_W + "px";
+      thumb.style.height = Math.round(r.h * scale) + "px";
+      const cv = buildCanvas(rk, sk);
+      cv.style.transform = "scale(" + scale + ")";
+      cv.style.transformOrigin = "top left";
+      thumb.appendChild(cv);
+      card.appendChild(thumb);
+      card.insertAdjacentHTML("beforeend",
+        '<div class="cap"><span>' + id + " · " + STYLES[sk] + "</span></div>");
+      card.onclick = () => {
+        card.classList.toggle("picked");
+        const picked = [...document.querySelectorAll(".card.picked")].map(x => x.dataset.id);
+        localStorage.setItem("coverPicks", JSON.stringify(picked));
+        console.log("PICKS:", picked.join(", ") || "(空)");
+        document.getElementById("picks").textContent = picked.join("、") || "还没选";
+      };
+      gal.appendChild(card);
+    }
+  }
+  document.body.appendChild(gal);
+  document.body.insertAdjacentHTML("beforeend",
+    '<div class="bar">点卡片选中/取消(可多选,橙框=已选)。选好后把编号告诉小陈,或直接说「导出选中的」。当前已选:<b id="picks">还没选</b></div>');
+  const saved = JSON.parse(localStorage.getItem("coverPicks") || "[]");
+  saved.forEach(id => { const c = document.querySelector('[data-id="' + id + '"]'); if (c) c.click(); });
+}
+</script>
+</body>
+</html>
