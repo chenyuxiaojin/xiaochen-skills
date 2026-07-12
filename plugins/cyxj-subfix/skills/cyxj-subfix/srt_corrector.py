@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """SRT 字幕语义修正工具 - 达芬奇字幕修正 Skill v4
 
-用 Gemini 3.5 Flash 做初修，输出修正后的 SRT 和修改清单。
+用 Gemini 3.1 Flash-Lite（--premium 时用 3.5 Flash）做初修，输出修正后的 SRT 和修改清单。
 依赖：google-genai, pysrt
 """
 
@@ -19,8 +19,8 @@ from google.genai import types
 
 # ── 配置 ──────────────────────────────────────────────────────────────────
 
-DEFAULT_MODEL = "gemini-3.5-flash"
-PREMIUM_MODEL = "gemini-3.5-flash"  # 3.5 系列目前仅 flash 一档，--premium 保留兼容但与日常同款
+DEFAULT_MODEL = "gemini-3.1-flash-lite"  # 官方定位：高频/批量数据处理场景，价格约为 3.5-flash 的 1/6
+PREMIUM_MODEL = "gemini-3.5-flash"  # --premium：更强的语义理解，用于疑难字幕
 BATCH_SIZE = 40  # 每批字幕条数
 MAX_RETRIES = 3
 RETRY_DELAY = 2  # 秒

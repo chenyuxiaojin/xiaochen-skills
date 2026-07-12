@@ -4,7 +4,7 @@ description: >
   达芬奇字幕修正工具：SRT 清理、Gemini 语义初修、Opus 审查把关。
   触发词：/字幕修正、修正字幕、字幕错别字、SRT 修正、达芬奇字幕。
   当用户提供 SRT 文件路径需要修正时使用此 skill。
-version: 4.0.0
+version: 4.1.1
 ---
 
 # 达芬奇字幕修正 Skill v4
@@ -113,18 +113,29 @@ python3 "${CLAUDE_PLUGIN_ROOT}/skills/cyxj-subfix/srt_cleaner.py" "<_fixed.srt>"
 
 **交接**：逐字稿写回后，若用户想把这期视频再做成图文，提示可用 `cyxj-transcript`（转稿）把逐字稿整理成文章草稿。
 
-### Phase 4: 输出汇总
+### Phase 4: 收尾清理（强制，不许跳过）
+
+Phase 3 完成、逐字稿已写回 Obsidian 后，**必须**清理全部中间产物。同目录最终只留两份文件：
+
+- `<原文件名>.srt` — 母片（用户给的原始文件，全程未改动）
+- `<原文件名>_fixed.srt` — 最终修正后的字幕
+
+清理步骤：
+
+1. 先把 `_cleaned_stats.json` 里的 `splits_needing_review` 和 `over_soft_limit` 条目提醒给用户（这是唯一需要在删除前读取的信息）
+2. 用 `cmp` 确认母片与 `.bak` 逐字节一致（母片没被误改）。一致 → 连 `.bak` 一起删；不一致 → 先用 `.bak` 还原母片，再删 `.bak`
+3. 执行清理：
+
+```bash
+cmp -s "<原文件>.srt" "<原文件>.srt.bak" && rm -f "<原文件>.srt.bak" "<stem>_cleaned.srt" "<stem>_cleaned_stats.json" "<stem>_gemini_fixed.srt" "<stem>_changes.json" "<stem>_transcript.md"
+```
+
+`_transcript.md` 已在 Phase 3 写回 Obsidian，本地副本一并删除。删除后向用户报一句"以下中间产物已清理"+文件列表（不用事先逐个确认）。
 
 向用户说明最终输出：
-- `_fixed.srt` — 最终修正后的字幕文件（连同母版共两份即可，中间产物可清理）
+- `<原文件名>.srt` — 母片（未动）
+- `<stem>_fixed.srt` — 最终修正后的字幕
 - Obsidian 待发布笔记 — 已写回成片逐字稿（Phase 3）
-
-中间文件留在同目录供排查：
-- `原文件.bak` — 原始备份
-- `_cleaned.srt` + `_cleaned_stats.json` — Phase 1 中间产物
-- `_gemini_fixed.srt` + `_changes.json` — Phase 2a 中间产物
-
-提醒检查 `splits_needing_review` 和 `over_soft_limit` 条目。
 
 </steps>
 
@@ -146,13 +157,15 @@ python3 "${CLAUDE_PLUGIN_ROOT}/skills/cyxj-subfix/srt_cleaner.py" "<_fixed.srt>"
 
 ## 模型选择
 
-| 用途 | 模型 ID | 价格 | 说明 |
+| 用途 | 模型 ID | 价格（输入/输出 per M token） | 说明 |
 |------|---------|------|------|
-| 日常初修 | `gemini-3.5-flash` | $1.50/$9 per M | 默认（3.5 系列目前仅 flash 一档）|
-| 高端初修 | `gemini-3.5-flash` | $1.50/$9 per M | 与日常同款，`--premium` 仅保留参数兼容 |
-| 审查 | Opus 4.6（对话内） | $15/$75 per M | 只审查 diff |
+| 日常初修 | `gemini-3.1-flash-lite` | $0.25 / $1.50 | 默认，官方定位"高频/批量数据处理"，价格约为 3.5-flash 的 1/6 |
+| 高端初修 | `gemini-3.5-flash` | $1.50 / $9.00 | `--premium` 时启用，语义理解更强，用于疑难字幕 |
+| 审查 | Opus（对话内） | 按对话计费 | 只审查 diff |
 
-**注意**：`gemini-3.1-flash-image-preview` 和 `gemini-3-pro-image-preview` 是图片生成专用模型，不用于文本修正。
+价格核实于 2026-07-09（ai.google.dev/gemini-api/docs/pricing 原文，Standard 档）。
+
+**注意**：`gemini-3.1-flash-image`（Nano Banana 2）、`gemini-3-pro-image`（Nano Banana Pro）是图片生成专用模型，不用于文本修正。
 
 ## 词典管理
 

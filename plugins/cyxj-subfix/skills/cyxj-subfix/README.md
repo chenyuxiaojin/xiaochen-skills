@@ -18,23 +18,29 @@ When you export subtitles from DaVinci Resolve's built-in speech-to-text, Chines
 Phase 1: Python structural processing (srt_cleaner.py)
   HTML cleanup → dedup → punctuation → merge short → split long → renumber
 
-Phase 2a: Gemini 3.5 Flash auto-correction (srt_corrector.py)
+Phase 2a: Gemini 3.1 Flash-Lite auto-correction (--premium uses 3.5 Flash) (srt_corrector.py)
   Batch API calls with dictionary + topic context → _gemini_fixed.srt + _changes.json
 
 Phase 2b: Opus review (in Claude Code conversation)
   Review Gemini's change list → fix errors → catch misses → save _fixed.srt
 
-Phase 3: Export plain text for IntelliScript
+Phase 2c: Audio cross-check (when the finished audio is available, via lark-minutes as a second source)
+
+Phase 3: Write transcript back to Obsidian
+
+Phase 4: Cleanup (keep only the original SRT + _fixed.srt; intermediates incl. .bak auto-deleted)
 ```
+
+After the run, only two files remain locally: the original SRT the user provided (untouched master) and the final `_fixed.srt`; intermediates like `.bak`, `_cleaned.srt`, `_gemini_fixed.srt`, and `_changes.json` are cleaned up automatically (the `.bak` is removed only after a `cmp` check confirms the master is intact).
 
 ### Why Hybrid?
 
 | Approach | Cost per 400 subtitles | Accuracy |
 |----------|----------------------|----------|
 | Opus only (v3) | ~$2-4 | High |
-| Gemini 3.5 Flash + Opus review (v4) | ~$0.6-1.0 | High |
+| Gemini + Opus review (v4) | ~$0.1-0.3 | High |
 
-Gemini handles 95%+ of corrections at ~1/10th the cost. Opus only reviews the diff, not the full text.
+Gemini handles 95%+ of corrections at minimal cost. Opus only reviews the diff, not the full text.
 
 ## Prerequisites
 
@@ -104,11 +110,12 @@ The `feedback.gemini_missed` field tracks errors Gemini missed but Opus caught, 
 
 ## Gemini Models
 
-| Model | Use Case | Input/Output Price |
+| Model | Use Case | Input/Output Price (per M tokens) |
 |-------|----------|-------------------|
-| `gemini-3.5-flash` | Default & `--premium` (only flash in 3.5 series) | $1.50 / $9.00 per M tokens |
+| `gemini-3.1-flash-lite` | Default, official positioning: high-volume/batch data processing | $0.25 / $1.50 |
+| `gemini-3.5-flash` | `--premium`, stronger semantic understanding | $1.50 / $9.00 |
 
-> Note: Image generation models (`gemini-3.1-flash-image-preview`, `gemini-3-pro-image-preview`) are NOT suitable for text correction.
+> Prices verified 2026-07-09 against the official pricing page. Image generation models (`gemini-3.1-flash-image`, `gemini-3-pro-image`) are NOT suitable for text correction.
 
 ## Display Rules
 
