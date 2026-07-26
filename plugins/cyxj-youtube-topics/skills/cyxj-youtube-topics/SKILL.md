@@ -4,7 +4,8 @@ description: |
   YouTube 选题发现 + 判断。搜索 "Claude Code" 相关最近 48 小时新视频，
   去重、按话题聚类、做硬信号 + 字幕内容分析，输出带 verdict（值得做/观望/跟风/跳过）+
   理由 + 差异化切口建议的选题报告。写入 Obsidian 选题库。
-  触发方式：「选题」「找选题」「YouTube 最近有什么」「帮我找找最近的新选题」「跑一下选题发现」「有什么新视频」
+  触发方式：「YouTube 选题」「找 YouTube 选题」「YouTube 最近有什么」「帮我找找最近的新选题」「跑一下选题发现」「有什么新视频」
+  边界：只做 YouTube 新视频的选题发现与判断；泛选题、短视频 IP 人群选题、文案式出选题不归本 skill。
 ---
 
 # youtube-topic-discovery：YouTube 选题发现 + 判断
@@ -68,18 +69,18 @@ fi
 
 4. **Apify API Token**（必需，字幕抓取主路径）
    - 注册 apify.com，Settings → API & Integrations → Personal API Token
-   - 添加 Actor：Apify Store 搜 `karamelo/youtube-transcripts` 并 bookmark
+   - 主路径 Actor：`scrape-creators/best-youtube-transcripts-scraper`（脚本直接按 Actor ID 调用，无需 bookmark）
    - 按优先级配置任选其一：
      - `export APIFY_API_TOKEN=你的token`
      - 在 `${SKILL_DIR}/.env` 写入 `APIFY_API_TOKEN=你的token`
      - 在 `~/.config/cyxj/.env` 写入 `APIFY_API_TOKEN=你的token`
-   - Free plan 每月 $5 credit，按 $0.007/视频计费，每月 600 视频约用 $4.2，在 Free 额度内
+   - Free plan 每月 $5 credit，scrape-creators 约 $0.001/条，每月 600 视频约 $0.6，远在 Free 额度内
 
 5. **Supadata API Key**（可选，fallback 兜底）
    - 注册 supadata.ai，dashboard 拷贝 API key
    - 配置：同 Apify，变量名 `SUPADATA_API_KEY`
    - Free tier 每月 100 credits，应急 fallback 够用
-   - 不配置也能跑，只是 karamelo 挂时没兜底
+   - 不配置也能跑，只是主路径挂时没兜底（Supadata 是独立服务商、独立 IP 池，与 Apify 不共享额度）
 
 6. **Python 依赖**：`pip install -r requirements.txt`
    - 必需：`requests`
@@ -209,8 +210,8 @@ python3 "$SKILL_DIR/topic_judge.py" /tmp/yt_clusters.json > /tmp/yt_enriched.jso
        - 已知 + 饱和但头部 ≥1 千 → 抓 top 3（救援边界话题）
   - 其他（饱和+头部低 < 1 千）→ 不抓，LLM 降级用标题+描述判断
   - 理由：字幕对"跟风/跳过"的判断带不来增量，只对"可能值得做"的话题有价值
-  - 主路径 Apify `karamelo/youtube-transcripts`（Apify IP 池，0.5-2s/视频均值，不污染本地 IP）
-  - 失败 fallback Supadata（独立 IP 池，每月 100 credits 免费）
+  - 主路径 Apify `scrape-creators/best-youtube-transcripts-scraper`（Apify IP 池，不污染本地 IP，约 $0.001/条）
+  - 失败 fallback Supadata（独立服务商、独立 IP 池，每月 100 credits 免费）
 
 ### 第五步：LLM 生成 verdict
 

@@ -9,11 +9,13 @@
     "cyxj-hook": "cyxj-video-doctor",
     "cyxj-content": "cyxj-video-doctor",
     "cyxj-poster": "cyxj-image-studio",
-    "cyxj-video-cover": "cyxj-image-studio"
+    "cyxj-video-cover": "cyxj-image-studio",
+    "cyxj-geo": null,
+    "cyxj-psjpg": null
   },
   "metadata": {
-    "description": "小陈的 Claude Code 技能集：达芬奇字幕修正、公众号排版发布、Obsidian 知识库编译、海报设计、YouTube 选题发现、博主用法研究、Notebook LM 研究、真人视频封面、GEO 优化、圆桌决策压测、每周 AI 热点视频、逐字稿转文章、Astro 博客发布、PS 批量转 JPG、知识视频开头优化、知识视频内容诊断、抖音数据复盘诊断、抖音精选申请文案、视频发布物料一条龙",
-    "version": "1.14.0"
+    "description": "小陈的 Claude Code 技能集：达芬奇字幕修正、公众号排版发布、Obsidian 知识库编译、海报设计、YouTube 选题发现、博主用法研究、Notebook LM 研究、真人视频封面、圆桌决策压测、每周 AI 热点视频、逐字稿转文章、Astro 博客发布、知识视频开头优化、知识视频内容诊断、抖音数据复盘诊断、抖音精选申请文案、视频发布物料一条龙",
+    "version": "1.15.0"
   },
   "plugins": [
     {
@@ -52,11 +54,6 @@
       "source": "./plugins/cyxj-notebook-research"
     },
     {
-      "name": "cyxj-geo",
-      "description": "GEO 生成式搜索引擎优化部署：选词、写文、配图、发布、监控四步法，输出可直接执行的投放方案",
-      "source": "./plugins/cyxj-geo"
-    },
-    {
       "name": "cyxj-roundtable",
       "description": "圆桌会议：6 个 Opus 4.7 subagent 扮演 6 个有立场的角色对议题给出独立意见，会议自动落地到 Obsidian",
       "source": "./plugins/cyxj-roundtable"
@@ -75,11 +72,6 @@
       "name": "cyxj-blog-pub",
       "description": "Astro 博客发布：frontmatter 校验、kebab-case 命名、正文图片全用图床 URL，build 后部署",
       "source": "./plugins/cyxj-blog-pub"
-    },
-    {
-      "name": "cyxj-psjpg",
-      "description": "真 PS 批量导出 JPG + 清理转换痕迹：质量可配、嵌 sRGB、抹掉 PNG→JPG 来源痕迹",
-      "source": "./plugins/cyxj-psjpg"
     },
     {
       "name": "cyxj-video-doctor",

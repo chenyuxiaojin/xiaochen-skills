@@ -1,8 +1,8 @@
 # xiaochen-skills
 
-> xiaochen-skills is a Claude Code plugin marketplace bundling 14 personal automation skills for video production, content publishing, and knowledge management.
+> xiaochen-skills is a Claude Code plugin marketplace bundling 15 plugins (17 skills) for video production, content publishing, and knowledge management.
 
-xiaochen-skills is a collection of Claude Code plugins built by a Chinese video creator and blogger (Chen Yu Xiaojin, handle: chenyuxiaojin). It covers an end-to-end personal media workflow: fixing DaVinci Resolve subtitles, publishing to WeChat Official Accounts and Astro blogs, discovering YouTube topics, generating video thumbnails with real-person AI image synthesis, batch-exporting images via local Photoshop, and compiling an Obsidian knowledge vault. Each of the 14 plugins is self-contained and installs via a single `/plugin marketplace add` command.
+xiaochen-skills is a collection of Claude Code plugins built by a Chinese video creator and blogger (Chen Yu Xiaojin, handle: chenyuxiaojin). It covers an end-to-end personal media workflow: fixing DaVinci Resolve subtitles, publishing to WeChat Official Accounts and Astro blogs, discovering YouTube topics, generating video thumbnails with real-person AI image synthesis, producing 6-platform release kits (titles, descriptions, covers), and compiling an Obsidian knowledge vault. Each of the 15 plugins is self-contained and installs via a single `/plugin marketplace add` command.
 
 ## Documentation
 - [README (English)](README.md): Full English documentation including skill table with triggers and dependencies, install instructions, FAQ, and comparison to alternatives.

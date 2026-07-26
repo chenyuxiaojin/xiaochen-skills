@@ -99,7 +99,7 @@ def load_apify_token() -> str:
         f"  2. 在 {SKILL_DIR}/.env 写入：APIFY_API_TOKEN=你的token\n"
         "  3. 在 ~/.config/cyxj/.env 写入：APIFY_API_TOKEN=你的token\n"
         "获取方式：apify.com 注册 → Settings → API & Integrations → Personal API Token\n"
-        "另外需要在 Apify Store 搜索并 bookmark Actor：karamelo/youtube-transcripts",
+        "字幕主路径 Actor：scrape-creators/best-youtube-transcripts-scraper（脚本按 ID 直接调用，无需 bookmark）",
         file=sys.stderr,
     )
     sys.exit(1)

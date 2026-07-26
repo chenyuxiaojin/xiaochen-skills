@@ -26,7 +26,7 @@ plugins/
 ```
 
 **两类 skill**：
-- **纯指令型**（geo、obsidian-build、roundtable、ai-weekly-news）—— 没有脚本，全靠 SKILL.md 的
+- **纯指令型**（obsidian-build、roundtable、ai-weekly-news、jingxuan 等）—— 没有脚本，全靠 SKILL.md 的
   frontmatter + 正文指令（部分配 references/ 模板）驱动；roundtable 还会现场拉起多个 Opus subagent 扮演不同角色
 - **脚本型**—— SKILL.md 调用同目录的 Python/Bash 脚本，脚本里用 `${CLAUDE_PLUGIN_ROOT}`（或 `$SKILL_DIR`）
   拼本地路径定位资源。新写脚本引用本地文件时**必须**走这个变量，不能写死绝对路径
@@ -98,11 +98,11 @@ python3 -c "import json,os; reg={p['name'] for p in json.load(open('.claude-plug
 | cyxj-youtube-topics | Python + YouTube Data API + Apify（字幕主路径） | requests、APIFY_API_TOKEN、Supadata（可选兜底） | ✓ |
 | cyxj-yt-creator | Python + Apify + Obsidian | requests | ✓ |
 | cyxj-notebook-research | Python + Notebook LM | notebooklm-py, python-frontmatter | ✓ |
-| cyxj-geo | 纯 SKILL.md 指令 | 无 | ✓ |
 | cyxj-roundtable | 纯 SKILL.md 指令（拉起多个 Opus subagent） | 无 | ✓ |
 | cyxj-ai-weekly-news | 纯 SKILL.md 指令（9 步交互式 SOP + references 模板） | 达芬奇 / Obsidian 工作流 | ✓ |
 | cyxj-transcript | 纯 SKILL.md 指令（逐字稿转文章） | Obsidian 工作流 | ✓ |
 | cyxj-blog-pub | 纯 SKILL.md 指令（Astro 博客发布） | Astro / 图床 | ✓ |
-| cyxj-psjpg | 本机 Photoshop + Bash + exiftool（导出 JPG + 去 XMP 转换痕迹） | Photoshop（本地 app）、exiftool | ✓ |
 | cyxj-video-doctor | 纯 SKILL.md 指令，一插件双 skill：cyxj-content（六维内容诊断）+ cyxj-hook（开头钩子四型方案），共享 references/track-truth.md | 无 | ✓ |
 | cyxj-data-review | 纯 SKILL.md 指令（抖音数据复盘，KPI 链收藏→涨粉→精选） | 用户导出的抖音数据 | ✓ |
+| cyxj-jingxuan | 纯 SKILL.md 指令（抖音精选申请文案，四段式） | 成片字幕/逐字稿 | ✓ |
+| cyxj-release-kit | 指令 + HTML 封面工作台（浏览器排字出三比例封面） | 底图依赖 cyxj-image-studio（GPTIMG2_*）；浏览器 | ✓ |
