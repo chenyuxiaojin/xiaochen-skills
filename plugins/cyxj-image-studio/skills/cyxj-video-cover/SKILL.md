@@ -1,163 +1,44 @@
 ---
 name: cyxj-video-cover
 description: |
-  视频封面生成（真人版）。用你的真人照片 + gpt-image-2 重绘入场，一句话生成带本人形象的高点击封面。
-  默认输出 4 个比例：YouTube 16:9、公众号 2.35:1、竖版 3:4、横版 4:3，每比例 2 张供挑选，并行生成。
-  中文标题由模型直接渲染（gpt-image-2 中文渲染准确率高）。
-  触发方式：/封面、/video-cover、「生成封面」「做个视频封面」「帮我做封面」「做个 YouTube 封面」
-  Real-person video cover generator. Uses your photo + gpt-image-2 to redraw you into a
-  high-CTR cover. Outputs 16:9 / 2.35:1 / 3:4 / 4:3, 2 picks each, in parallel.
-  Trigger: /封面, /video-cover, "generate cover", "make a YouTube thumbnail"
+  无字底图生成引擎(gpt-image-2-vip,真人照片重绘保脸)。只出不带任何文字的场景图,
+  供 cyxj-release-kit 的 HTML 封面工作台当底图,或手动要一张无字人物场景图时用。
+  ⚠️ 封面成品、视频发布物料(标题/简介/封面)一律走 cyxj-release-kit——
+  本 skill 不再直接产出带字封面,不要用它响应「做封面/生成封面」类请求。
 ---
 
-# cyxj-video-cover：视频封面生成（真人版）
+# cyxj-video-cover:无字底图生成引擎(已降级)
 
-用你的真人照片做参考，gpt-image-2 把你重绘进新封面场景（人脸保持一致），一句话出封面。
-默认 4 个比例各 2 张，并行生成，约 1 分钟出齐。
+**2026-07-26 降级定稿**(裁决记录见 内容创作/log):旧「生图直接渲染中文标题」工作流作废——
+中文文字永远不要交给生图模型渲染,文字由浏览器渲染(cyxj-release-kit 的 cover-studio.html),
+底图才交给生图。本 skill 只剩一件事:**出无字底图**。
 
-## 前置准备（首次）
-
-1. **中转站 key**（已配好则跳过）——脚本自动从密钥存储读，无需手动 export：
-   - `~/项目/自己的应用/密钥存储/.env` 里的 `GPTIMG2_BASE_URL` 和 `GPTIMG2_API_KEY`
-   - `GPTIMG2_BASE_URL` = `https://api.chatgpt-code.com`（末尾**没有** `/v1`，脚本拼端点时自己补）
-   - 也可用同名环境变量覆盖
-
-2. **真人照片**——默认读 `~/Pictures/封面形象/`（放几张本人正脸清晰的照片即可），
-   也可每次用 `--face` 临时指定某张或某目录。注意：指定目录时脚本按文件名排序**只取第一张照片**做参考。
-
-3. **Python 依赖**：仅标准库（urllib），无需 pip 安装。生成结果用系统自带能力查看即可。
-
-## 工作流
-
-### Step 0：引擎与「先探 API，不行就交付提示词」总纲（小陈定，2026-06-26）
-
-**本 skill 不把任何风格固化成死预设**。每次要封面：先用 API 现场探测出几张样片，**验证中文不错字、标题没被裁切**；
-如果 API 出的不达标（中文错字 / 标题被裁 / 质量不够），**别在 API 上死磕——直接把干净的提示词交给小陈，
-他去网页（ChatGPT / Gemini）自己生成，更快更稳**（模板见 `${CLAUDE_PLUGIN_ROOT}/skills/cyxj-video-cover/references/web-prompts.md`）。
-
-**脚本主路径 = `gpt-image-2-vip`**（`generate.py` 唯一支撑的引擎）；`gemini-3-pro-image-preview` 是**实验性手动路径**（无脚本支撑，按速记现场调用）。
-引擎实测对照表、选型建议与 Gemini 调用速记见：`${CLAUDE_PLUGIN_ROOT}/skills/cyxj-video-cover/references/engines.md`。
-
-### Step 1：确认标题
-
-- **明确标题**：直接用
-- **一段话/主题**：提炼为 10-20 字的封面标题
-- **什么都没说**：从当前对话上下文（刚写的文章、逐字稿、选题、大纲）推断主题并提炼标题
-
-### Step 2：场景（通常自动）
-
-脚本会根据标题自动安排人物动作和场景（科技工位虚化背景 + 与主题相关的道具），
-**不需要问用户**。用户主动指定时用 `--scene` 传入（如「坐在电脑前敲代码」「手指向屏幕」）。
-
-### Step 3：调用脚本生成（先探 API，下方「引擎与工作流」是这一步的总纲）
+## 唯一入口:generate.py
 
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/cyxj-video-cover/scripts/generate.py \
-  --title "封面标题" \
-  --label "测试"        # 本批标签：测试 / 某视频名
+python3 <本目录>/scripts/generate.py \
+  --title "占位" \                  # 仍需传参但别指望它排字;场景里必须禁字(见下)
+  --label "<项目名>-底图" \
+  --ratios "16:9" \
+  --face ~/Pictures/封面形象/<用户指定的原图> \
+  --scene "<场景描述>。画面中完全不出现任何文字、字母、数字、标志、水印;右侧大面积留白给排版"
 ```
 
-**输出路径（固定规矩，别改）**：输出根永远是 `~/Pictures/封面出图`，**每次出图都在它下面新建一个
-`<今日日期>-<标签>` 子文件夹**（如 `2026-06-26-测试`），不同批次不互相覆盖。脚本已内置：
-`--output` 只给根目录（默认就是封面出图），真正落地目录 = `<根>/<日期>-<label>/`，`--label` 必给一个有意义的标签。
+硬规矩:
+1. **人脸参考必须由用户指定原图**(`--face` 显式传),严禁默认取目录第一张、严禁拿生成图回喂(会越来越不像)。
+2. **场景提示词必须带禁字条款**(上面那句),出图后人工检查画面无任何文字残留。
+3. 底图只出 16:9 一张;分比例适配、标题渲染、psjpg 转换全部在 cyxj-release-kit 里做。
+4. 输出仍落 `~/Pictures/封面出图/<日期>-<label>/`。
 
-常用参数：
-- `--label "测试"` — **本批标签（务必传）**，决定子文件夹名 `<日期>-<标签>`
-- `--ratios "16:9,3:4"` — 只出指定比例（默认全四个：`16:9,2.35:1,3:4,4:3`）
-- `--n 1` — 每比例只出 1 张（默认 2 张挑）
-- `--face ~/Pictures/封面形象/某张.png` — 临时指定参考照片（默认读 `~/Pictures/封面形象/`）
-- `--scene "场景描述"` — 手动指定人物动作/场景
-- `--model <model>` — 换模型（默认 `gpt-image-2-vip`）
-- `--style <预设>` — 风格预设（默认 `default`）；`arch-stickman` = 俯拍真头火柴人 + 仰望双行拱形标题 + 大留白
+## 技术事实(engine 层,维护时看)
 
-### Step 4：展示结果，让用户挑
+- 引擎:`gpt-image-2-vip` @ GPTIMG2 中转 `api.chatgpt-code.com`(OpenAI 兼容,`{base}/v1/images/edits`,
+  真人照片做参考图重绘保脸;`response_format=url`,脚本下载落地 PNG)
+- 密钥:`密钥存储/.env` 的 `GPTIMG2_BASE_URL`(末尾无 `/v1`)+ `GPTIMG2_API_KEY`,脚本自动读
+- 引擎实测对照与 Gemini 实验路径:`references/engines.md`
+- 依赖:Python 3.11+ 标准库;可选 Pillow(自动中心裁切)
 
-用 Read 工具打开生成的封面展示给用户。每比例多张时，并列展示让用户挑。
+## 历史
 
-不满意时：
-- 调 `--scene` 改人物动作/场景
-- 调 `--title` 措辞
-- 换 `--face` 参考照片
-- 重新生成（多出几张挑）
-
-### Step 5：选定的封面过 cyxj-psjpg 转上传用 JPG
-
-生成的封面是 PNG。**用户挑定要用的封面后**，把这些选中的图过一遍
-[`cyxj-psjpg`](../../cyxj-psjpg) skill，转成统一规格的 JPG 并清理元数据痕迹
-（真 PS 导出，去掉来源痕迹，适合上传各平台）。
-
-为什么挑完再过：psjpg 走真 Photoshop，慢且占用 PS——只处理用户最终要用的几张，
-不浪费在没选中的图上。
-
-做法：
-1. 把用户选定的封面**复制到一个单独目录**（如 `<输出目录>/选定/`），避免把没选的也转了。
-2. **调用 `cyxj-psjpg` skill**，对这个目录跑它的转换脚本（psjpg 会输出到 `<目录>_psjpg/`）。
-   psjpg 是独立插件，用 Skill 工具调起它即可，由它用自己的 `${CLAUDE_PLUGIN_ROOT}` 定位脚本——
-   **不要**在本 skill 里写死 psjpg 的路径（两个插件装在不同缓存目录，路径不固定）。
-3. 把最终 JPG 位置告诉用户。
-
-前提：用户本机已装 `cyxj-psjpg`（及其依赖 Photoshop + exiftool）。没装就提示用户先装，
-或这一步可跳过（PNG 也能直接用）。
-
-## 输出规格
-
-| 用途 | 比例 | 目标尺寸 | 文件名 |
-|------|------|---------|--------|
-| YouTube | 16:9 | 2560×1440 | cover_16x9_N.png |
-| 公众号 | 2.35:1 | 2560×1088 | cover_2_35x1_N.png |
-| 竖版 | 3:4 | 1536×2048 | cover_3x4_N.png |
-| 横版 | 4:3 | 2048×1536 | cover_4x3_N.png |
-
-> ℹ️ **尺寸说明**：表内是**目标尺寸**——如 Step 0 所说，模型不认精确比例，实际出图可能有偏差。
-> 装了 Pillow 时脚本会把落地图**自动中心裁切**到表内尺寸；未装 Pillow 则保持原图、以实际出图为准（脚本会提示一句）。
-> GPTIMG2（`api.chatgpt-code.com`）的 gpt-image-2 出 **2K 级别**大图，
-> 边长均对齐 16 的倍数、长短比 ≤ 3:1。图片走 `response_format=url` 返回，脚本拿到 url 后下载落地为 PNG。
-> 想改尺寸/比例改脚本里的 `RATIO_SIZE` 即可。
-
-## 视觉风格（`--style` 选预设）
-
-### `default`（默认）
-
-- **真人**：你的照片重绘入场，保持本人长相（写实，不卡通/不 3D 化）
-- 人物在一侧（半身、看镜头、表情生动自信）+ 另一侧大标题留白
-- 背景：**简洁为主**——纯色/弱渐变或重度虚化的极简环境，不堆道具/屏幕/UI，
-  让人物和标题主导画面（需要具体场景时用 `--scene` 临时加）
-- 大号加粗中文标题（高对比、描边），由 gpt-image-2 直接渲染
-- 高点击 YouTube 缩略图调性
-
-### `arch-stickman`
-
-- 高角度俯拍视角，**真实头像 + 火柴人身体**（脚下带柔和投影、轻微方向光）
-- 小人很小、在画面下方**抬头仰望**头顶的标题
-- 标题排成**双行拱形**罩在小人头顶，一个关键词亮橙强调
-- 背景纯浅色、**大量留白**，极简
-- 人脸仍走 edits 端点保真，只把身体抽象成火柴人；"渺小的人 + 巨大的标题" 反差感，辨识度高、可做系列招牌
-
-### 借用 poster 的风格库（同插件福利）
-
-想要设计感更强的封面（如 Saul Bass 极简几何、胶片摄影质感），可读同插件的
-`${CLAUDE_PLUGIN_ROOT}/skills/cyxj-poster/references/artist-styles.md`，把选中的风格描述拼进 `--scene`
-作为背景/构图指令。**注意保真红线不变**：真人长相仍由 edits 端点保证，风格只作用于背景与排版，
-不要让风格描述把人物卡通化/抽象化（`arch-stickman` 除外）。
-
-## 技术说明
-
-- `generate.py` 默认模型 **`gpt-image-2-vip`** @ GPTIMG2 中转 `api.chatgpt-code.com`（OpenAI 兼容）；
-  引擎选型与各引擎实测能力见 `references/engines.md` 引擎对照表（Gemini 3 为实验性手动路径）
-- 走 `{base}/v1/images/edits` 端点：传真人照片做参考图重绘，保人脸一致
-  （`GPTIMG2_BASE_URL` 末尾无 `/v1`，脚本读到 base 后自动补全到 `/v1`）
-- `response_format=url` 返回 url，脚本下载后落地为 PNG（与 b64 同尺寸，实测）
-- 并行生成（ThreadPoolExecutor），4 比例×2 张约 1 分钟出齐
-- key 从密钥存储自动读取，不写进代码
-
-## 依赖
-
-- Python 3.11+（仅标准库）
-- **可选**：Pillow（装了会把出图自动中心裁切到目标尺寸，不装也能跑）
-- 真人照片目录（默认 `~/Pictures/封面形象/`）
-- 密钥存储 `.env` 里的 `GPTIMG2_BASE_URL` / `GPTIMG2_API_KEY`
-- **可选**：`cyxj-psjpg` skill（Step 5 把选定封面转上传用 JPG；它本身需 Photoshop + exiftool）
-
-## 网页生成提示词模板（API 不达标时用）
-
-火柴人 / 无脸涂鸦两大段模板与叮嘱见：`${CLAUDE_PLUGIN_ROOT}/skills/cyxj-video-cover/references/web-prompts.md`。
+旧版完整工作流(整图带字、4 比例×2、风格预设、psjpg 交付)已删,如需考古看本仓 git 历史
+(2026-07-26 之前的版本);网页生成模板 web-prompts.md 同日删除。
