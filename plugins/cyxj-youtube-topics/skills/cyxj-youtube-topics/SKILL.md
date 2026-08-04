@@ -10,26 +10,18 @@ description: |
 
 # youtube-topic-discovery：YouTube 选题发现 + 判断
 
-## ⚠️ 执行约束（严格遵守）
+## 执行边界
 
-本 skill 在一次调用内**只允许执行一遍 7 步流程**。具体禁止：
+一次调用跑一遍 7 步流程就结束——流水线的完整性由 launcher 保证，不由你保证。
+输出 `CYXJ_RESULT_FILE=<路径>` 后立即终止：不要回头再拉一次新视频，不要二次调 `write_topics.py`，
+不要"再补全一下"。也不要 echo 模仿 launcher 的 `===== 启动/结束/失败 =====` 日志格式。
 
-- 不要在 verdict 输出后又调用 `youtube_search.py` 拉新视频
-- 不要二次调用 `write_topics.py`
-- 输出 `CYXJ_RESULT_FILE=<路径>` 后立即终止，不要"再补全一下"或"再确认一下"
-- 不要模仿 launcher 的 `===== 启动/结束/失败 =====` 日志格式 echo 任何文字
+## 断点续传（每步执行前先看一眼）
 
-如果你在执行过程中产生"是不是该再扫一次"的念头，停下——这是错的。流水线的完整性由 launcher 保证，不由你保证。
-
-## 🔁 断点续传机制（每步执行前必读）
-
-上一次跑可能在中间某步失败（budget 烧光 / 网络挂 / Ctrl+C），失败时 `/tmp/yt_*.json` 中间产物可能还在。**每步开始前先检查对应输出文件**，存在且新鲜则跳过该步：
+上一次跑可能在中间某步失败（budget 烧光 / 网络挂 / Ctrl+C），`/tmp/yt_*.json` 中间产物可能还在。
+**每步开始前检查对应输出文件，存在且 6h 内就跳过该步**——超过 6h 视为过期（48h lookback 窗口已显著移位）：
 
 ```bash
-# 全流程都会用到 $SKILL_DIR，先定义（CLAUDE_PLUGIN_ROOT 由 Claude Code 注入）
-SKILL_DIR="${CLAUDE_PLUGIN_ROOT}/skills/cyxj-youtube-topics"
-
-# 模板：每一步开头先这样判断（stat -f 是 BSD/macOS 写法，Linux 兜底用 stat -c）
 if [ -f /tmp/yt_videos.json ] && [ $(($(date +%s) - $(stat -f %m /tmp/yt_videos.json 2>/dev/null || stat -c %Y /tmp/yt_videos.json))) -lt 21600 ]; then
   echo "复用现有 /tmp/yt_videos.json（6h 内）"
 else
@@ -37,11 +29,11 @@ else
 fi
 ```
 
-**6h 阈值**：超过 6h 的中间产物视为过期（48h lookback 窗口已显著移位），重新跑。
+（`stat -f` 是 BSD/macOS 写法，Linux 兜底用 `stat -c`；`$SKILL_DIR` 在下面「流程」开头定义。）
 
-**LLM 步骤（第 3 步聚类 / 第 5 步 verdict）**：执行前先 `ls -la /tmp/yt_clusters.json /tmp/yt_final.json`，存在且新鲜则跳过判断动作，直接读文件进入下一步。
+LLM 步骤（第 3 步聚类 / 第 5 步 verdict）同理：先 `ls -la /tmp/yt_clusters.json /tmp/yt_final.json`，新鲜就直接读文件进下一步。
 
-**第 6 步 write_topics.py 不做断点续传**——一旦写盘就更新了 `.seen_video_ids.json`、话题索引、判断日志，没有"重复写入"概念。如果第 6 步已经跑过（看 `${CYXJ_TOPIC_DIR}` 下有今天的 `YYYY-MM-DD HH-MM YouTube选题总览.md`），直接终止流程并报告"今天已经跑过了"。
+**第 6 步 write_topics.py 不做断点续传**——一旦写盘就更新了 `.seen_video_ids.json`、话题索引、判断日志，没有"重复写入"概念。`${CYXJ_TOPIC_DIR}` 下已有今天的 `YYYY-MM-DD HH-MM YouTube选题总览.md` 就直接终止，报告"今天已经跑过了"。
 
 ## 角色
 
@@ -49,49 +41,10 @@ fi
 
 ## 前置准备
 
-首次使用前配置以下环境变量（一次配置永久生效）：
-
-1. **YouTube Data API v3 Key**（必需，可配多个轮询）
-   - 在 https://console.cloud.google.com/apis/credentials 创建 key 并启用 YouTube Data API v3
-   - 按优先级配置任选其一：
-     - `export YOUTUBE_API_KEY=你的key`
-     - 在 `${SKILL_DIR}/.env` 写入 `YOUTUBE_API_KEY=你的key`
-     - 在 `~/.config/cyxj/.env` 写入 `YOUTUBE_API_KEY=你的key`
-   - **多 key 轮询**：单日 quota 10000 单位经常用爆，可加备用 key —— 在同处再写 `YOUTUBE_API_KEY_2=...`、`YOUTUBE_API_KEY_3=...`。脚本 403 quotaExceeded 时自动切下一个 key 重试。⚠️ 备用 key 必须来自**不同的 Google Cloud 项目**才有独立配额，同项目里加几个 key 也是同一份 quota。变量名大小写不敏感、`_2` 和 `2` 都认。
-
-2. **Obsidian 选题库目录**（必需）
-   - `export CYXJ_TOPIC_DIR="$HOME/obsidian/灵感库/选题库"`
-
-3. **用户个人档案**（可选，但强烈建议）
-   - `export CYXJ_USER_PROFILE="$HOME/obsidian/.../个人档案.md"`
-   - 内容应包含：身份定位、内容聚焦方向、目标受众、不做什么、代表作品
-   - 有这个文件，判断层能给"差异化切口"建议；没有时降级为客观判断
-
-4. **Apify API Token**（必需，字幕抓取主路径）
-   - 注册 apify.com，Settings → API & Integrations → Personal API Token
-   - 主路径 Actor：`scrape-creators/best-youtube-transcripts-scraper`（脚本直接按 Actor ID 调用，无需 bookmark）
-   - 按优先级配置任选其一：
-     - `export APIFY_API_TOKEN=你的token`
-     - 在 `${SKILL_DIR}/.env` 写入 `APIFY_API_TOKEN=你的token`
-     - 在 `~/.config/cyxj/.env` 写入 `APIFY_API_TOKEN=你的token`
-   - Free plan 每月 $5 credit，scrape-creators 约 $0.001/条，每月 600 视频约 $0.6，远在 Free 额度内
-
-5. **Supadata API Key**（可选，fallback 兜底）
-   - 注册 supadata.ai，dashboard 拷贝 API key
-   - 配置：同 Apify，变量名 `SUPADATA_API_KEY`
-   - Free tier 每月 100 credits，应急 fallback 够用
-   - 不配置也能跑，只是主路径挂时没兜底（Supadata 是独立服务商、独立 IP 池，与 Apify 不共享额度）
-
-6. **Python 依赖**：`pip install -r requirements.txt`
-   - 必需：`requests`
-   - 不再需要 `youtube-transcript-api`（主路径已换 Apify 代理，不走 YouTube 内部接口）
-
-### 高级环境变量（可选，从脚本实际行为归纳）
-
-- `CYXJ_STATE_DIR`：覆盖状态目录（话题索引 / 创作者索引 / 判断日志 / `.seen_video_ids.json` 的存放处；默认 `~/Library/Application Support/cyxj-youtube-topics/state`，为避 iCloud 文件锁不放同步目录）
-- `CYXJ_TRUSTED_BACKEND`：信任频道直查后端，`youtube_api`（默认）或 `apify`（测试用，不烧 YouTube quota，且会跳过关键词召回）
-- `CYXJ_LOOKBACK_HOURS`：召回回看窗口小时数，默认 48，取值范围 1–168
-- `CYXJ_PHASE`：两段式 cron 专用；`=1` 时 `write_topics.py` 硬锁拒绝写盘（防廉价模型越界），`=2` 或不设则放行
+跑之前需要 `YOUTUBE_API_KEY`（可多 key 轮询）、`CYXJ_TOPIC_DIR`、`APIFY_API_TOKEN` 三个必需项，
+外加可选的 `CYXJ_USER_PROFILE`（有它才能给"差异化切口"）和 `SUPADATA_API_KEY`（字幕兜底）。
+**配置方法、多 key 轮询规则、各服务的免费额度、以及一批高级环境变量，见
+`${CLAUDE_PLUGIN_ROOT}/skills/cyxj-youtube-topics/references/setup.md`**——首次使用或脚本报缺 key 时读它。
 
 ## 流程
 

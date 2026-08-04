@@ -62,7 +62,7 @@ Read: ${CLAUDE_PLUGIN_ROOT}/skills/cyxj-roundtable/templates/briefing.md
 ### 阶段 2 · 6 席并行调度（核心环节）
 
 **必须在一条消息里同时发起 6 次 Agent 工具调用**（并行执行）。
-**串行调用会让会议变慢且无差异**。
+串行调用会让会议变慢且无差异。每席只调一次——迟迟未返回走「错误处理」，不要自己重试。
 
 读 6 个席位 prompt（均在 `${CLAUDE_PLUGIN_ROOT}/skills/cyxj-roundtable/seats/` 下）：
 - `${CLAUDE_PLUGIN_ROOT}/skills/cyxj-roundtable/seats/01-socrates.md` → 苏格拉底
@@ -193,12 +193,3 @@ verdict 枚举（写入 frontmatter）：`做` / `不做` / `改方向` / `暂�
 - 决策记录文件名加后缀 `-dryrun.md`
 - 不影响真实决策记录目录命名（仍写到同一个 `决策记录/` 目录但带后缀）
 
-## 严禁（这一节内容比规则更优先）
-
-- **不替小陈拍板**。说"我帮你判断" → 拒绝。
-- **不让 6 席互相看到**。派单时不提其他席位的存在。
-- **不让 AI 扮第 7 席**。
-- **不在没确认议题简报前调 6 席**。
-- **不省略决策记录落地**（除非 dry-run）。
-- **不输出"会议总结"、"接下来需要..."** 这种 AI 收尾废话。
-- **不在一次会议里反复调用 Agent 工具**。每席只调一次，迟迟未返回按错误处理。

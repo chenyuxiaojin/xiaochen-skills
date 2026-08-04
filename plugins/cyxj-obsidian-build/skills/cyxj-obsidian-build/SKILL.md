@@ -15,15 +15,6 @@ version: 2.0.0
 > 灵感来源：Andrej Karpathy 的 [LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f) 方法论
 > 核心理念：LLM 增量构建并维护一个持久的 Wiki — 一个结构化、互相链接的 Markdown 文件集合。知识编译一次，持续维护，而不是每次查询时重新推导。
 
-<trigger>
-以下场景触发此 skill：
-- "帮我整理我的 Obsidian"、"编译知识库"、"更新 Wiki"（→ 批量摄入）
-- "摄入这篇笔记"、"处理这个文件"、"消化这个"（→ 单条摄入）
-- "查知识库"、"知识库里有没有…"、"帮我查…"（→ 查询）
-- "健康度检查"、"检查知识库"（→ Lint）
-- 任何涉及 Obsidian 笔记整理、关联、维护的请求
-</trigger>
-
 ---
 
 ## 定位库（任何操作之前先做）
@@ -81,38 +72,11 @@ Wiki 层包含：
 前提：已按「定位库」确认 `$VAULT`。如果 `$VAULT/CLAUDE.md` 不存在，先生成它再开始工作：
 
 1. 扫描库的顶层目录结构
-2. 生成 CLAUDE.md，内容如下（根据实际目录调整）：
+2. 读 `${CLAUDE_PLUGIN_ROOT}/skills/cyxj-obsidian-build/templates/vault-claude-md.md`，按实际目录调整后生成 CLAUDE.md
 3. 让用户确认或修改后再继续
 
-**CLAUDE.md 默认模板：**
-
-```markdown
-# Obsidian 知识库配置
-
-## 原始资料目录（LLM 只读不写）
-- 日记/
-- 灵感库/
-- 收藏夹/
-- 资源库/（Wiki/ 子目录除外）
-
-## Wiki 目录（LLM 维护）
-- 资源库/Wiki/
-
-## 分类体系
-Wiki 概念页按以下分类组织（可随时扩展）：
-- 技术工具
-- 创作方法
-- 人物
-- 商业认知
-- 自我认知
-
-## 约定
-- Wiki 概念页 frontmatter 包含 `source: ai-compiled`
-- 合成页 frontmatter 包含 `source: ai-synthesized`
-- 所有 [[wikilink]] 必须指向真实存在的文件
-```
-
-同时创建 `Wiki/index.md` 和 `Wiki/log.md`（如果不存在）。
+同时创建 `Wiki/index.md` 和 `Wiki/log.md`（格式见
+`${CLAUDE_PLUGIN_ROOT}/skills/cyxj-obsidian-build/templates/index-and-log.md`）。
 
 ---
 
@@ -130,7 +94,8 @@ Wiki 概念页按以下分类组织（可随时扩展）：
 4. **识别概念**：提取笔记中的概念、工具名、人名、方法论
 5. **匹配 Wiki**：对每个概念，用 `obsidian-cli search` 检查是否已有 Wiki 页面
    - 已有 → 用 `obsidian-cli read` 读取，用 `obsidian-cli append` 追加新信息
-   - 没有 → 用 `obsidian-cli create` 按模板创建新概念页
+   - 没有 → 用 `obsidian-cli create` 创建新概念页，模板与规则见
+     `${CLAUDE_PLUGIN_ROOT}/skills/cyxj-obsidian-build/templates/concept-page.md`
 6. **更新索引**：更新 `Wiki/index.md`，添加新页面条目
 7. **记录日志**：追加到 `Wiki/log.md`
 8. **汇报结果**：告诉用户创建/更新了哪些页面
@@ -170,31 +135,9 @@ Wiki 概念页按以下分类组织（可随时扩展）：
 3. **深入阅读**：用 `obsidian-cli read` 读取相关的 Wiki 页面和原始资料
 4. **合成答案**：综合多个来源，给出带引用的回答
 5. **提议归档**：问用户"这次分析要存回 Wiki 吗？"
-   - 是 → 创建新的合成页（type: synthesis / comparison），更新 index.md，追加 log.md
+   - 是 → 按 `${CLAUDE_PLUGIN_ROOT}/skills/cyxj-obsidian-build/templates/synthesis-page.md`
+     创建合成页，更新 index.md，追加 log.md
    - 否 → 仅追加 log.md 记录查询
-
-**合成页模板：**
-
-```markdown
----
-type: 合成
-source: ai-synthesized
-created: YYYY-MM-DD
-query: "用户的原始问题"
----
-
-# 标题
-
-> 一句话回答
-
-## 分析
-
-（正文内容）
-
-## 引用资料
-
-- [[Wiki 页面或原始笔记]] — 引用说明
-```
 
 这样你的提问和思考也会沉淀到知识库里，而不是消失在聊天记录中。
 
@@ -222,90 +165,16 @@ query: "用户的原始问题"
 
 ---
 
-## 概念页模板
+## 模板文件（用到时再读）
 
-```markdown
----
-type: 概念
-source: ai-compiled
-aliases: [别名1, 别名2]
-created: YYYY-MM-DD
-updated: YYYY-MM-DD
----
+所有页面模板都在 `${CLAUDE_PLUGIN_ROOT}/skills/cyxj-obsidian-build/templates/` 下，写文件前读对应的那份：
 
-# 概念名
-
-> 一句话定义（简洁直白）
-
-## 核心要点
-
-- 从所有相关资料提炼的核心认知（不是复述，是升华）
-
-## 相关资料
-
-- [[原始笔记名]] — 一句话说明与本概念的关系
-
-## 日记洞察
-
-- **YYYY-MM-DD**：从日记提炼的相关认知（摘录关键原文）
-
-## 另见
-
-- [[其他 Wiki 概念页]] — 关系说明
-```
-
-**规则：**
-- `aliases` 包含常见变体写法（中英文、缩写）
-- `相关资料` 中的 `[[链接]]` 必须指向真实存在的文件
-- `另见` 用于 Wiki 概念页之间的互相链接
-- 更新时只追加新内容，不删除已有内容
-
----
-
-## 导航文件
-
-### Wiki/index.md
-
-按分类组织的内容目录，每次 Ingest 后更新：
-
-```markdown
----
-source: ai-compiled
-updated: YYYY-MM-DD
----
-
-# Wiki 索引
-
-## 技术工具
-- [[Claude Code]] — AI 编程助手
-- [[Obsidian]] — 知识管理工具
-
-## 创作方法
-- [[视频制作]] — 短视频内容创作流程
-
-## 合成分析
-- [[某某对比分析]] — Query 产出的合成页
-```
-
-分类来自 `$VAULT/CLAUDE.md` 中定义的分类体系。
-
-### Wiki/log.md
-
-操作时间线，仅追加，格式可被 grep 解析：
-
-```markdown
-## [2026-04-05] ingest | 文章标题
-摄入来源：收藏夹/article.md
-更新页面：[[概念A]]、[[概念B]]
-新建页面：[[概念C]]
-
-## [2026-04-05] query | 用户的问题
-答案归档：[[合成页标题]]
-引用页面：[[概念A]]、[[概念D]]
-
-## [2026-04-05] lint
-发现问题：3 个孤岛、1 个断链、2 个过时页
-```
+| 文件 | 什么时候读 |
+|---|---|
+| `vault-claude-md.md` | 首次运行，生成库根 CLAUDE.md |
+| `concept-page.md` | Ingest 创建/更新概念页（含 aliases、链接、只追加不删的规则） |
+| `synthesis-page.md` | Query 的答案要存回 Wiki |
+| `index-and-log.md` | 更新 Wiki/index.md 或 Wiki/log.md |
 
 ---
 

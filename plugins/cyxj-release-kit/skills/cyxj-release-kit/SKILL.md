@@ -86,9 +86,8 @@ description: |
 
 ## 模块四:上传 JPG
 
-- **默认轻量转换**(HTML 截图无任何来源痕迹,无需去痕):
+- HTML 截图无任何来源痕迹,无需去痕,直接轻量转换:
   `sips -s format jpeg -s formatOptions 95 <png> --out <jpg>`
-- 用户要「PS 出品」元数据外观时才调 **cyxj-psjpg** skill(真 Photoshop 导出,约 2-4 秒/张)。
 
 ## 产物归集与收尾
 
@@ -96,7 +95,6 @@ description: |
 ~/Pictures/封面出图/<日期>-<项目>-最终/
   封面_16x9.png / 封面_4x3.png / 封面_3x4.png     ← 定稿 PNG
   源文件/ 封面工作台.html + plate_16x9.png + 字体   ← 可复用,下期只改 L1/L2/L3
-~/Pictures/封面出图/<日期>-<项目>-最终_psjpg/       ← 走 psjpg 时的 JPG
 ```
 - 过程稿文件夹在用户确认定稿后**问一声再删**(先例:用户会要求清掉)。
 - 标题+简介直接在对话交付;按内容创作仓库规矩更新 log HEAD + 历史流水。
@@ -106,6 +104,5 @@ description: |
 | skill | 管什么 | 本 skill 关系 |
 |---|---|---|
 | cyxj-video-cover | 生图封面(整图带字) | 降级为**底图生成器**,文字不再交给它 |
-| cyxj-psjpg | 真 PS 转 JPG + 去痕 | 可选后处理,默认不用 |
 | cyxj-jingxuan | 抖音精选申请文案 | 发布后的下一步,不在本 skill 内 |
 | cyxj-hook / cyxj-content | 视频开头/内容诊断 | 管片子本身,不管发布物料 |

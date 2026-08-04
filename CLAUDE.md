@@ -59,7 +59,8 @@ plugins/cyxj-foo/skills/cyxj-foo/SKILL.md   ← name: cyxj-foo
    插件**改名/合并/删除**时必须在顶层 `renames` 字段加映射（改名 → 新名，删除 → null），已装用户才能自动迁移。
    `renames` 是 append-only 历史，旧条目**永不删除**（Claude Code 会沿改名链跟踪）
 3. **README.md** — Skills 表格同步（名称 + 链接路径），且不留指向已删除目录的幽灵条目
-4. **CLAUDE.md** — 下方技术栈速查表同步
+4. **CLAUDE.md** — 只在「架构 / 命名规则 / 流程」这些**不会随插件增减而变**的规则受影响时才动它；
+   不要在这里维护逐插件清单（会漂），要看有哪些插件读 `marketplace.json`
 5. **AGENTS.md** — 已改为指向本文件的重定向（2026-06-13 起单源维护，不再镜像同步），正常情况不需要动它
 6. **push 到 GitHub** — 本地改动不会自动同步给已安装用户，**必须 push 后才对用户生效**
 
@@ -69,8 +70,7 @@ plugins/cyxj-foo/skills/cyxj-foo/SKILL.md   ← name: cyxj-foo
 2. 辅助脚本 / 资源放同级目录或 `scripts/`
 3. 在 `.claude-plugin/marketplace.json` 的 `plugins` 数组注册
 4. 更新 README.md 的 Skills 表格
-5. 更新本文件的技术栈速查表（AGENTS.md 是重定向，无需同步）
-6. push 到 GitHub 后生效
+5. push 到 GitHub 后生效（AGENTS.md 是重定向，无需同步；CLAUDE.md 不维护逐插件清单，通常不用动）
 
 ## 常用命令
 
@@ -78,31 +78,6 @@ plugins/cyxj-foo/skills/cyxj-foo/SKILL.md   ← name: cyxj-foo
 # 验证 marketplace.json 格式
 python3 -m json.tool .claude-plugin/marketplace.json
 
-# 列出当前所有已注册插件
-cat .claude-plugin/marketplace.json | python3 -c "import sys,json; [print(p['name']) for p in json.load(sys.stdin)['plugins']]"
-
 # 漂移自检：找出"有目录但没注册进 marketplace"的插件（理想为空；非空 = 有插件漏注册）
-python3 -c "import json,os; reg={p['name'] for p in json.load(open('.claude-plugin/marketplace.json'))['plugins']}; print(sorted(set(os.listdir('plugins'))-reg))"
+python3 -c "import json,os; reg={p['name'] for p in json.load(open('.claude-plugin/marketplace.json'))['plugins']}; print(sorted({d for d in os.listdir('plugins') if os.path.isdir('plugins/'+d)}-reg))"
 ```
-
-## 各 Skill 技术栈速查
-
-> 以 `.claude-plugin/marketplace.json` + `plugins/` 实际目录为准；下表会漂移，发现不符时以前两者为准。
-
-| Skill | 核心技术 | 外部依赖 | 已注册 |
-|-------|---------|---------|:--:|
-| cyxj-subfix | Python + Gemini API + Opus 审查 | google-genai, pysrt | ✓ |
-| cyxj-wechat-pub | CSS + HTML 模板 + juice（npm），内置 3 套主题 | juice (npm) | ✓ |
-| cyxj-obsidian-build | 纯 SKILL.md 指令 | Obsidian 库访问 | ✓ |
-| cyxj-image-studio | 一插件双 skill：cyxj-poster（Python + gpt-image-2 + Gemini 扩写）+ cyxj-video-cover（标准库 urllib 真人照重绘），共享 lib/imgapi.py 凭据加载 | poster: requests, google-genai, pillow；video-cover: 无第三方（Pillow 可选） | ✓ |
-| cyxj-youtube-topics | Python + YouTube Data API + Apify（字幕主路径） | requests、APIFY_API_TOKEN、Supadata（可选兜底） | ✓ |
-| cyxj-yt-creator | Python + Apify + Obsidian | requests | ✓ |
-| cyxj-notebook-research | Python + Notebook LM | notebooklm-py, python-frontmatter | ✓ |
-| cyxj-roundtable | 纯 SKILL.md 指令（拉起多个 Opus subagent） | 无 | ✓ |
-| cyxj-ai-weekly-news | 纯 SKILL.md 指令（9 步交互式 SOP + references 模板） | 达芬奇 / Obsidian 工作流 | ✓ |
-| cyxj-transcript | 纯 SKILL.md 指令（逐字稿转文章） | Obsidian 工作流 | ✓ |
-| cyxj-blog-pub | 纯 SKILL.md 指令（Astro 博客发布） | Astro / 图床 | ✓ |
-| cyxj-video-doctor | 纯 SKILL.md 指令，一插件双 skill：cyxj-content（六维内容诊断）+ cyxj-hook（开头钩子四型方案），共享 references/track-truth.md | 无 | ✓ |
-| cyxj-data-review | 纯 SKILL.md 指令（抖音数据复盘，KPI 链收藏→涨粉→精选） | 用户导出的抖音数据 | ✓ |
-| cyxj-jingxuan | 纯 SKILL.md 指令（抖音精选申请文案，四段式） | 成片字幕/逐字稿 | ✓ |
-| cyxj-release-kit | 指令 + HTML 封面工作台（浏览器排字出三比例封面） | 底图依赖 cyxj-image-studio（GPTIMG2_*）；浏览器 | ✓ |

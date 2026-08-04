@@ -10,7 +10,7 @@ description: 一句话生成大师级海报/封面设计。33+设计师风格+10
 ## 脚本调用
 
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/scripts/generate_mondo_enhanced.py "subject" "type" [options]
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/cyxj-poster/scripts/generate_mondo_enhanced.py "subject" "type" [options]
 ```
 
 > **生图后端**：gpt-image-2（GPTIMG2 @ `api.chatgpt-code.com`，OpenAI 兼容 HTTP）。
@@ -63,52 +63,52 @@ python3 ${CLAUDE_PLUGIN_ROOT}/scripts/generate_mondo_enhanced.py "subject" "type
 
 基础生成：
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/scripts/generate_mondo_enhanced.py "Blade Runner" movie
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/cyxj-poster/scripts/generate_mondo_enhanced.py "Blade Runner" movie
 ```
 
 AI 优化 prompt：
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/scripts/generate_mondo_enhanced.py "Blade Runner" movie --ai-enhance
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/cyxj-poster/scripts/generate_mondo_enhanced.py "Blade Runner" movie --ai-enhance
 ```
 
 3 种风格对比：
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/scripts/generate_mondo_enhanced.py "Akira" movie --compare kilian-eng,saul-bass,jock
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/cyxj-poster/scripts/generate_mondo_enhanced.py "Akira" movie --compare kilian-eng,saul-bass,jock
 ```
 
 图生图转换：
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/scripts/generate_mondo_enhanced.py "cyberpunk noir" movie --input poster.jpg --style saul-bass
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/cyxj-poster/scripts/generate_mondo_enhanced.py "cyberpunk noir" movie --input poster.jpg --style saul-bass
 ```
 
 指定配色：
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/scripts/generate_mondo_enhanced.py "Jazz Night" event --style milton-glaser --colors "psychedelic orange, purple, yellow"
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/cyxj-poster/scripts/generate_mondo_enhanced.py "Jazz Night" event --style milton-glaser --colors "psychedelic orange, purple, yellow"
 ```
 
 摄影风格：
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/scripts/generate_mondo_enhanced.py "portrait" event --style ccd-flash
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/cyxj-poster/scripts/generate_mondo_enhanced.py "portrait" event --style ccd-flash
 ```
 
 IP 角色海报（带标题）：
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/scripts/generate_mondo_enhanced.py "cyberpunk tech news" event --ip-ref ./ip-reference/ --title "A社新规：禁止第三方调用" --aspect-ratio 4:3 --colors "deep navy blue, neon cyan, magenta"
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/cyxj-poster/scripts/generate_mondo_enhanced.py "cyberpunk tech news" event --ip-ref ./ip-reference/ --title "A社新规：禁止第三方调用" --aspect-ratio 4:3 --colors "deep navy blue, neon cyan, magenta"
 ```
 
 IP 角色海报（无标题）：
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/scripts/generate_mondo_enhanced.py "cozy reading scene" event --ip-ref ./ip-reference/ --style rixi --aspect-ratio 3:4
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/cyxj-poster/scripts/generate_mondo_enhanced.py "cozy reading scene" event --ip-ref ./ip-reference/ --style rixi --aspect-ratio 3:4
 ```
 
 只输出 prompt：
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/scripts/generate_mondo_enhanced.py "Dune sci-fi epic" movie --no-generate
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/cyxj-poster/scripts/generate_mondo_enhanced.py "Dune sci-fi epic" movie --no-generate
 ```
 
 列出所有风格：
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/scripts/generate_mondo_enhanced.py --list-styles
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/cyxj-poster/scripts/generate_mondo_enhanced.py --list-styles
 ```
 
 ## 摄影风格速查
@@ -138,7 +138,6 @@ python3 ${CLAUDE_PLUGIN_ROOT}/scripts/generate_mondo_enhanced.py --list-styles
 4. **确认参数** — 画幅比例、是否需要标题文字等
 5. **生成并展示** — 调用脚本生成，展示结果
 6. **迭代调整** — 不满意可以换风格/配色重新生成
-7. **交接** — 选定的图要发平台时，提示可用 `cyxj-psjpg` 转 JPG 并清理 AI 生成痕迹（需本机 Photoshop）
 
 如果用户想看风格对比，用 `--compare` 生成 3 种风格并排对比图。
 
