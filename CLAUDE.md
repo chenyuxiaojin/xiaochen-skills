@@ -26,7 +26,7 @@ plugins/
 ```
 
 **两类 skill**：
-- **纯指令型**（obsidian-build、roundtable、ai-weekly-news、jingxuan 等）—— 没有脚本，全靠 SKILL.md 的
+- **纯指令型**（obsidian-build、roundtable、jingxuan、transcript 等）—— 没有脚本，全靠 SKILL.md 的
   frontmatter + 正文指令（部分配 references/ 模板）驱动；roundtable 还会现场拉起多个 Opus subagent 扮演不同角色
 - **脚本型**—— SKILL.md 调用同目录的 Python/Bash 脚本，脚本里用 `${CLAUDE_PLUGIN_ROOT}`（或 `$SKILL_DIR`）
   拼本地路径定位资源。新写脚本引用本地文件时**必须**走这个变量，不能写死绝对路径

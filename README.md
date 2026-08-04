@@ -2,7 +2,7 @@
 
 # xiaochen-skills
 
-> xiaochen-skills is a Claude Code plugin marketplace bundling 15 plugins (17 skills) for video production, content publishing, and knowledge management.
+> xiaochen-skills is a Claude Code plugin marketplace bundling 13 plugins (15 skills) for video production, content publishing, and knowledge management.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-plugin-blueviolet)](https://claude.ai/code)
@@ -21,9 +21,7 @@ Claude Code's built-in skills cover general tasks. This collection adds a vertic
 | [cyxj-image-studio](./plugins/cyxj-image-studio/) | Image studio (gpt-image-2), one plugin with two skills sharing credential loading: **cyxj-poster** (master-level poster / book cover / album art, 33+ designer + 10 photography styles) and **cyxj-video-cover** (real-person video thumbnails from your photo, 4 aspect ratios; can borrow poster's style library) | `生成海报`, `封面设计`, `/封面`, `生成封面`, `做个视频封面` | `GPTIMG2_BASE_URL`/`GPTIMG2_API_KEY`; poster additionally `GEMINI_API_KEY` + Python `requests`, `google-genai`, `pillow`; video-cover is stdlib-only (Pillow optional) |
 | [cyxj-youtube-topics](./plugins/cyxj-youtube-topics/) | Discover YouTube videos published in the last 48 hours on a topic, cluster by theme, score each with verdict (make / wait / follow / skip), write to Obsidian topic library | `YouTube 选题`, `找 YouTube 选题`, `YouTube 最近有什么`, `有什么新视频` | `YOUTUBE_DATA_API_KEY`; `APIFY_API_TOKEN` (subtitles); Python: `requests`; Obsidian vault path |
 | [cyxj-yt-creator](./plugins/cyxj-yt-creator/) | Research how YouTubers cover a tool/topic via Apify: fetch transcripts, rank by date/views, write differentiation notes to Obsidian draft queue | `查博主怎么用`, `用 Apify 搜 YouTube`, `研究这个工具的 YouTube 视频` | `APIFY_API_TOKEN`; Python: `requests`; Obsidian vault path |
-| [cyxj-notebook-research](./plugins/cyxj-notebook-research/) | Submit videos from Obsidian topic library to Google Notebook LM in batch, pull transcripts and research reports back to Obsidian | `帮我研究一下 XXX 话题`, `研究一下这个选题`, `把选题提交给 Notebook LM` | Google account with Notebook LM access; Python: `notebooklm-py`, `python-frontmatter`; `CYXJ_VAULT_BASE` env var |
 | [cyxj-roundtable](./plugins/cyxj-roundtable/) | Convene 6 independent Claude Opus subagents playing adversarial roles (Socrates / harsh peer / biased investor / historian / future-regretful-you / ally) to pressure-test a decision; save to Obsidian | `/圆桌`, `开个圆桌`, `开圆桌`, `/roundtable` | No extra API key (uses Claude Opus via Claude Code); Obsidian vault path |
-| [cyxj-ai-weekly-news](./plugins/cyxj-ai-weekly-news/) | End-to-end 9-step SOP for a weekly AI news video: news selection → narration → timecodes → 4K render in DaVinci Resolve; pauses at each human decision point | `/AI每周热点`, `/做下一期`, `/每周AI视频`, `做这周的 AI 视频` | DaVinci Resolve installed locally; Obsidian vault path; **video project path is hardcoded to author's machine — must be updated before use** |
 | [cyxj-transcript](./plugins/cyxj-transcript/) | Turn a raw transcript (video voiceover, recording transcription) into a structured article draft: de-spoken, headings added, data tabulated, original preserved at the end — outputs Obsidian Markdown | `转稿`, `逐字稿整理`, `把这个稿子整理成文章`, `口播稿成文` | Obsidian vault path; no API key |
 | [cyxj-blog-pub](./plugins/cyxj-blog-pub/) | Publish an article to an Astro blog: validate frontmatter, enforce kebab-case filenames, replace images with CDN URLs, then build and deploy | `发布到博客`, `发博客`, `博客发文`, `上博客`, `Astro 发布` | Astro blog repo configured locally; image CDN configured; **deploy target is author's server — must be updated before use** |
 | [cyxj-video-doctor](./plugins/cyxj-video-doctor/) | Knowledge-video clinic (3-min+ aimed at Douyin featured), one plugin with two skills sharing a single track-truth reference: **cyxj-content** (six-dimension content diagnosis) and **cyxj-hook** (opening-hook diagnosis + 4 hook archetypes) | `/内容诊断`, `帮我看看这条稿`, `/cyxj-hook`, `优化我的视频开头`, `开头钩子` | None (instruction-only skills) |
@@ -59,7 +57,7 @@ No slash command prefix is required for most skills — the trigger phrases list
 | | xiaochen-skills | [anthropic/claude-code-skills](https://github.com/anthropics/claude-code) (official examples) | [awesome-claude-code](https://github.com/hesreallyhim/awesome-claude-code) community list |
 |---|---|---|---|
 | Focus | Video production + WeChat publishing + Obsidian knowledge management | General-purpose demos and patterns | Curated links to many community skills |
-| Skill count | 17 skills / 15 plugins | Varies (reference examples) | Many repos, not a single install |
+| Skill count | 15 skills / 13 plugins | Varies (reference examples) | Many repos, not a single install |
 | Install method | Single `/plugin marketplace add` command | Copy individual files | Each repo installs separately |
 | Multi-agent | Yes (roundtable spawns 6 Opus subagents) | Depends on example | Varies |
 | Script automation | Yes (Python + Bash, Photoshop, Gemini, Apify) | Minimal | Varies |
@@ -68,7 +66,7 @@ No slash command prefix is required for most skills — the trigger phrases list
 ## FAQ
 
 **How do I install?**
-Run `/plugin marketplace add chenyuxiaojin/xiaochen-skills` inside Claude Code. All 15 plugins (17 skills) are registered.
+Run `/plugin marketplace add chenyuxiaojin/xiaochen-skills` inside Claude Code. All 13 plugins (15 skills) are registered.
 
 **Can I install only one skill?**
 Yes. Each plugin is self-contained. You can install a single plugin by specifying the plugin name if the marketplace supports it, or copy the individual `plugins/cyxj-{name}/` directory and register it in your own marketplace.
@@ -86,11 +84,9 @@ Skills that require API keys:
 - `cyxj-image-studio` → `GPTIMG2_BASE_URL`/`GPTIMG2_API_KEY` (both skills); poster additionally `GEMINI_API_KEY` (文字扩写)
 - `cyxj-youtube-topics` → `YOUTUBE_DATA_API_KEY` + `APIFY_API_TOKEN` (subtitles)
 - `cyxj-yt-creator` → `APIFY_API_TOKEN`
-- `cyxj-notebook-research` → Google account with Notebook LM access
 - `cyxj-release-kit` → base images via `cyxj-image-studio` (`GPTIMG2_*`)
 
 Skills with **hardcoded paths or dependencies tied to the author's machine** — you must update paths before use:
-- `cyxj-ai-weekly-news` — project path is hardcoded to `~/项目/试验区/ai-weekly-flash-video`
 - `cyxj-blog-pub` — deploy target is the author's Astro blog and server
 
 **Where are API keys stored?**

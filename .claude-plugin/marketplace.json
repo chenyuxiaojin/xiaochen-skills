@@ -11,11 +11,13 @@
     "cyxj-poster": "cyxj-image-studio",
     "cyxj-video-cover": "cyxj-image-studio",
     "cyxj-geo": null,
-    "cyxj-psjpg": null
+    "cyxj-psjpg": null,
+    "cyxj-notebook-research": null,
+    "cyxj-ai-weekly-news": null
   },
   "metadata": {
-    "description": "小陈的 Claude Code 技能集：达芬奇字幕修正、公众号排版发布、Obsidian 知识库编译、海报设计、YouTube 选题发现、博主用法研究、Notebook LM 研究、真人视频封面、圆桌决策压测、每周 AI 热点视频、逐字稿转文章、Astro 博客发布、知识视频开头优化、知识视频内容诊断、抖音数据复盘诊断、抖音精选申请文案、视频发布物料一条龙",
-    "version": "1.15.0"
+    "description": "小陈的 Claude Code 技能集：达芬奇字幕修正、公众号排版发布、Obsidian 知识库编译、海报设计、YouTube 选题发现、博主用法研究、真人视频封面、圆桌决策压测、逐字稿转文章、Astro 博客发布、知识视频开头优化、知识视频内容诊断、抖音数据复盘诊断、抖音精选申请文案、视频发布物料一条龙",
+    "version": "1.16.0"
   },
   "plugins": [
     {
@@ -49,19 +51,9 @@
       "source": "./plugins/cyxj-yt-creator"
     },
     {
-      "name": "cyxj-notebook-research",
-      "description": "Notebook LM 批量研究：将选题库视频提交 Google Notebook LM，拉取转录稿和报告",
-      "source": "./plugins/cyxj-notebook-research"
-    },
-    {
       "name": "cyxj-roundtable",
       "description": "圆桌会议：6 个 Opus 4.7 subagent 扮演 6 个有立场的角色对议题给出独立意见，会议自动落地到 Obsidian",
       "source": "./plugins/cyxj-roundtable"
-    },
-    {
-      "name": "cyxj-ai-weekly-news",
-      "description": "每周 AI 热点视频：9 步交互式 SOP 端到端制作（选题→旁白→时间码→4K 渲染）",
-      "source": "./plugins/cyxj-ai-weekly-news"
     },
     {
       "name": "cyxj-transcript",

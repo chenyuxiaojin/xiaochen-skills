@@ -2,7 +2,7 @@
 
 # xiaochen-skills
 
-> 小陈的 Claude Code 插件集：15 个插件（17 个技能），面向视频制作、内容发布和知识管理。
+> 小陈的 Claude Code 插件集：13 个插件（15 个技能），面向视频制作、内容发布和知识管理。
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-plugin-blueviolet)](https://claude.ai/code)
@@ -21,9 +21,7 @@ Claude Code 内置技能覆盖通用任务。这个集合在上面加了一层�
 | [cyxj-image-studio](./plugins/cyxj-image-studio/) | 生图工坊（gpt-image-2 中转），一个插件两个 skill 共享凭据加载：**cyxj-poster**（33+ 大师风格海报/书封/专辑封面）+ **cyxj-video-cover**（真人照重绘视频封面，4 比例输出，可借用海报风格库） | `生成海报`、`封面设计`、`/封面`、`生成封面`、`做个视频封面` | `GPTIMG2_BASE_URL`/`GPTIMG2_API_KEY`；poster 另需 `GEMINI_API_KEY` + Python `requests`/`google-genai`/`pillow`；video-cover 仅标准库（Pillow 可选） |
 | [cyxj-youtube-topics](./plugins/cyxj-youtube-topics/) | 搜索某话题 48 小时内新视频，去重、聚类、打 verdict（值得做/观望/跟风/跳过），写入 Obsidian 选题库 | `YouTube 选题`、`找 YouTube 选题`、`YouTube 最近有什么`、`有什么新视频` | `YOUTUBE_DATA_API_KEY`；`APIFY_API_TOKEN`（字幕）；Python: `requests`；Obsidian 库路径 |
 | [cyxj-yt-creator](./plugins/cyxj-yt-creator/) | 用 Apify 研究外部博主怎么讲某工具/话题：抓字幕、按日期整理视频、写差异化切口，存入 Obsidian 待发布稿 | `查博主怎么用`、`用 Apify 搜 YouTube`、`研究这个工具的 YouTube 视频` | `APIFY_API_TOKEN`；Python: `requests`；Obsidian 库路径 |
-| [cyxj-notebook-research](./plugins/cyxj-notebook-research/) | 将 Obsidian 选题库里的视频批量提交给 Google Notebook LM，拉取转录稿和研究报告写回 Obsidian | `帮我研究一下 XXX 话题`、`研究一下这个选题`、`把选题提交给 Notebook LM` | Google 账号（有 Notebook LM 权限）；Python: `notebooklm-py`、`python-frontmatter`；环境变量 `CYXJ_VAULT_BASE` |
 | [cyxj-roundtable](./plugins/cyxj-roundtable/) | 召集 6 个 Claude Opus subagent 扮演对立角色（苏格拉底 / 严苛同行 / 带偏见投资人 / 历史学家 / 5 年后后悔的你 / 同盟者），多视角压测决策，会议记录自动存入 Obsidian | `/圆桌`、`开个圆桌`、`开圆桌`、`圆桌一下` | 无需额外 API key（通过 Claude Code 调用 Claude Opus）；Obsidian 库路径 |
-| [cyxj-ai-weekly-news](./plugins/cyxj-ai-weekly-news/) | 每周 AI 热点视频端到端 9 步 SOP：选题 → 旁白稿 → 时间码 → 达芬奇 4K 渲染，每个决策点停下等用户确认 | `/AI每周热点`、`/做下一期`、`/每周AI视频`、`做这周的 AI 视频` | 本机安装达芬奇（DaVinci Resolve）；Obsidian 库路径；**项目路径硬编码到作者机器，使用前需修改** |
 | [cyxj-transcript](./plugins/cyxj-transcript/) | 把视频/录音逐字稿整理成文章草稿：去口语化、加小标题、数据转表格，原稿保留文末，产出 Obsidian Markdown | `转稿`、`逐字稿整理`、`把这个稿子整理成文章`、`口播稿成文` | Obsidian 库路径；无需 API key |
 | [cyxj-blog-pub](./plugins/cyxj-blog-pub/) | 发布文章到 Astro 博客：校验 frontmatter、kebab-case 文件名、正文图片替换为图床 URL，build 后部署 | `发布到博客`、`发博客`、`博客发文`、`上博客`、`Astro 发布` | 本地配置好 Astro 博客仓库和图床；**部署目标是作者自己的服务器，使用前需修改** |
 | [cyxj-video-doctor](./plugins/cyxj-video-doctor/) | 知识视频诊所（3 分钟+ 冲抖音精选），一个插件两个 skill 共享赛道真相单源：**cyxj-content**（六维内容诊断）+ **cyxj-hook**（开头/钩子诊断 + 四型方案） | `/内容诊断`、`帮我看看这条稿`、`/cyxj-hook`、`优化我的视频开头`、`开头钩子` | 无（纯指令型技能） |
@@ -39,7 +37,7 @@ Claude Code 内置技能覆盖通用任务。这个集合在上面加了一层�
 /plugin marketplace add chenyuxiaojin/xiaochen-skills
 ```
 
-一条命令安装全部 15 个插件（17 个技能）。
+一条命令安装全部 13 个插件（15 个技能）。
 
 ## 使用方法
 
@@ -59,7 +57,7 @@ YouTube 选题            → 启动 cyxj-youtube-topics
 | | xiaochen-skills | [Anthropic 官方示例 Skills](https://github.com/anthropics/claude-code) | [awesome-claude-code](https://github.com/hesreallyhim/awesome-claude-code) 社区列表 |
 |---|---|---|---|
 | 定位 | 视频制作 + 公众号发布 + Obsidian 知识管理 | 通用示例和模式参考 | 社区技能链接汇总，非单一安装 |
-| 技能数量 | 17 个技能 / 15 个插件 | 随示例变化 | 多仓库分散 |
+| 技能数量 | 15 个技能 / 13 个插件 | 随示例变化 | 多仓库分散 |
 | 安装方式 | 一条命令全量安装 | 手动复制文件 | 各仓库分别安装 |
 | 多智能体 | 有（圆桌召集 6 个 Opus subagent） | 取决于示例 | 各异 |
 | 脚本自动化 | 有（Python + Bash + Photoshop + Gemini + Apify） | 较少 | 各异 |
@@ -68,7 +66,7 @@ YouTube 选题            → 启动 cyxj-youtube-topics
 ## 常见问题
 
 **怎么安装？**
-在 Claude Code 里运行 `/plugin marketplace add chenyuxiaojin/xiaochen-skills`，15 个插件（17 个技能）全部注册。
+在 Claude Code 里运行 `/plugin marketplace add chenyuxiaojin/xiaochen-skills`，13 个插件（15 个技能）全部注册。
 
 **能只安装一个技能吗？**
 可以。每个插件互相独立。如果 marketplace 支持单插件安装，可以按名称指定；也可以手动复制 `plugins/cyxj-{name}/` 目录并在自己的 marketplace.json 里注册。
@@ -86,11 +84,9 @@ YouTube 选题            → 启动 cyxj-youtube-topics
 - `cyxj-image-studio` → `GPTIMG2_BASE_URL`/`GPTIMG2_API_KEY`（两个 skill 共用）；poster 另需 `GEMINI_API_KEY`（文字扩写）
 - `cyxj-youtube-topics` → `YOUTUBE_DATA_API_KEY` + `APIFY_API_TOKEN`（字幕）
 - `cyxj-yt-creator` → `APIFY_API_TOKEN`
-- `cyxj-notebook-research` → Google 账号（有 Notebook LM 访问权限）
 - `cyxj-release-kit` → 封面底图依赖 `cyxj-image-studio`（`GPTIMG2_*`）
 
 **强绑作者本人环境、使用前必须改配置的技能**：
-- `cyxj-ai-weekly-news` — 项目路径硬编码为 `~/项目/试验区/ai-weekly-flash-video`
 - `cyxj-blog-pub` — 部署目标是作者自己的 Astro 博客和服务器
 
 **API key 存在哪里？**
