@@ -36,11 +36,7 @@ description: |
 
 ## 流程
 
-### 阶段 0 · 触发识别
-
-触发词命中即进入阶段 1：
-- 中文：`/圆桌`、"开个圆桌"、"开圆桌"、"圆桌一下"
-- 英文：`/roundtable`、"open the roundtable"
+（触发词见 frontmatter description，命中即从阶段 1 开始。）
 
 ### 阶段 1 · 议题握手
 

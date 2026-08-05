@@ -35,7 +35,7 @@ python3 ${CLAUDE_PLUGIN_ROOT}/skills/cyxj-poster/scripts/generate_mondo_enhanced
 |------|------|--------|
 | `--style` | 艺术家风格（见 `--list-styles`） | 自动选择 |
 | `--ai-enhance` | AI 优化 prompt（保留用户原始意图） | 关闭 |
-| `--compare` | 生成 3 种风格对比图 | 无 |
+| `--compare` | 生成 3 种风格对比图，值为逗号分隔的**恰好 3 个**风格 key（如 `kilian-eng,saul-bass,jock`） | 无 |
 | `--input` | 输入图片路径（图生图转换） | 无 |
 | `--ip-ref` | IP 角色参考图目录 | 无 |
 | `--title` | 直接渲染在海报上的标题文字 | 无 |
@@ -61,54 +61,10 @@ python3 ${CLAUDE_PLUGIN_ROOT}/skills/cyxj-poster/scripts/generate_mondo_enhanced
 
 ## 调用示例
 
-基础生成：
-```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/cyxj-poster/scripts/generate_mondo_enhanced.py "Blade Runner" movie
-```
+参数表即接口，按需自由组合。给一个多参数组合的形状参考（IP 角色海报）：
 
-AI 优化 prompt：
-```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/cyxj-poster/scripts/generate_mondo_enhanced.py "Blade Runner" movie --ai-enhance
-```
-
-3 种风格对比：
-```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/cyxj-poster/scripts/generate_mondo_enhanced.py "Akira" movie --compare kilian-eng,saul-bass,jock
-```
-
-图生图转换：
-```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/cyxj-poster/scripts/generate_mondo_enhanced.py "cyberpunk noir" movie --input poster.jpg --style saul-bass
-```
-
-指定配色：
-```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/cyxj-poster/scripts/generate_mondo_enhanced.py "Jazz Night" event --style milton-glaser --colors "psychedelic orange, purple, yellow"
-```
-
-摄影风格：
-```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/cyxj-poster/scripts/generate_mondo_enhanced.py "portrait" event --style ccd-flash
-```
-
-IP 角色海报（带标题）：
 ```bash
 python3 ${CLAUDE_PLUGIN_ROOT}/skills/cyxj-poster/scripts/generate_mondo_enhanced.py "cyberpunk tech news" event --ip-ref ./ip-reference/ --title "A社新规：禁止第三方调用" --aspect-ratio 4:3 --colors "deep navy blue, neon cyan, magenta"
-```
-
-IP 角色海报（无标题）：
-```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/cyxj-poster/scripts/generate_mondo_enhanced.py "cozy reading scene" event --ip-ref ./ip-reference/ --style rixi --aspect-ratio 3:4
-```
-
-只输出 prompt：
-```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/cyxj-poster/scripts/generate_mondo_enhanced.py "Dune sci-fi epic" movie --no-generate
-```
-
-列出所有风格：
-```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/cyxj-poster/scripts/generate_mondo_enhanced.py --list-styles
 ```
 
 ## 摄影风格速查

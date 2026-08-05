@@ -18,7 +18,7 @@ Claude Code 内置技能覆盖通用任务。这个集合在上面加了一层�
 | [cyxj-subfix](./plugins/cyxj-subfix/) | 达芬奇字幕修正：SRT 清理 → Gemini 语义初修 → Claude Opus 审查把关 | `/字幕修正`、`修正字幕`、`字幕错别字`、`SRT 修正` | `GEMINI_API_KEY`；Python: `google-genai`、`pysrt` |
 | [cyxj-wechat-pub](./plugins/cyxj-wechat-pub/) | Obsidian Markdown → 微信公众号 HTML，内置 3 套主题（TATALAB 蓝 / 炭黑暖金 / 暖橙编辑），可直接粘贴到微信后台 | `发布到公众号`、`公众号排版`、`微信发布`、`排版文章` | npm: `juice`；微信公众号后台权限 |
 | [cyxj-obsidian-build](./plugins/cyxj-obsidian-build/) | 将 Obsidian 库编译为三层知识架构（摄入/查询/检查），灵感来自 Karpathy 的 LLM Wiki 方法论 | `整理 Obsidian`、`编译知识库`、`摄入笔记`、`查知识库`、`健康度检查` | 配置 Obsidian 库路径；无需 API key |
-| [cyxj-image-studio](./plugins/cyxj-image-studio/) | 生图工坊（gpt-image-2 中转），一个插件两个 skill 共享凭据加载：**cyxj-poster**（33+ 大师风格海报/书封/专辑封面）+ **cyxj-video-cover**（真人照重绘视频封面，4 比例输出，可借用海报风格库） | `生成海报`、`封面设计`、`/封面`、`生成封面`、`做个视频封面` | `GPTIMG2_BASE_URL`/`GPTIMG2_API_KEY`；poster 另需 `GEMINI_API_KEY` + Python `requests`/`google-genai`/`pillow`；video-cover 仅标准库（Pillow 可选） |
+| [cyxj-image-studio](./plugins/cyxj-image-studio/) | 生图工坊（gpt-image-2 中转），一个插件两个 skill 共享凭据加载：**cyxj-poster**（33+ 大师风格海报/书封/专辑封面）+ **cyxj-video-cover**（无字底图引擎：真人照重绘保脸，只出 16:9 无文字场景图，供 cyxj-release-kit 封面工作台当底图；带字封面成品一律走 cyxj-release-kit） | `做海报`、`海报设计`、`书籍封面`、`专辑封面` | `GPTIMG2_BASE_URL`/`GPTIMG2_API_KEY`；poster 另需 `GEMINI_API_KEY` + Python `requests`/`google-genai`/`pillow`；video-cover 仅标准库（Pillow 可选） |
 | [cyxj-youtube-topics](./plugins/cyxj-youtube-topics/) | 搜索某话题 48 小时内新视频，去重、聚类、打 verdict（值得做/观望/跟风/跳过），写入 Obsidian 选题库 | `YouTube 选题`、`找 YouTube 选题`、`YouTube 最近有什么`、`有什么新视频` | `YOUTUBE_DATA_API_KEY`；`APIFY_API_TOKEN`（字幕）；Python: `requests`；Obsidian 库路径 |
 | [cyxj-yt-creator](./plugins/cyxj-yt-creator/) | 用 Apify 研究外部博主怎么讲某工具/话题：抓字幕、按日期整理视频、写差异化切口，存入 Obsidian 待发布稿 | `查博主怎么用`、`用 Apify 搜 YouTube`、`研究这个工具的 YouTube 视频` | `APIFY_API_TOKEN`；Python: `requests`；Obsidian 库路径 |
 | [cyxj-roundtable](./plugins/cyxj-roundtable/) | 召集 6 个 Claude Opus subagent 扮演对立角色（苏格拉底 / 严苛同行 / 带偏见投资人 / 历史学家 / 5 年后后悔的你 / 同盟者），多视角压测决策，会议记录自动存入 Obsidian | `/圆桌`、`开个圆桌`、`开圆桌`、`圆桌一下` | 无需额外 API key（通过 Claude Code 调用 Claude Opus）；Obsidian 库路径 |
@@ -60,7 +60,7 @@ YouTube 选题            → 启动 cyxj-youtube-topics
 | 技能数量 | 15 个技能 / 13 个插件 | 随示例变化 | 多仓库分散 |
 | 安装方式 | 一条命令全量安装 | 手动复制文件 | 各仓库分别安装 |
 | 多智能体 | 有（圆桌召集 6 个 Opus subagent） | 取决于示例 | 各异 |
-| 脚本自动化 | 有（Python + Bash + Photoshop + Gemini + Apify） | 较少 | 各异 |
+| 脚本自动化 | 有（Python + Bash + Gemini + Apify） | 较少 | 各异 |
 | 目标用户 | macOS 上的视频创作者 / 博主工作流 | 学习 Claude Code 的开发者 | 探索社区工作的开发者 |
 
 ## 常见问题
