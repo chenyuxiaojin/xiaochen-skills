@@ -5,7 +5,7 @@ description: >
   TATALAB 蓝（默认）、炭黑暖金（深度/商务）、暖橙编辑（编辑/海报风）。
   支持内容审查、打磨、IP 配图生成、预览确认，输出可直接粘贴到微信后台。
   触发词：发布到公众号、公众号排版、微信发布、排版文章、XCYJ 排版。
-version: 1.0.0
+version: 1.1.0
 ---
 
 # XCYJ WeChat Publisher - 陈与小金公众号排版发布 Skill
@@ -20,6 +20,7 @@ version: 1.0.0
 - `${CLAUDE_PLUGIN_ROOT}/skills/cyxj-wechat-pub/references/components.md` - 通用 HTML 组件模板（Phase 2 落 HTML 时按需读取）
 - `${CLAUDE_PLUGIN_ROOT}/skills/cyxj-wechat-pub/references/orange-editorial.md` - orange-editorial 主题专属规则与组件（选该主题时必读）
 - `${CLAUDE_PLUGIN_ROOT}/skills/cyxj-wechat-pub/references/illustration.md` - Phase 3 生图/图床/封面全流程（要配图时读）
+- `${CLAUDE_PLUGIN_ROOT}/skills/cyxj-wechat-pub/ip-reference/xiaochen-glasses.png` - 现行 IP 参考图（眼镜插画版小陈；`deprecated/` 里是停用的旧图，不要用）
 
 ## Theme 选择
 
@@ -89,6 +90,7 @@ Obsidian .md
 3. 列表使用 `<p class="list-item">` 而非 `<ul><li>`（微信兼容）
 4. 整体包裹在 `<section class="article">...</section>` 中
 5. 排版落 HTML 时，按需读取 `${CLAUDE_PLUGIN_ROOT}/skills/cyxj-wechat-pub/references/components.md` 获取各组件的 HTML 模板；选 orange-editorial 主题时，还必须先读 `${CLAUDE_PLUGIN_ROOT}/skills/cyxj-wechat-pub/references/orange-editorial.md`
+6. **正文不放文章大标题**：hero 里不出 `<h1>`，标题只在微信后台标题栏填。标题 / 摘要 / 封面在 Phase 4 预览页底部的「发布信息区」单独列出，不进复制区
 
 **Important**: You (Claude) are responsible for generating the HTML with correct class names. The converter only handles CSS inlining.
 
@@ -122,17 +124,21 @@ fs.writeFileSync('/tmp/wechat-output.html', juice.inlineContent(html, css));
 
 2. Read `preview-template.html`
 3. Replace `{{CONTENT}}` with the juice-inlined HTML
-4. Write to `/tmp/wechat-preview.html`
-5. **打开预览给用户看**：`open /tmp/wechat-preview.html`（系统浏览器，用户可在底部点「复制到剪贴板」）
-6. **可选：Claude 自验证排版**——Playwright MCP 不支持 file:// 协议，必须先起本地 http server：
+4. 填底部「发布信息区」四个占位符（只在预览页显示，在 `#output` 之外，复制按钮抓不到）：
+   - `{{TITLE}}`：文章标题（frontmatter `title`）
+   - `{{DIGEST}}`：摘要，≤120 字（微信上限）。frontmatter 有 `digest` / `summary` 就用，没有则 Claude 起一段给用户确认
+   - `{{COVER_21x9}}` / `{{COVER_16x9}}`：封面图**绝对路径**（预览放 /tmp 也能显示）；没做封面填「未生成」，图片加载失败会自动隐藏
+5. Write to `/tmp/wechat-preview.html`
+6. **打开预览给用户看**：`open /tmp/wechat-preview.html`（系统浏览器，用户可在底部点「复制到剪贴板」；标题 / 摘要 / 封面照发布信息区手动填到后台）
+7. **可选：Claude 自验证排版**——Playwright MCP 不支持 file:// 协议，必须先起本地 http server：
    ```bash
    cd /tmp && python3 -m http.server 8765 &
    ```
    然后让 Playwright `navigate` 到 `http://localhost:8765/wechat-preview.html`，`browser_take_screenshot` 后用 `pkill -f "http.server 8765"` 关闭 server。
    - **截图 filename 必须用相对路径**，比如 `.playwright-mcp/skill-test.png` 或工作目录下的 `xxx.png`；写 `/tmp/xxx.png` 等绝对路径会被 MCP 以 `outside allowed roots` 拒绝。
    - 截图看完后 `rm -rf .playwright-mcp` 清理，避免污染工作区。
-7. Ask: "排版满意吗？需要调整什么？"
-8. If user wants changes, go back to Phase 2
+8. Ask: "排版满意吗？需要调整什么？"
+9. If user wants changes, go back to Phase 2
 
 
 ## Auto-Recognition Rules
@@ -141,7 +147,7 @@ When reading the Markdown, apply these rules to determine component mapping:
 
 | Content Pattern | Component | Class |
 |----------------|-----------|-------|
-| Frontmatter has `title` and optional `subtitle` | Hero Banner | `.hero` |
+| Frontmatter has `subtitle`（`title` 不进正文，只进预览页发布信息区） | Hero Banner（无 `<h1>`） | `.hero` |
 | `## N. Title` or sequential `## Title` headings | Chapter Section | `.chapter` + `.chapter-num` + `.chapter-title` |
 | `### Title` | Sub-heading with pill style | `h3` + `.pill` |
 | Single short bold/italic sentence (<50 chars) standing alone | Quote | `.quote` |

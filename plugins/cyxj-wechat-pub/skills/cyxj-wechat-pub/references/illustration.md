@@ -5,6 +5,15 @@
 
 ---
 
+## 3.0 IP 参考图清单（先读）
+
+| 状态 | 文件 | 说明 |
+|------|------|------|
+| **现行** | `ip-reference/xiaochen-glasses.png` | 眼镜插画版小陈，1844×1820。图床 https://img.xiaochens.com/i/2026/06/22/6a3918365275f.png（Hero 作者区头像用同一张） |
+| 已停用 | `ip-reference/deprecated/xiaojin-spec-sheet.png` | 蓝色光头小金 3D 四视图，2026-09-02 停用 |
+| 已停用 | `ip-reference/deprecated/xiaojin-front.png` | 蓝色光头小金 3D 正面图，2026-09-02 停用 |
+
+`/v1/images/edits` 的 `image` 字段只传现行图。`deprecated/` 里的图不要再传，也不要按它的特征（光头、蓝色卫衣、金链耳饰）写 prompt。
 
 ## 3.1 题材识别与视觉方案匹配
 
@@ -20,12 +29,9 @@
 
 将匹配到的场景、配色、构图描述融入图片生成 prompt，让每篇文章的配图氛围与内容匹配，而不是千篇一律的白底 3D 渲染。
 
-## 3.2 渲染风格选择
+## 3.2 渲染风格（单一，不换）
 
-- **默认风格：3D Stylized Toon** — 保持 XCYJ 品牌 IP 一致性，适用于大多数文章
-- **备选风格：水彩绘本风** — 适用于读书笔记、生活感悟、情感类文章。将小金 IP 画成柔和水彩/水墨插画风格，保留核心辨识特征（光头、蓝色卫衣、金链耳饰），但呈现为手绘绘本质感
-
-选择哪种风格由文章气质决定：技术/教程/商业类用 3D Toon，文艺/读书/情感类可用水彩风。如果不确定，询问用户。
+**统一半写实动漫插画风，与参考图同一画风。** 不再提供备选风格（2026-09-02 起水彩绘本备选已删）：题材差异靠 3.1 的场景、配色、构图体现，人物画风不变。prompt 里写「与参考图同一人物、同一画风」，不要写 3D / 卡通 / 水彩 / 手办等会带偏画风的词。
 
 ## 3.3 图片生成引擎与凭据（GPTIMG2 / gpt-image-2）
 
@@ -38,8 +44,8 @@
 **模型**：`gpt-image-2`（中文标题渲染准确率高，适合封面直接出字）。
 
 **两个端点（按是否带 IP 参考图选）**：
-- **带 IP 参考图（保小金形象一致）→ `{base}/v1/images/edits`**（multipart 表单，`image` 字段传 `ip-reference/xiaojin-spec-sheet.png`）。IP 配图默认走这个端点。
-- **纯文生图（不需要小金形象，如纯场景图）→ `{base}/v1/images/generations`**（JSON body）。
+- **带 IP 参考图（保 IP 人物一致）→ `{base}/v1/images/edits`**（multipart 表单，`image` 字段传 `ip-reference/xiaochen-glasses.png`，见 3.0）。IP 配图默认走这个端点。
+- **纯文生图（不需要 IP 人物，如纯场景图）→ `{base}/v1/images/generations`**（JSON body）。
 
 **出图方式**：请求带 `response_format=url`，拿到返回 JSON 里的图片 url 后**先 `curl` 下载落地到本地临时文件**，再走下方「图床上传流程」上传公网。不要直接把中转站 url 写进 HTML（可能过期）。
 
@@ -61,15 +67,15 @@ SKILL_DIR="${CLAUDE_PLUGIN_ROOT}/skills/cyxj-wechat-pub"
 curl -s -X POST "${GPTIMG2_BASE_URL}/v1/images/edits" \
   -H "Authorization: Bearer ${GPTIMG2_API_KEY}" \
   -F "model=gpt-image-2" \
-  -F "image=@${SKILL_DIR}/ip-reference/xiaojin-spec-sheet.png" \
-  -F "prompt=小金（光头、蓝色卫衣写着\"陈与小金\"、金链耳饰、蓝眼睛）站在全息工作站前，深蓝+霓虹青赛博朋克配色，居中对称构图，3D Stylized Toon 风格" \
+  -F "image=@${SKILL_DIR}/ip-reference/xiaochen-glasses.png" \
+  -F "prompt=与参考图同一人物、同一画风（半写实动漫插画）：黑色寸头、圆框金色细边眼镜、小金色耳钉、黑色立领拉链夹克的年轻男子，站在全息工作站前，深蓝+霓虹青赛博朋克配色，居中对称构图" \
   -F "size=2560x1440" \
   -F "n=1" \
   -F "response_format=url"
 # 返回: {"data":[{"url":"https://.../xxxx.png"}]}
 ```
 
-**curl 示例 B — 纯文生图（`/v1/images/generations`，无需小金形象时）**：
+**curl 示例 B — 纯文生图（`/v1/images/generations`，无需 IP 人物时）**：
 
 ```bash
 # 凭据加载见上方「生图凭据」两级查找
@@ -78,7 +84,7 @@ curl -s -X POST "${GPTIMG2_BASE_URL}/v1/images/generations" \
   -H "Content-Type: application/json" \
   -d '{
     "model": "gpt-image-2",
-    "prompt": "暖琥珀金+奶油色的文艺暖调咖啡馆窗边场景，三层景深，柔和光线，水彩绘本风",
+    "prompt": "暖琥珀金+奶油色的文艺暖调咖啡馆窗边场景，三层景深，柔和光线，半写实动漫插画风",
     "size": "2560x1440",
     "n": 1,
     "response_format": "url"
@@ -97,7 +103,7 @@ curl -s -o /tmp/wechat-illust-1.png "$IMG_URL"
 **插图生成步骤**：
 
 1. 根据每个章节主题 + 上面匹配到的视觉方案，撰写 gpt-image-2 图片生成 prompt
-2. 调用 `{base}/v1/images/edits` 端点，传入 IP 参考图（`ip-reference/xiaojin-spec-sheet.png`），用上面的 curl 示例 A；prompt 中包含题材对应的场景、配色、构图描述
+2. 调用 `{base}/v1/images/edits` 端点，传入 IP 参考图（`ip-reference/xiaochen-glasses.png`），用上面的 curl 示例 A；prompt 中包含题材对应的场景、配色、构图描述
 3. 从返回 JSON 取 `data[0].url`，`curl` 下载到本地临时文件
 4. 上传到 Lsky Pro 图床（见下方上传流程）
 5. 在 HTML 中插入 `.img-card` 组件，使用图床返回的公网 URL
@@ -106,7 +112,7 @@ curl -s -o /tmp/wechat-illust-1.png "$IMG_URL"
 - 短文章（<1500 字）且已有截图配图时，IP 配图只补无图章节，不要每章都插
 - 先询问用户需要几张 IP 配图，不要自作主张
 
-**IP 形象核心特征（每次生成必须强调）**：光头、蓝色卫衣写着"陈与小金"、金链耳饰、蓝眼睛。
+**IP 形象核心特征（每次生成必须写进 prompt）**：半写实动漫插画风、黑色寸头、圆框金色细边眼镜、小金色耳钉、黑色立领拉链夹克；并明确要求「与参考图同一人物、同一画风」。
 
 **图床上传流程**（Lsky Pro - img.xiaochens.com）：
 
@@ -130,8 +136,8 @@ curl -s -X POST "https://img.xiaochens.com/api/v1/upload" \
 
 封面是文章的门面，必须同时包含 **IP 形象 + 文章标题文字**。
 
-封面同样走 3.3 的 GPTIMG2 引擎、凭据和出图方式（`response_format=url` → 下载落地 → 图床上传）。因为封面必须含小金形象，**用 `{base}/v1/images/edits` 端点**（带 IP 参考图，curl 示例 A），在 prompt 中明确要求：
-- IP 形象（小金）处于画面中，场景和配色按题材视觉方案
+封面同样走 3.3 的 GPTIMG2 引擎、凭据和出图方式（`response_format=url` → 下载落地 → 图床上传）。因为封面必须含 IP 人物形象，**用 `{base}/v1/images/edits` 端点**（带 IP 参考图，curl 示例 A），在 prompt 中明确要求：
+- IP 人物（与参考图同一人物、同一画风）处于画面中，场景和配色按题材视觉方案
 - **文章标题文字直接渲染在封面图上**，作为设计的一部分（不是后期叠加）。gpt-image-2 中文渲染准确率高，适合直接出标题字
 - 标题文字要清晰可读，字体风格与画面氛围匹配
 - 封面是 21:9 微信公众号规格，目标 1800x766。但 GPTIMG2 的 `size` 取离散档位，21:9 没有原生档——请求时用最接近的 16:9 `2560x1440`（2K，比例略宽），拿到图后再裁成 1800x766；或直接在 prompt 里要求 21:9 超宽构图。**不要回退到低分辨率出图**

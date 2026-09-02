@@ -55,17 +55,13 @@
     <section class="hero-cat">{TAG}</section>
   </section>
 
-  <section class="hero-title">
-    <h1>{标题第一行}<br>{标题第二行}<span class="hero-title-arrow">→</span></h1>
-  </section>
-
   <section class="hero-subtitle">
     <section class="hero-eyebrow">STUCK BETWEEN<br>MODEL & WRAPPER</section>
     <section class="hero-deck">{中文副标，1-2 句话讲清楚文章在说什么}</section>
   </section>
 
   <section class="hero-author">
-    <section class="hero-ip"><img src="{头像 CDN}" alt="陈与小金"></section>
+    <section class="hero-ip"><img src="https://img.xiaochens.com/i/2026/06/22/6a3918365275f.png" alt="陈与小金"></section>
     <section class="hero-byline">
       <section class="hero-byline-label">BYLINE / 作者</section>
       <section class="hero-author-name">陈与小金</section>
@@ -78,7 +74,9 @@
 </section>
 ```
 
-每篇文章只换 `TAG`、ISSUE 号、ticker 内容、标题、eyebrow（英文小标）、deck（中文副标），其他保持不变。
+每篇文章只换 `TAG`、ISSUE 号、ticker 内容、eyebrow（英文小标）、deck（中文副标），其他保持不变。头像固定为眼镜插画版小陈（2026-09-02 起）。
+
+**hero 里不放文章大标题**：不用 `.hero-title` / `<h1>`（CSS 里的样式留着不用）。标题走微信后台，预览页底部「发布信息区」单独列标题 / 摘要 / 封面，不进复制区。
 
 ### Chapter（章节大头）
 

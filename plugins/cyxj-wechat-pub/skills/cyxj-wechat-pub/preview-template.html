@@ -59,6 +59,21 @@
     .copy-btn.copied {
       background: #2E7D32;
     }
+    /* 发布信息区：只在预览页显示，在 #output 之外，复制按钮抓不到 */
+    .publish-info {
+      max-width: 720px;
+      margin: 32px auto 96px;
+      padding: 20px;
+      border: 2px dashed #1565C0;
+      background: #F5F9FF;
+      font-family: "PingFang SC", -apple-system, sans-serif;
+      color: #222;
+      font-size: 14px;
+      line-height: 1.7;
+    }
+    .publish-info h3 { margin: 0 0 12px; font-size: 16px; }
+    .publish-info p { margin: 0 0 8px; }
+    .publish-info img { width: 100%; border: 1px solid #ccc; margin-bottom: 14px; display: block; }
   </style>
 </head>
 <body>
@@ -67,6 +82,17 @@
     <div id="output">
       {{CONTENT}}
     </div>
+  </div>
+
+  <!-- 发布信息区：微信后台单独填，不进正文；不在 #output 内，复制按钮抓不到 -->
+  <div class="publish-info">
+    <h3>📌 发布信息（微信后台单独填，不进正文）</h3>
+    <p><b>标题：</b>{{TITLE}}</p>
+    <p><b>摘要：</b>{{DIGEST}}</p>
+    <p><b>封面 21:9（后台上传）：</b>{{COVER_21x9}}</p>
+    <img src="{{COVER_21x9}}" alt="封面 21:9" onerror="this.style.display='none'">
+    <p><b>封面 16:9 原图：</b>{{COVER_16x9}}</p>
+    <img src="{{COVER_16x9}}" alt="封面 16:9" onerror="this.style.display='none'">
   </div>
 
   <div class="copy-bar">

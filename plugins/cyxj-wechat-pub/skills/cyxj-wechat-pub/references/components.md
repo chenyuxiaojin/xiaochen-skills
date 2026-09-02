@@ -11,11 +11,10 @@
 <section class="hero">
   <section class="hero-top">
     <section class="hero-tag">{TAG}</section>
-    <h1>{title}</h1>
     <section class="hero-line"></section>
     <p class="hero-subtitle">{subtitle}</p>
     <section class="hero-author">
-      <section class="hero-ip"><img src="https://img.xiaochens.com/i/2026/03/21/69be46623a45d.png" alt="陈与小金"></section>
+      <section class="hero-ip"><img src="https://img.xiaochens.com/i/2026/06/22/6a3918365275f.png" alt="陈与小金"></section>
       <section>
         <section class="hero-author-name">陈与小金</section>
         <section class="hero-author-tags">
@@ -29,7 +28,9 @@
 </section>
 ```
 
-**Hero 作者区是固定 IP 标志**，每篇文章不变。只替换 `{TAG}`、`{title}`、`{subtitle}`。
+**Hero 作者区是固定 IP 标志**，每篇文章不变（头像 = 眼镜插画版小陈，2026-09-02 起）。只替换 `{TAG}`、`{subtitle}`。
+
+**Hero 里不放文章大标题**（不出 `<h1>`）：公众号正文不含标题，标题在微信后台标题栏填；预览页底部「发布信息区」单独列标题 / 摘要 / 封面，不进复制区。
 
 ## Chapter Section
 ```html
