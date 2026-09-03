@@ -2,7 +2,8 @@
 name: cyxj-release-kit
 description: |
   陈与小金的视频发布物料一条龙：成片定稿后，一次产出 6 平台「标题+简介」（YouTube/B站/抖音 主平台,
-  视频号/TikTok/小红书 分发平台）+ 三比例封面（16:9 / 4:3 / 3:4,HTML 封面工作台出图,文字零错字零裁切）
+  视频号/TikTok/小红书 分发平台）+ 三比例封面（4:3 为工作台首项,另含 16:9 / 3:4,HTML 封面工作台出图,
+  文字零错字零裁切）
   + 上传用 JPG。封面走「无字底图 + HTML 排字」路线,不再用生图赌中文渲染。
   触发方式:/cyxj-release-kit、发布物料、出发布包、取标题、六平台标题、写标题和简介、
   做封面(HTML/工作台)、封面工作台、视频要发布了。
@@ -12,7 +13,7 @@ description: |
 
 # cyxj-release-kit:视频发布物料一条龙
 
-成片定稿 → 标题(6 平台)→ 简介(6 平台)→ 封面(3 比例)→ 上传 JPG。
+成片定稿 → 标题(6 平台)→ 简介(6 平台)→ 封面(4:3 首选,另含 16:9 / 3:4)→ 上传 JPG。
 本 skill 把 2026-07-05 loop 视频那次全流程实战固化下来,核心教训只有一条:
 **中文文字永远不要交给生图模型渲染**——模型不认精确比例、脚本会中心裁切,文字进画面必掉字;
 文字由浏览器渲染,底图才交给生图/实拍。
@@ -44,12 +45,40 @@ description: |
 ### 3.1 底图(一期一张,无字)
 
 底图 = 16:9 无文字场景图,来源二选一:
-- **生图**:调 cyxj-image-studio 的 generate.py(gpt-image-2-vip),场景提示词里必须写明
-  「画面中完全不出现任何文字、字母、数字、标志、水印」+「右侧大面积空墙留给排版」,
-  人脸参考用 `~/Pictures/封面形象/` 里用户指定的原图(**每次都喂原图,严禁拿生成图回喂**,会越来越不像)。
+
+- **生图**:调 cyxj-image-studio 的 `generate.py`,**必须显式指定风格**:
+
+  ```bash
+  S=~/.claude/plugins/.../cyxj-video-cover/scripts/generate.py
+  # 真人底图(人在左、右半边留白):
+  python3 $S --title "本期标识" --style plate --ratios 16:9 --n 3 \
+            --face ~/Pictures/封面形象/<用户指定的原图> --label "<项目>-底图"
+  # 无人底图(不喂脸,走文生图端点):
+  python3 $S --title "本期标识" --style plate-noface --ratios 16:9 --n 3 --label "<项目>-底图"
+  ```
+
+  **`--style` 不给就是 default,那会把中文标题渲进画面,出来是带字整图,不能当底图。**
+  plate / plate-noface 的 prompt 完全不含 title,并且写死了「无任何文字/字母/数字/logo/水印」
+  + 「右半边整片空墙留给排版」。`--title` 在这两个风格里只是批次标识,不进画面。
+
+  人脸参考用 `~/Pictures/封面形象/` 里**用户指定的原图**(**每次都喂原图,严禁拿生成图回喂**,
+  会越来越不像)。目录里有十几张,**别默认取第一张——先问用户用哪张**。
+
 - **实拍/抽帧**:用户给照片,或从成片开头口播段 ffmpeg 抽帧(注意挑眼睛睁开的帧,先抽 5-6 帧给用户选)。
 
 底图只出 16:9 一个比例——其余比例由工作台的 blur-fill 自己适配,不要分比例生图。
+
+**通道的坑(2026-08-25 实测,踩过一遍才跑通)**:
+
+| 现象 | 真因 | 处理 |
+|---|---|---|
+| 503 `No available channel for model gpt-image-2-vip` | 这把 key 的分组里**没有 vip 档** | 用 `gpt-image-2`(已是脚本默认);先 `GET /v1/models` 看分组里到底有啥 |
+| 自写脚本 403 `error code: 1010` | **Cloudflare 拦 `Python-urllib` 的 UA** | 请求和下图都要带浏览器 UA;`generate.py` 已内置 |
+| 400 `only supports image generation ... text conversation` | 上游偶发把图片请求错路由到对话模型,**成功率约五成** | 原样重试即可;`generate.py` 已内置 4 次重试 |
+| 524 | Cloudflare 网关超时(~100s),并发越高越容易撞 | 并发别开太大 + 重试。实测并发 6 → 3 成功(36/63/89s)/3 个 524 |
+
+已作废的旧说法:「gpt-image-2 会无视 size、强制 1254² 缩水,比例要稳得走 Gemini」——
+2026-08-25 实测传 `size: 2560x1440` 就出 2560×1440,不必绕道。
 
 ### 3.2 工作台
 
@@ -57,8 +86,8 @@ description: |
    物料目录(`~/Pictures/封面出图/<日期>-<项目>-最终/源文件/`),底图重命名为 `plate_16x9.png` 放同目录。
 2. 改模板顶部三个常量 `L1/L2/L3`(标题三段)。字数和默认(5/4/4 字)差很多时,按
    「字数 × 字号 ≈ 可用宽度」调 `RATIOS` 里各比例的 `s1/s3`,渲一次画廊自检确认没有换行/贴边。
-3. `open -a "Google Chrome" 工作台.html` 给用户挑。画廊 = 3 比例 × 3 样式(A 右栏三行+星芒箭头 /
-   B 通栏大字 / C 微倾斜+橙底线),点选存 localStorage,可多选。
+3. `open -a "Google Chrome" 工作台.html` 给用户挑。4:3 排在最前,画廊 = 3 比例 × 3 样式(A 右栏三行+箭头 /
+   B 通栏大字 / C 微倾斜+橙底线),点选存 localStorage,可多选。所有样式右上角都不放图标。
 4. 读用户选择:**扩展碰不了 file:// 页面**,从磁盘读:
    ```bash
    cd ~/Library/Application\ Support/Google/Chrome/Default/Local\ Storage/leveldb
@@ -79,7 +108,13 @@ description: |
 - **blur-fill 模糊延展**:清晰底图按宽度贴底,画布上方缺口用同图 `blur(60px)` 放大版补,
   清晰层顶部加 `mask-image: linear-gradient` 渐隐,接缝不可见。模糊层 `background-position`
   取景**纯墙区**(right center),否则人物鬼影会浮在模糊区。
-- 人物大小由清晰层 `plateW` 控制(小 ≈ 画布宽的 70-75%),文字大小在 `RATIOS` 每比例配置里。
+- 人物大小由清晰层 `plateW` 控制,文字大小在 `RATIOS` 每比例配置里。
+  · **真人底图**:竖版必须把人顶上来才够看 —— 3x4 实测 `plateW: 1536`(=画布宽)人物偏小,
+    **2200 才合适**(超出画布的右半边被 overflow 裁掉,人在左侧不受影响)。
+  · **无人底图**:纯背景,`plateW` 设成画布宽即可满幅铺开,16:9 还能 `fade:false` 免渐隐。
+- 字号三档 `s1/s2/s3` 对应 L1/L2/L3,**`s2` 不写会回退成 `s1`**。L1/L2 字数差很多时必须分开给:
+  例 L1「如何管理上下文?」(8 字) 与 L2「SUBAGENTS」(9 个拉丁字母 ≈ 4.5 汉字宽) 共用一个字号,
+  L1 必超宽。拉丁字母按 ≈0.5 汉字宽估,汉字按「字数 × 字号 ≈ 可用宽度」估。
 - 字体 = 得意黑 Smiley Sans,已装 `~/Library/Fonts/SmileySans-Oblique.ttf`;模板 @font-face 走
   `local()` + 同目录 ttf 兜底。新机器没装:GitHub `atelier-anchor/smiley-sans` releases 下载
   (v2.0.1 实测可用),cp 进 `~/Library/Fonts/`。
@@ -103,6 +138,6 @@ description: |
 
 | skill | 管什么 | 本 skill 关系 |
 |---|---|---|
-| cyxj-video-cover | 生图封面(整图带字) | 降级为**底图生成器**,文字不再交给它 |
+| cyxj-video-cover | 生图封面(整图带字) | 降级为**底图生成器**:只用 `--style plate` / `plate-noface`,default 风格会渲字不能用 |
 | cyxj-jingxuan | 抖音精选申请文案 | 发布后的下一步,不在本 skill 内 |
 | cyxj-hook / cyxj-content | 视频开头/内容诊断 | 管片子本身,不管发布物料 |
