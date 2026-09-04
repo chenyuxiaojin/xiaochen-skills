@@ -13,6 +13,12 @@
   python3 generate.py --title "封面标题" --ratios 16:9,3:4 --n 1
   python3 generate.py --title "封面标题" --scene "坐在电脑前敲代码"
   python3 generate.py --title "封面标题" --style arch-stickman   # 俯拍真头火柴人 + 仰望拱形标题
+  python3 generate.py --title "本期标识" --style plate --ratios 16:9 --n 3        # 【无字】真人底图
+  python3 generate.py --title "本期标识" --style plate-noface --ratios 16:9 --n 3 # 【无人无字】底图
+
+⚠ 给 cyxj-release-kit 出封面底图时,必须用 --style plate / plate-noface。
+  default 风格的 prompt 里硬编码了 Add this large bold Chinese title,会把中文渲进画面,
+  那是带字整图,不能当底图用(中文交给生图模型渲染 = 必掉字,见 release-kit 铁律)。
 
 key 与中转站地址自动从密钥存储读取（无需手动 export）：
   ~/项目/自己的应用/密钥存储/.env 里的 GPTIMG2_BASE_URL / GPTIMG2_API_KEY
@@ -26,6 +32,7 @@ import datetime
 import json
 import os
 import sys
+import time
 import urllib.request
 import urllib.error
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -36,9 +43,20 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "lib"))
 import imgapi
 
 # ---- 默认配置 ----
-# 默认 gpt-image-2-vip:同站 gpt-image-2 默认档实测会无视 size/quality、强制 1254² 低质量(缩水);
-# vip 档质量到 medium、能正常出横/竖图、中文渲染准。但仍不认精确比例,需出图后裁切;比例要更稳走 Gemini。
-DEFAULT_MODEL = "gpt-image-2-vip"
+# 默认 gpt-image-2。2026-08-25 实测两条更正(用 /v1/models + 实跑核过):
+#   1. 中转站这把 key 的分组(GPT-Image-2-4k)里【没有】gpt-image-2-vip,传它直接 503
+#      "No available channel for model gpt-image-2-vip"。别再把 vip 当默认。
+#   2. gpt-image-2 现在【认 size】了——传 2560x1440 就出 2560x1440。早期
+#      "无视 size、强制 1254² 缩水" 的说法已过时,不必为此绕道 Gemini。
+DEFAULT_MODEL = "gpt-image-2"
+
+# 2026-08-25 实测这条中转通道的两种偶发失败,都不是请求本身有问题,直接重试即可:
+#   1. 400 "This model only supports image generation and cannot process text conversation
+#      requests" —— 上游把图片请求错路由到对话模型。同一请求原样重放就能过。
+#   2. 524 —— Cloudflare 网关超时(约 100s 上限)。并发越高单请求越慢,越容易撞线:
+#      实测并发 6 时 3 成功(36/63/89s) / 3 个 524。所以并发别开太大,靠重试兜。
+MAX_RETRIES = 4
+RETRY_SLEEP = 3  # 秒
 DEFAULT_FACE_DIR = Path.home() / "Pictures" / "封面形象"
 DEFAULT_OUTPUT_DIR = Path.home() / "Pictures" / "封面出图"  # 输出根:每次出图在它下面新建「日期-标签」子文件夹
 
@@ -147,10 +165,70 @@ def _prompt_arch_stickman(title: str, scene: str | None) -> str:
     )
 
 
+def _prompt_plate(title: str, scene: str | None) -> str:
+    """plate 风格:【无字】真人底图,文字交给 cyxj-release-kit 的 HTML 封面工作台排。
+
+    铁律:中文永远不交给生图模型渲染。所以本 builder 【完全不把 title 写进 prompt】——
+    title 参数只用来标识这是哪一期,绝不进画面。这也是 cyxj-release-kit 把本 skill
+    "降级为底图生成器" 的落地形态:default 风格出的是带字整图,不能当底图用。
+
+    构图锁死账号暖棕主视觉(对齐 删80 / 找未知 / kimiK3):
+    人在左三分之一半身、右半边整片空墙留给排版。
+    """
+    scene_line = (
+        f"The person is in this scene: {scene}. " if scene
+        else "He sits behind a dark wooden desk with an open silver laptop in front of him, "
+             "turned toward the camera with a relaxed confident slight smile. "
+    )
+    return (
+        "Create a photorealistic YouTube thumbnail BACKGROUND PLATE. "
+        "Keep the SAME real person from the reference photo — same face, same identity, "
+        "same glasses, same haircut, photorealistic, absolutely not a cartoon or 3D character. "
+        "COMPOSITION: the person occupies the LEFT THIRD of the frame as upper body. "
+        f"{scene_line}"
+        "The ENTIRE RIGHT HALF of the frame must be clean empty wall with nothing on it — "
+        "no props, no objects, no screens, no UI panels — it is reserved for typography "
+        "that will be added later in a browser. "
+        "BACKGROUND: warm dark-brown to chocolate gradient studio wall with a soft warm amber "
+        "glow radiating from behind his left shoulder, vignette falling off toward the dark "
+        "right edge. Cinematic soft studio lighting, shallow depth of field, warm brown grade. "
+        "CRITICAL: the image must contain NO text, NO letters, NO numbers, NO Chinese "
+        "characters, NO logos, NO watermarks, NO captions, NO signage of any kind anywhere "
+        "in the frame."
+    )
+
+
+def _prompt_plate_noface(title: str, scene: str | None) -> str:
+    """plate-noface 风格:【无人 + 无字】底图,走 /images/generations(不喂脸参考)。
+
+    用在这条片子没有真人出镜素材、或用户明确要求画面不出现人的时候。
+    同样一个字都不许进画面。
+    """
+    scene_line = (
+        f"The scene is: {scene}. " if scene
+        else "In the lower LEFT third: a rich dark wooden desk with a single closed silver "
+             "laptop on it, an empty chair behind it, a warm table lamp glowing at the far left. "
+    )
+    return (
+        "A cinematic EMPTY scene shot, used as a YouTube thumbnail BACKGROUND PLATE. "
+        "Warm dark-brown to chocolate gradient studio wall, a soft warm amber glow radiating "
+        "from the left side of the frame, vignette falling off toward the dark right edge. "
+        f"{scene_line}"
+        "ABSOLUTELY NO PEOPLE — no person, no hands, no human figure, no silhouette anywhere. "
+        "The entire RIGHT HALF of the frame is clean empty wall with nothing on it, reserved "
+        "for typography added later. "
+        "CRITICAL: the image must contain NO text, NO letters, NO numbers, NO Chinese "
+        "characters, NO logos, NO watermarks, NO signage of any kind. "
+        "Soft professional studio lighting, shallow depth of field, photorealistic, high detail."
+    )
+
+
 # 风格 → prompt 构建器
 STYLE_BUILDERS = {
     "default": _prompt_default,
     "arch-stickman": _prompt_arch_stickman,
+    "plate": _prompt_plate,
+    "plate-noface": _prompt_plate_noface,
 }
 
 
@@ -225,55 +303,87 @@ def generate_one(
     if not size:
         # 自定义比例兜底：交给中转站 auto
         size = "auto"
-    # edits 是 multipart 表单：size / response_format 作为表单字段传，要求返回图片 url
-    body, boundary = _multipart(
-        {
-            "model": model,
-            "prompt": build_prompt(title, scene, style),
-            "size": size,
-            "n": "1",
-            "response_format": "url",
-        },
-        faces,
-    )
-    req = urllib.request.Request(
-        base + "/images/edits", data=body,
-        headers={
-            "Authorization": "Bearer " + key,
-            "Content-Type": f"multipart/form-data; boundary={boundary}",
-            # 中转站结果文件 CDN(files.chatgpt-topup.com)会拦 urllib 默认 UA(403)，统一带浏览器 UA
-            "User-Agent": "Mozilla/5.0",
-        },
-        method="POST",
-    )
+    prompt = build_prompt(title, scene, style)
+    # UA 说明：中转站前面挂了 Cloudflare，urllib 默认 UA(Python-urllib/x.y) 会被拦成
+    # 403 "error code: 1010"，结果文件 CDN 同样拦。所有请求统一带浏览器 UA。
+    if style == "plate-noface":
+        # 无人底图：没有脸参考可喂，走纯文生图 /images/generations（JSON body）
+        # response_format=url 与 edits 一致：返回图片 url 再下载，不走 b64 大包体。
+        req = urllib.request.Request(
+            base + "/images/generations",
+            data=json.dumps({"model": model, "prompt": prompt, "size": size,
+                             "n": 1, "response_format": "url"}).encode(),
+            headers={
+                "Authorization": "Bearer " + key,
+                "Content-Type": "application/json",
+                "User-Agent": "Mozilla/5.0",
+            },
+            method="POST",
+        )
+    else:
+        # edits 是 multipart 表单：size / response_format 作为表单字段传，要求返回图片 url
+        body, boundary = _multipart(
+            {
+                "model": model,
+                "prompt": prompt,
+                "size": size,
+                "n": "1",
+                "response_format": "url",
+            },
+            faces,
+        )
+        req = urllib.request.Request(
+            base + "/images/edits", data=body,
+            headers={
+                "Authorization": "Bearer " + key,
+                "Content-Type": f"multipart/form-data; boundary={boundary}",
+                "User-Agent": "Mozilla/5.0",
+            },
+            method="POST",
+        )
     safe_ratio = ratio.replace(":", "x").replace(".", "_")
     out_path = output_dir / f"cover_{safe_ratio}_{idx}.png"
-    try:
-        with urllib.request.urlopen(req, timeout=300) as r:
-            d = json.load(r)
-        item = d["data"][0]
-        # 契约：优先走 url（response_format=url）下载落地；b64_json 作兜底
-        if item.get("url"):
-            # 下载结果图：CDN 拦 urllib 默认 UA(403)，必须带浏览器 UA
-            dl_req = urllib.request.Request(item["url"], headers={"User-Agent": "Mozilla/5.0"})
-            with urllib.request.urlopen(dl_req, timeout=120) as ir:
-                output_dir.mkdir(parents=True, exist_ok=True)
-                out_path.write_bytes(ir.read())
-            _center_crop_to_size(out_path, size)
-            return out_path
-        if item.get("b64_json"):
-            output_dir.mkdir(parents=True, exist_ok=True)
-            out_path.write_bytes(base64.b64decode(item["b64_json"]))
-            _center_crop_to_size(out_path, size)
-            return out_path
-        print(f"⚠ {ratio} #{idx}: 返回里没有图片", file=sys.stderr)
-        return None
-    except urllib.error.HTTPError as e:
-        print(f"❌ {ratio} #{idx}: HTTP {e.code} {e.read().decode('utf-8', 'replace')[:200]}", file=sys.stderr)
-        return None
-    except Exception as e:
-        print(f"❌ {ratio} #{idx}: {type(e).__name__} {str(e)[:200]}", file=sys.stderr)
-        return None
+    for attempt in range(1, MAX_RETRIES + 1):
+      try:
+          with urllib.request.urlopen(req, timeout=300) as r:
+              d = json.load(r)
+          item = d["data"][0]
+          # 契约：优先走 url（response_format=url）下载落地；b64_json 作兜底
+          if item.get("url"):
+              # 下载结果图：CDN 拦 urllib 默认 UA(403)，必须带浏览器 UA
+              dl_req = urllib.request.Request(item["url"], headers={"User-Agent": "Mozilla/5.0"})
+              with urllib.request.urlopen(dl_req, timeout=120) as ir:
+                  output_dir.mkdir(parents=True, exist_ok=True)
+                  out_path.write_bytes(ir.read())
+              _center_crop_to_size(out_path, size)
+              return out_path
+          if item.get("b64_json"):
+              output_dir.mkdir(parents=True, exist_ok=True)
+              out_path.write_bytes(base64.b64decode(item["b64_json"]))
+              _center_crop_to_size(out_path, size)
+              return out_path
+          print(f"⚠ {ratio} #{idx}: 返回里没有图片", file=sys.stderr)
+          return None
+      except urllib.error.HTTPError as e:
+          detail = e.read().decode("utf-8", "replace")[:200]
+          # 400 text_conversation / 5xx 都是上游抽风,重试;其余(401 鉴权、404 模型不存在)直接放弃
+          retryable = e.code >= 500 or "text conversation" in detail or "text_conversation" in detail
+          if retryable and attempt < MAX_RETRIES:
+              print(f"   ↻ {ratio} #{idx}: HTTP {e.code} 上游抽风,第 {attempt}/{MAX_RETRIES} 次重试",
+                    file=sys.stderr)
+              time.sleep(RETRY_SLEEP)
+              continue
+          print(f"❌ {ratio} #{idx}: HTTP {e.code} {detail}", file=sys.stderr)
+          return None
+      except Exception as e:
+          if attempt < MAX_RETRIES:
+              print(f"   ↻ {ratio} #{idx}: {type(e).__name__} 第 {attempt}/{MAX_RETRIES} 次重试",
+                    file=sys.stderr)
+              time.sleep(RETRY_SLEEP)
+              continue
+          print(f"❌ {ratio} #{idx}: {type(e).__name__} {str(e)[:200]}", file=sys.stderr)
+          return None
+    return None
 
 
 def main():
@@ -291,13 +401,18 @@ def main():
     parser.add_argument("--label", default="未命名",
                         help="本批标签（如 测试 / 某视频名）；输出子文件夹名 = <今日日期>-<标签>")
     parser.add_argument("--style", default="default",
-                        choices=["default", "arch-stickman"],
-                        help="封面风格：default(人在一侧半身) / "
-                             "arch-stickman(俯拍真头火柴人 + 仰望双行拱形标题 + 大留白)")
+                        choices=["default", "arch-stickman", "plate", "plate-noface"],
+                        help="封面风格：default(人在一侧半身,带字整图) / "
+                             "arch-stickman(俯拍真头火柴人 + 仰望双行拱形标题 + 大留白) / "
+                             "plate(【无字】真人底图,人在左右侧留白,交 HTML 工作台排字) / "
+                             "plate-noface(【无人无字】底图,不喂脸,走文生图端点)。"
+                             "给 cyxj-release-kit 出底图时只能用 plate / plate-noface——"
+                             "default 会把中文渲进画面,不能当底图。")
     args = parser.parse_args()
 
     base, key = load_credentials()
-    faces = resolve_faces(args.face)
+    # plate-noface 走文生图,没有脸参考可喂;此时不去解析脸目录(空目录会直接退出)
+    faces = [] if args.style == "plate-noface" else resolve_faces(args.face)
     ratios = [r.strip() for r in args.ratios.split(",") if r.strip()]
     # 每次出图新建「日期-标签」子文件夹,不同批次不互相覆盖
     today = datetime.date.today().isoformat()
@@ -308,7 +423,7 @@ def main():
     print(f"   场景: {args.scene or '(按标题自动)'}")
     print(f"   风格: {args.style}")
     print(f"   比例: {', '.join(ratios)}  ×{args.n} 张")
-    print(f"   参考: {', '.join(p.name for p in faces)}")
+    print(f"   参考: {', '.join(p.name for p in faces) if faces else '(无脸参考·纯文生图)'}")
     print(f"   模型: {args.model} @ {base}")
     print(f"   批次: {today}-{args.label}")
     print(f"   输出: {output_dir}")
