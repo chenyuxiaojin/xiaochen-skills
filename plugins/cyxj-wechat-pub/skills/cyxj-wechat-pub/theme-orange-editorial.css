@@ -1,5 +1,5 @@
 /* Orange Editorial Theme for WeChat Official Account */
-/* 暖橙 #E8763C × 米黄纸感 #F2E6CC × 深棕 #2A1F18 */
+/* 暖橙 #E8763C(点缀:细带/大数字/描边阴影)× 米黄纸感 #F2E6CC × 深棕 #2A1F18 × 深橙 #A6461A(米黄底上的强调字)*/
 /* Brutalist 印刷感：2px 描边 + 6px 实心阴影 + 网点底纹 */
 /* 适用题材：AI 行业观察、深度长稿、海报式排版 */
 
@@ -33,14 +33,14 @@
 .hero {
   margin: 0;
   padding: 0;
-  background: #E8763C;
+  background: #F2E6CC;
   background-image: radial-gradient(rgba(42,31,24,0.10) 1px, transparent 1px);
   background-size: 3px 3px;
 }
 
 /* Hero top ticker */
 .hero-ticker {
-  background: #F2E6CC;
+  background: #E8763C;
   border-bottom: 2px solid #2A1F18;
   padding: 8px 24px;
   font-family: "Bebas Neue", "PingFang SC", sans-serif;
@@ -126,7 +126,7 @@
   font-family: "Bebas Neue", "PingFang SC", sans-serif;
   font-size: 11px;
   letter-spacing: 3px;
-  color: #2A1F18;
+  color: #A6461A;
   font-weight: 700;
   line-height: 1.4;
   flex-shrink: 0;
@@ -234,23 +234,23 @@ p {
 
 strong {
   font-weight: 800;
-  color: #B14E1E;
+  color: #A6461A;
 }
 
 /* Highlight: 重要词汇带橙色下划线 + 浅米色高光 */
 .hl, strong.hl {
   font-weight: 800;
-  color: #B14E1E;
+  color: #A6461A;
   background: #F4EBD6;
   padding: 0 4px;
-  border-bottom: 2px solid #B14E1E;
+  border-bottom: 2px solid #A6461A;
 }
 
 /* === Chapter Section（橙底网点 + 84px 大数字）=== */
 .chapter {
   border-top: 2px solid #2A1F18;
   border-bottom: 2px solid #2A1F18;
-  background: #E8763C;
+  background: #F4EBD6;
   background-image: radial-gradient(rgba(42,31,24,0.10) 1px, transparent 1px);
   background-size: 3px 3px;
   padding: 18px 22px;
@@ -263,7 +263,7 @@ strong {
   font-family: "Bebas Neue", "PingFang SC", sans-serif;
   font-size: 84px;
   line-height: 0.85;
-  color: #F4EBD6;
+  color: #E8763C;
   font-weight: 400;
   letter-spacing: -4px;
   text-shadow: 2px 2px 0 rgba(42,31,24,0.2);
@@ -278,7 +278,7 @@ strong {
   font-family: "Bebas Neue", "PingFang SC", sans-serif;
   font-size: 11px;
   letter-spacing: 4px;
-  color: #2A1F18;
+  color: #A6461A;
   font-weight: 700;
   margin-bottom: 4px;
 }
@@ -286,10 +286,10 @@ strong {
 .chapter-title {
   font-size: 20px;
   font-weight: 900;
-  color: #F4EBD6;
+  color: #2A1F18;
   line-height: 1.2;
   letter-spacing: 0.5px;
-  text-shadow: 1px 1px 0 rgba(42,31,24,0.2);
+  text-shadow: none;
 }
 
 /* Chapter 反色变体（黑底橙数字，用于结论/总结章节）*/
@@ -426,7 +426,7 @@ h3 {
   font-family: "Bebas Neue", "PingFang SC", sans-serif;
   font-size: 38px;
   line-height: 1;
-  color: #E8763C;
+  color: #A6461A;
   font-weight: 400;
   letter-spacing: -1px;
 }
@@ -473,7 +473,7 @@ h3 {
 .list-num {
   font-family: "Bebas Neue", "PingFang SC", sans-serif;
   font-weight: 400;
-  color: #E8763C;
+  color: #A6461A;
   font-size: 22px;
   line-height: 1;
   flex-shrink: 0;
@@ -525,7 +525,7 @@ h3 {
   flex-shrink: 0;
   font-family: "Bebas Neue", "PingFang SC", sans-serif;
   font-weight: 400;
-  color: #E8763C;
+  color: #A6461A;
   font-size: 20px;
   line-height: 1.1;
 }
@@ -541,11 +541,11 @@ h3 {
 }
 
 .timeline-row-current .timeline-year {
-  color: #F4EBD6;
+  color: #2A1F18;
 }
 
 .timeline-row-current .timeline-event {
-  color: #F4EBD6;
+  color: #2A1F18;
   font-weight: 700;
 }
 
@@ -563,7 +563,7 @@ h3 {
   font-family: "Bebas Neue", "PingFang SC", sans-serif;
   font-size: 11px;
   letter-spacing: 4px;
-  color: #E8763C;
+  color: #A6461A;
   font-weight: 700;
   margin-bottom: 6px;
 }
@@ -579,7 +579,7 @@ h3 {
 
 .keyword-sub {
   font-size: 24px;
-  color: #E8763C;
+  color: #A6461A;
   letter-spacing: 1px;
 }
 
@@ -636,11 +636,11 @@ h3 {
 
 .layer-outer {
   background: #E8763C;
-  color: #F4EBD6;
+  color: #2A1F18;
 }
 
 .layer-outer .layer-num {
-  color: #F4EBD6;
+  color: #2A1F18;
 }
 
 .layer-outer .layer-eyebrow {
@@ -648,7 +648,7 @@ h3 {
 }
 
 .layer-outer .layer-title {
-  color: #F4EBD6;
+  color: #2A1F18;
 }
 
 /* === Growth Row（简易横条形增长可视化）=== */
@@ -720,11 +720,11 @@ h3 {
 
 .growth-row-current {
   background: #E8763C;
-  color: #F4EBD6;
+  color: #2A1F18;
 }
 
 .growth-row-current .growth-date {
-  color: #F4EBD6;
+  color: #2A1F18;
 }
 
 .growth-row-current .growth-bar {
@@ -732,7 +732,7 @@ h3 {
 }
 
 .growth-row-current .growth-value {
-  color: #F4EBD6;
+  color: #2A1F18;
   font-size: 28px;
   letter-spacing: -0.5px;
 }
@@ -763,8 +763,8 @@ h3 {
   line-height: 0.9;
   font-weight: 400;
   letter-spacing: -2px;
-  color: #F4EBD6;
-  text-shadow: 2px 2px 0 rgba(42,31,24,0.18);
+  color: #2A1F18;
+  text-shadow: none;
 }
 
 .poster-cn {
@@ -806,7 +806,7 @@ h3 {
   font-family: "Bebas Neue", "PingFang SC", sans-serif;
   font-size: 11px;
   letter-spacing: 4px;
-  color: #B14E1E;
+  color: #A6461A;
   font-weight: 700;
   margin-bottom: 8px;
 }
@@ -841,12 +841,12 @@ h3 {
 /* Warn / Tip 变体（保留兼容旧 .callout-warn / .callout-tip 标签）*/
 .callout-warn {
   background: #F4EBD6;
-  border-color: #B14E1E;
-  box-shadow: 6px 6px 0 #B14E1E;
+  border-color: #A6461A;
+  box-shadow: 6px 6px 0 #A6461A;
 }
 
 .callout-warn .callout-title {
-  color: #B14E1E;
+  color: #A6461A;
 }
 
 .callout-tip {
@@ -928,7 +928,7 @@ h3 {
   font-family: "Bebas Neue", "PingFang SC", sans-serif;
   font-size: 11px;
   letter-spacing: 3px;
-  color: #B14E1E;
+  color: #A6461A;
   font-weight: 700;
   margin-bottom: 10px;
 }
@@ -945,7 +945,7 @@ h3 {
 }
 
 .card-item strong {
-  color: #B14E1E;
+  color: #A6461A;
   font-weight: 800;
 }
 
@@ -1008,7 +1008,7 @@ h3 {
   width: 36px;
   height: 36px;
   background: #E8763C;
-  color: #F4EBD6;
+  color: #2A1F18;
   font-family: "Bebas Neue", "PingFang SC", sans-serif;
   font-size: 18px;
   font-weight: 700;
@@ -1025,7 +1025,7 @@ h3 {
 }
 
 .step-text strong {
-  color: #B14E1E;
+  color: #A6461A;
 }
 
 /* === Grid Cards === */
@@ -1049,7 +1049,7 @@ h3 {
   font-family: "Bebas Neue", "PingFang SC", sans-serif;
   font-size: 11px;
   font-weight: 700;
-  color: #F4EBD6;
+  color: #2A1F18;
   background: #E8763C;
   padding: 3px 10px;
   margin-bottom: 10px;
@@ -1095,7 +1095,7 @@ h3 {
   width: 36px;
   height: 36px;
   background: #E8763C;
-  color: #F4EBD6;
+  color: #2A1F18;
   font-family: "Bebas Neue", "PingFang SC", sans-serif;
   font-size: 16px;
   font-weight: 700;
@@ -1291,7 +1291,7 @@ code {
   background: #F4EBD6;
   border: 1px solid #2A1F18;
   padding: 1px 5px;
-  color: #B14E1E;
+  color: #A6461A;
 }
 
 pre code {

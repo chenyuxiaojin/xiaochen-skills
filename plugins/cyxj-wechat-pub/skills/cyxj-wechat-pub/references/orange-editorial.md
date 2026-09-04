@@ -5,6 +5,18 @@
 > ⚠️ **orange 主题不要用 `.img-scroll` 组件**（Scroll Gallery）——`theme-orange-editorial.css` 里没有它的样式，
 > 排出来会裸奔。多张同类图片直接用多个 `.img-card` 竖排。
 
+## 配色（2026-09-04 起：橙是点缀，不是底色）
+
+| 角色 | 色值 | 用在哪 |
+|---|---|---|
+| 米黄纸面 | #F2E6CC / #F4EBD6 | 整篇底色、hero 底、chapter 横条、卡片底 |
+| 深棕 | #2A1F18 | 正文、标题、**所有橙底上的文字**（5.4:1） |
+| 主橙 | #E8763C | 只做点缀：hero 顶部 ticker 带、hero 底部 bleed 带、chapter 大数字、quote 大引号、6px 实心阴影、小块橙底（step-num / grid-card-tag / avatar / timeline 当前行 / layer-outer / prediction 表头 / footer 表头 / poster）、深棕底上的橙字 |
+| 深橙 | #A6461A | 米黄底上的强调字：strong / .hl / code / stat-value / list-num / timeline-year / keyword / callout 标题 / card 标题（≥4.8:1） |
+
+铁律：**大面积（hero / chapter / poster 之外的整块）不要再铺橙**，橙墙一多正文就没地方喘气；橙底上永远深棕字，米黄底上要橙字就用深橙。
+只有 chapter-num / quote-mark 这类装饰性大字允许主橙压米黄（2.5:1，装饰，旁边有深橙小字重复信息）。
+
 ## 结构铁律（违反就出白色断层）
 
 公众号编辑器会在所有相邻的 `<section>` 兄弟元素之间强行插入白色间隙，所以这个主题的 HTML 必须长这样：
@@ -31,7 +43,7 @@
 **不要做的事**：
 - 不要把 hero 之后的章节 / 后记拆成 `.article` 的多个兄弟 `<section>`
 - 不要用 `margin-top` 给章节之间留白——用 `<section class="spacer"></section>` 占位（内部填充米色背景，避免兄弟间隙）
-- 不要把 `.body` 嵌套到 `.hero` 里面（嵌套之后 hero 橙色背景会被 WeChat 剥掉）
+- 不要把 `.body` 嵌套到 `.hero` 里面（嵌套之后 hero 的米黄网点背景和上下橙带会被 WeChat 剥掉）
 - 不要用 `position: absolute` / `writing-mode: vertical-rl` / `transform: rotate(180deg)`，公众号统统不支持
 
 ## Orange Editorial 专属组件模板
@@ -57,7 +69,7 @@
 
   <section class="hero-subtitle">
     <section class="hero-eyebrow">STUCK BETWEEN<br>MODEL & WRAPPER</section>
-    <section class="hero-deck">{中文副标，1-2 句话讲清楚文章在说什么}</section>
+    <section class="hero-deck">{中文副标，≤60 字、最多 2 句}</section>
   </section>
 
   <section class="hero-author">
@@ -75,6 +87,9 @@
 ```
 
 每篇文章只换 `TAG`、ISSUE 号、ticker 内容、eyebrow（英文小标）、deck（中文副标），其他保持不变。头像固定为眼镜插画版小陈（2026-09-02 起）。
+
+**deck 硬上限：≤60 字、最多 2 句**（2026-09-04 起）。deck 是封面副标，不是导语——只说"这篇讲什么"，不复述背景、不列全部章节。
+**禁止把文章第一段整段粘进 deck**；文章开头的导语段落照常放进 `.body` 的第一个 `<p>`。超过 60 字就压缩，压不下来说明写的是导语不是副标。
 
 **hero 里不放文章大标题**：不用 `.hero-title` / `<h1>`（CSS 里的样式留着不用）。标题走微信后台，预览页底部「发布信息区」单独列标题 / 摘要 / 封面，不进复制区。
 
@@ -166,7 +181,7 @@
 </section>
 ```
 
-最新 / 当前事件加 `.timeline-row-current`，会变橙底反白。
+最新 / 当前事件加 `.timeline-row-current`，会变橙底深棕字（2026-09-04 起橙底上一律深棕字，不再反白）。
 
 ### Keyword Card（黑底橙阴影的概念锚点）
 
@@ -214,7 +229,7 @@
 </section>
 ```
 
-最外层加 `.layer-outer` 变成橙底反白，强调"最重要的一层"。
+最外层加 `.layer-outer` 变成橙底深棕字，强调"最重要的一层"。
 
 ### Growth（增长可视化，简易横条形）
 
@@ -372,5 +387,6 @@
 - [ ] grep 一遍 HTML，确认没有 `position: absolute`、`writing-mode`、`transform: rotate`
 - [ ] hero 末尾有 `.hero-bleed` + `.hero-bleed-cream` 两块米色压底（缓冲 WeChat 间隙）
 - [ ] body 开头有 `border-top: 30px solid #F2E6CC`（CSS 里已写好，HTML 别覆盖）
-- [ ] 文章开头确认有橙底网点的 hero，结尾确认有 footer-card + ticker-end
+- [ ] hero 的 `.hero-deck` ≤60 字、最多 2 句，不是文章第一段整段
+- [ ] 文章开头确认有 hero（米黄网点底 + 顶部橙色 ticker 带 + 底部橙色 bleed 带），结尾确认有 footer-card + ticker-end
 - [ ] 全文没有出现 `.img-scroll` / `.img-scroll-track` / `.img-scroll-item`

@@ -5,7 +5,7 @@ description: >
   TATALAB 蓝（默认）、炭黑暖金（深度/商务）、暖橙编辑（编辑/海报风）。
   支持内容审查、打磨、IP 配图生成、预览确认，输出可直接粘贴到微信后台。
   触发词：发布到公众号、公众号排版、微信发布、排版文章、XCYJ 排版。
-version: 1.1.0
+version: 1.2.0
 ---
 
 # XCYJ WeChat Publisher - 陈与小金公众号排版发布 Skill
@@ -30,7 +30,7 @@ version: 1.1.0
 |---------|------|---------|
 | `theme-tatalab.css` | 蓝色商务感（Material Blue 系：#1565C0 / #1976D2 / #BBDEFB） | AI 编程 / 运营干货 / 教程效率类，活泼亲和 |
 | `theme-noir-gold.css` | 炭黑 + 暖金沉稳感（#26262A 炭灰 Hero + #8A6D1A 金棕强调 + #FAF6EC 米黄引用块） | AI 行业观察 / 深度分析 / 长稿，沉稳权威 |
-| `theme-orange-editorial.css` | 暖橙 × 米黄编辑/海报风（#E8763C 橙 + #F2E6CC 米黄 + #2A1F18 深棕 + Bebas Neue + 2px 描边 + 6px 实心阴影 + 网点底纹） | AI 行业观察 / 大事件解读 / 海报式长稿，杂志/印刷感强 |
+| `theme-orange-editorial.css` | 米黄纸面编辑/海报风，橙做点缀（#F2E6CC 米黄底 + #2A1F18 深棕字 + #E8763C 橙只用于色带/大数字/阴影/小块 + #A6461A 深橙强调字 + Bebas Neue + 2px 描边 + 6px 实心阴影 + 网点底纹；橙底上一律深棕字 ≥4.5:1） | AI 行业观察 / 大事件解读 / 海报式长稿，杂志/印刷感强 |
 
 调用 juice 时把 `theme-tatalab.css` 替换成想要的主题文件名即可，其他流程不变。Phase 0 内容审查时顺便判定主题：技术/教程类默认 tatalab；行业观察/深度分析/商业评论类问用户是 noir-gold 还是 orange-editorial（orange-editorial 适合需要强视觉冲击、有数据 + 时间线 + 关键词 + 结论金句的长稿；noir-gold 适合更克制的深度评论）。
 
