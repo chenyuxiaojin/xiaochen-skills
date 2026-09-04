@@ -2,7 +2,7 @@
 
 # xiaochen-skills
 
-> xiaochen-skills is a Claude Code plugin marketplace bundling 13 plugins (15 skills) for video production, content publishing, and knowledge management.
+> xiaochen-skills is a Claude Code plugin marketplace bundling 14 plugins (16 skills) for video production, content publishing, and knowledge management.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-plugin-blueviolet)](https://claude.ai/code)
@@ -28,6 +28,7 @@ Claude Code's built-in skills cover general tasks. This collection adds a vertic
 | [cyxj-data-review](./plugins/cyxj-data-review/) | Evidence-driven Douyin analytics review around the KPI chain (saves → followers → featured); every conclusion tagged 【事实】【推断】【未知】 | `复盘我的数据`, `数据复盘`, `看看我最近数据`, `精选诊断` | Douyin analytics export from the user; no API key |
 | [cyxj-jingxuan](./plugins/cyxj-jingxuan/) | Write a 150-250 character Douyin Featured application from the video's final subtitles/transcript, in a fixed 4-part structure (originality → depth → audience value → platform fit); every claim verifiable in the video, no invented data | `写精选申请`, `精选申请`, `申请精选`, `/cyxj-jingxuan` | Final subtitles/transcript of the video; no API key |
 | [cyxj-release-kit](./plugins/cyxj-release-kit/) | One-stop release kit after final cut: titles + descriptions for 6 platforms (YouTube/Bilibili/Douyin + distribution) and 3-ratio covers via an HTML cover workbench (browser-rendered text, zero typo / zero crop) plus upload JPGs | `发布物料`, `出发布包`, `六平台标题`, `封面工作台`, `/cyxj-release-kit` | Base images via cyxj-image-studio (`GPTIMG2_*`); a browser for the cover workbench |
+| [cyxj-audio-check](./plugins/cyxj-audio-check/) | Final-cut audio QC + fix: ffmpeg measures loudness (LUFS), true peak, L/R balance, BGM-to-voice ratio, silences and bitrate into a pass/fail sheet; failures map to step-by-step DaVinci fixes (F1-F6); ffmpeg fallback remasters the track or remixes voice + BGM with sidechain ducking, then re-checks | `音频体检`, `查一下音频`, `这版能发吗`, `/cyxj-audio-check` | ffmpeg / ffprobe; Python `numpy` optional (master alignment) |
 
 ## Install
 
@@ -57,7 +58,7 @@ No slash command prefix is required for most skills — the trigger phrases list
 | | xiaochen-skills | [anthropic/claude-code-skills](https://github.com/anthropics/claude-code) (official examples) | [awesome-claude-code](https://github.com/hesreallyhim/awesome-claude-code) community list |
 |---|---|---|---|
 | Focus | Video production + WeChat publishing + Obsidian knowledge management | General-purpose demos and patterns | Curated links to many community skills |
-| Skill count | 15 skills / 13 plugins | Varies (reference examples) | Many repos, not a single install |
+| Skill count | 16 skills / 14 plugins | Varies (reference examples) | Many repos, not a single install |
 | Install method | Single `/plugin marketplace add` command | Copy individual files | Each repo installs separately |
 | Multi-agent | Yes (roundtable spawns 6 Opus subagents) | Depends on example | Varies |
 | Script automation | Yes (Python + Bash, Gemini, Apify) | Minimal | Varies |
@@ -66,7 +67,7 @@ No slash command prefix is required for most skills — the trigger phrases list
 ## FAQ
 
 **How do I install?**
-Run `/plugin marketplace add chenyuxiaojin/xiaochen-skills` inside Claude Code. All 13 plugins (15 skills) are registered.
+Run `/plugin marketplace add chenyuxiaojin/xiaochen-skills` inside Claude Code. All 14 plugins (16 skills) are registered.
 
 **Can I install only one skill?**
 Yes. Each plugin is self-contained. You can install a single plugin by specifying the plugin name if the marketplace supports it, or copy the individual `plugins/cyxj-{name}/` directory and register it in your own marketplace.

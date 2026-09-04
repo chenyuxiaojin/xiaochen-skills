@@ -2,7 +2,7 @@
 
 # xiaochen-skills
 
-> 小陈的 Claude Code 插件集：13 个插件（15 个技能），面向视频制作、内容发布和知识管理。
+> 小陈的 Claude Code 插件集：14 个插件（16 个技能），面向视频制作、内容发布和知识管理。
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-plugin-blueviolet)](https://claude.ai/code)
@@ -28,6 +28,7 @@ Claude Code 内置技能覆盖通用任务。这个集合在上面加了一层�
 | [cyxj-data-review](./plugins/cyxj-data-review/) | 抖音数据复盘诊断：围绕 KPI 链（收藏→涨粉→进精选）做证据驱动诊断，每条结论标【事实】【推断】【未知】 | `复盘我的数据`、`数据复盘`、`看看我最近数据`、`精选诊断` | 用户导出的抖音数据；无需 API key |
 | [cyxj-jingxuan](./plugins/cyxj-jingxuan/) | 抖音精选申请文案：读成片字幕/逐字稿，按四段式（原创定性→深度证明→受众价值→平台对齐）写 150-250 字申请，每条理由可在视频中核验，数据不编 | `写精选申请`、`精选申请`、`申请精选`、`/cyxj-jingxuan` | 成片字幕/逐字稿；无需 API key |
 | [cyxj-release-kit](./plugins/cyxj-release-kit/) | 视频发布物料一条龙：6 平台标题+简介 + HTML 封面工作台三比例出图（无字底图+浏览器排字，零错字零裁切）+ 上传 JPG | `发布物料`、`出发布包`、`六平台标题`、`封面工作台`、`/cyxj-release-kit` | 底图依赖 cyxj-image-studio（`GPTIMG2_*`）；浏览器（封面工作台） |
+| [cyxj-audio-check](./plugins/cyxj-audio-check/) | 成片音频体检 + 修法:ffmpeg 量响度(LUFS)/真峰值/左右声道/BGM 比例/静音/码率,出放行表(可发/不可发);不可发给达芬奇菜单级修法(F1-F6),可 ffmpeg 应急修音轨或人声+BGM 自动闪避重混,修完自动复测 | `音频体检`、`查一下音频`、`这版能发吗`、`人声太小`、`BGM 太大`、`/cyxj-audio-check` | ffmpeg / ffprobe;Python `numpy` 可选(母带对齐) |
 
 ## 安装
 
@@ -37,7 +38,7 @@ Claude Code 内置技能覆盖通用任务。这个集合在上面加了一层�
 /plugin marketplace add chenyuxiaojin/xiaochen-skills
 ```
 
-一条命令安装全部 13 个插件（15 个技能）。
+一条命令安装全部 14 个插件（16 个技能）。
 
 ## 使用方法
 
@@ -57,7 +58,7 @@ YouTube 选题            → 启动 cyxj-youtube-topics
 | | xiaochen-skills | [Anthropic 官方示例 Skills](https://github.com/anthropics/claude-code) | [awesome-claude-code](https://github.com/hesreallyhim/awesome-claude-code) 社区列表 |
 |---|---|---|---|
 | 定位 | 视频制作 + 公众号发布 + Obsidian 知识管理 | 通用示例和模式参考 | 社区技能链接汇总，非单一安装 |
-| 技能数量 | 15 个技能 / 13 个插件 | 随示例变化 | 多仓库分散 |
+| 技能数量 | 16 个技能 / 14 个插件 | 随示例变化 | 多仓库分散 |
 | 安装方式 | 一条命令全量安装 | 手动复制文件 | 各仓库分别安装 |
 | 多智能体 | 有（圆桌召集 6 个 Opus subagent） | 取决于示例 | 各异 |
 | 脚本自动化 | 有（Python + Bash + Gemini + Apify） | 较少 | 各异 |
@@ -66,7 +67,7 @@ YouTube 选题            → 启动 cyxj-youtube-topics
 ## 常见问题
 
 **怎么安装？**
-在 Claude Code 里运行 `/plugin marketplace add chenyuxiaojin/xiaochen-skills`，13 个插件（15 个技能）全部注册。
+在 Claude Code 里运行 `/plugin marketplace add chenyuxiaojin/xiaochen-skills`，14 个插件（16 个技能）全部注册。
 
 **能只安装一个技能吗？**
 可以。每个插件互相独立。如果 marketplace 支持单插件安装，可以按名称指定；也可以手动复制 `plugins/cyxj-{name}/` 目录并在自己的 marketplace.json 里注册。

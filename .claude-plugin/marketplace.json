@@ -16,8 +16,8 @@
     "cyxj-ai-weekly-news": null
   },
   "metadata": {
-    "description": "小陈的 Claude Code 技能集：达芬奇字幕修正、公众号排版发布、Obsidian 知识库编译、海报设计、YouTube 选题发现、博主用法研究、真人视频封面、圆桌决策压测、逐字稿转文章、Astro 博客发布、知识视频开头优化、知识视频内容诊断、抖音数据复盘诊断、抖音精选申请文案、视频发布物料一条龙",
-    "version": "1.16.0"
+    "description": "小陈的 Claude Code 技能集：达芬奇字幕修正、公众号排版发布、Obsidian 知识库编译、海报设计、YouTube 选题发现、博主用法研究、真人视频封面、圆桌决策压测、逐字稿转文章、Astro 博客发布、知识视频开头优化、知识视频内容诊断、抖音数据复盘诊断、抖音精选申请文案、视频发布物料一条龙、成片音频体检与修法",
+    "version": "1.17.0"
   },
   "plugins": [
     {
@@ -84,6 +84,11 @@
       "name": "cyxj-release-kit",
       "description": "视频发布物料一条龙：6 平台标题+简介（体裁匹配、时间戳核对字幕）+ HTML 封面工作台三比例出图（无字底图+浏览器排字，零错字零裁切）+ 上传 JPG",
       "source": "./plugins/cyxj-release-kit"
+    },
+    {
+      "name": "cyxj-audio-check",
+      "description": "成片音频体检 + 修法:ffmpeg 量响度/峰值/声道/BGM 比例/码率出放行表,不可发给达芬奇菜单级修法,可 ffmpeg 应急修音轨或人声+BGM 自动闪避重混,修完复测",
+      "source": "./plugins/cyxj-audio-check"
     }
   ]
 }
