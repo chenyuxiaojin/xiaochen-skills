@@ -60,7 +60,21 @@ HTTPS_PROXY=<你的代理地址> HTTP_PROXY=<你的代理地址> \
 python3 "${CLAUDE_PLUGIN_ROOT}/skills/cyxj-yt-creator/scripts/research_to_draft.py" --topic "Open Design + HyperFrames"
 ```
 
-验证时先 dry-run：
+### 关联同题笔记（`--link`）
+
+如果这次研究是从一篇已有笔记出发的（用户给了灵感笔记路径，或对话就从那篇笔记开始），运行时必须带 `--link`：
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/skills/cyxj-yt-creator/scripts/research_to_draft.py" \
+  --topic "Opus 5.5 思考档位实测" \
+  --link "如何发挥 opus5.5的模型最大能力"
+```
+
+- 值可以是笔记名（在 `--out-dir` 里找）或完整路径；可重复，一次链多篇。
+- 研究稿顶部生成 `> [!link] 关联笔记`，并在每篇被链笔记末尾补一条指回研究稿的反链；已链过的跳过，笔记不存在只警告不新建。
+- 只按用户明确的来源笔记传，不按文件名猜同题笔记。
+
+验证时先 dry-run（dry-run 不改动被链笔记）：
 
 ```bash
 python3 "${CLAUDE_PLUGIN_ROOT}/skills/cyxj-yt-creator/scripts/research_to_draft.py" \
@@ -82,6 +96,7 @@ python3 "${CLAUDE_PLUGIN_ROOT}/skills/cyxj-yt-creator/scripts/research_to_draft.
 6. 重点视频与字幕观察。
 7. 全部 YouTube 结果：按发布日期倒序，包含链接、频道、播放量、时长。
 8. 拍摄判断：必须回到陈与小金定位，避免变成普通工具介绍。
+9. 关联笔记：有来源笔记时，研究稿顶部与来源笔记末尾互相 `[[wikilink]]`，生成后确认两边都能跳转。
 
 ## 研究判断原则
 

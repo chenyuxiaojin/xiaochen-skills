@@ -187,6 +187,7 @@ def build_markdown(
     profile: str,
     search_queries: list[str],
     subtitle_count: int,
+    links: list[str] | None = None,
 ) -> str:
     today = datetime.now().strftime("%Y-%m-%d")
     positioning = infer_positioning(profile)
@@ -202,6 +203,11 @@ def build_markdown(
     add("status: 待发布")
     add("tags: [YouTube选题, 博主研究, Apify, Claude Code, Codex]")
     add("---\n")
+    if links:
+        add("> [!link] 关联笔记")
+        for name in links:
+            add(f"> - [[{name}]]")
+        add("")
     add(f"# {output_title}\n")
     add("## 结论\n")
     add(
@@ -275,6 +281,41 @@ def build_markdown(
     return "\n".join(lines).rstrip() + "\n"
 
 
+LINK_CALLOUT = "> [!link] 关联笔记"
+
+
+def resolve_link_notes(names: list[str], search_dir: Path) -> list[Path]:
+    """把 --link 的值解析成已存在的笔记文件：可以是路径，也可以是 search_dir 下的笔记名。找不到只警告，不新建。"""
+    found: list[Path] = []
+    for raw in names:
+        candidate = Path(raw).expanduser()
+        if candidate.suffix != ".md":
+            candidate = candidate.with_name(candidate.name + ".md")
+        if not candidate.is_absolute():
+            candidate = search_dir / candidate
+        if candidate.is_file():
+            found.append(candidate)
+        else:
+            print(f"warn: 关联笔记不存在，已跳过：{raw}", file=sys.stderr)
+    return found
+
+
+def append_backlink(note: Path, draft_name: str) -> bool:
+    """在已有笔记末尾补一条指回研究稿的链接；已链过就跳过（幂等）。"""
+    text = note.read_text(encoding="utf-8")
+    link = f"[[{draft_name}]]"
+    if link in text:
+        return False
+    tail = text.rstrip("\n")
+    last_line = tail.rsplit("\n", 1)[-1]
+    if LINK_CALLOUT in tail and last_line.startswith("> - "):
+        new_text = f"{tail}\n> - 研究稿：{link}\n"
+    else:
+        new_text = f"{tail}\n\n{LINK_CALLOUT}\n> - 研究稿：{link}\n"
+    note.write_text(new_text, encoding="utf-8")
+    return True
+
+
 def run(args: argparse.Namespace) -> Path:
     token = load_env_value("APIFY_API_TOKEN")
     if not token:
@@ -324,6 +365,7 @@ def run(args: argparse.Namespace) -> Path:
             print(f"warn: subtitle actor failed: {exc}", file=sys.stderr)
 
     profile = read_profile(Path(args.profile).expanduser())
+    link_notes = resolve_link_notes(args.link or [], Path(args.out_dir).expanduser())
     title = args.output_title or f"{args.topic} 选题研究"
     markdown = build_markdown(
         topic=args.topic,
@@ -333,6 +375,7 @@ def run(args: argparse.Namespace) -> Path:
         profile=profile,
         search_queries=queries,
         subtitle_count=args.subtitle_count,
+        links=[note.stem for note in link_notes],
     )
 
     if args.output:
@@ -345,6 +388,11 @@ def run(args: argparse.Namespace) -> Path:
 
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(markdown, encoding="utf-8")
+    for note in link_notes:
+        if args.dry_run and not args.output:
+            print(f"dry-run: 未改动关联笔记，正式运行会在 {note.name} 末尾补反链")
+        elif append_backlink(note, output.stem):
+            print(f"backlink: {note}")
     print(output)
     print(f"videos={len(videos)} subtitles={sum(1 for value in subtitles.values() if value)}")
     return output
@@ -363,6 +411,7 @@ def main() -> None:
     parser.add_argument("--profile", default=str(DEFAULT_PROFILE), help="Creator profile markdown path.")
     parser.add_argument("--date-filter", default="year", help="Apify YouTube date filter, e.g. day/week/month/year.")
     parser.add_argument("--timeout", type=int, default=240, help="Apify request timeout seconds.")
+    parser.add_argument("--link", action="append", help="同题的已有笔记（笔记名或路径，名字按 --out-dir 查找）。可重复。研究稿顶部链向它，并在它末尾补反链。")
     parser.add_argument("--dry-run", action="store_true", help="Write to /tmp unless --output is set.")
     args = parser.parse_args()
     try:
