@@ -49,7 +49,7 @@ Gemini handles 95%+ of corrections at minimal cost. Opus only reviews the diff, 
 - `GEMINI_API_KEY` environment variable set
 
 ```bash
-pip install google-genai pysrt
+pip install google-genai pysrt jieba
 ```
 
 ## Installation
@@ -120,8 +120,7 @@ The `feedback.gemini_missed` field tracks errors Gemini missed but Opus caught, 
 ## Display Rules
 
 Optimized for 16:9 landscape video subtitles:
-- Soft limit: 18 display characters (Chinese = 1, ASCII = 0.5)
-- Hard limit: 25 characters (auto-split with review flag)
+- Line limit: 16 display characters (Chinese = 1, ASCII = 0.5; Netflix Simplified Chinese allows 16 per line). Longer cues are split at word boundaries and flagged for review
 - Punctuation: commas/periods → spaces, keep ？！
 
 ## License

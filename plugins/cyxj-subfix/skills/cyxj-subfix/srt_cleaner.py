@@ -11,9 +11,21 @@ import json
 import math
 import re
 import sys
+import warnings
 from pathlib import Path
 
 import pysrt
+
+try:  # 分词只用来找拆分点；没装就退回中点强拆
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore')
+        import jieba
+    jieba.setLogLevel(60)
+except ImportError:
+    jieba = None
+
+# 这些字黏在前一个词上，拆分时不放到下一条开头
+ATTACH_TO_PREV = set('的地得了着过吗呢吧啊呀们')
 
 
 # ── 辅助函数 ──────────────────────────────────────────────────────────────
@@ -216,8 +228,8 @@ def deduplicate(subs, overlap_threshold=0.8, ghost_duration=0.3):
 # ── Stage 3: 替换标点 ────────────────────────────────────────────────────
 
 def replace_punctuation(subs):
-    """逗号句号 → 空格，保留？！，合并连续空格。"""
-    punct_re = re.compile(r'[,，.。、]')
+    """逗号句号 → 空格，保留？！，合并连续空格。数字里的小数点和千分位（5.5、1,000）不动。"""
+    punct_re = re.compile(r'[，。、]|(?<!\d)[,.]|[,.](?!\d)')
     multi_space = re.compile(r' {2,}')
 
     for sub in subs:
@@ -229,7 +241,7 @@ def replace_punctuation(subs):
 
 # ── Stage 4: 保守合并 ────────────────────────────────────────────────────
 
-def merge_short(subs, gap_limit=0.5, soft_limit=18):
+def merge_short(subs, gap_limit=0.5, soft_limit=16):
     """保守合并短字幕。返回 (merged_list, merge_ops)。"""
     if not subs:
         return [], []
@@ -278,82 +290,106 @@ def merge_short(subs, gap_limit=0.5, soft_limit=18):
 
 # ── Stage 5: 强制拆分 ────────────────────────────────────────────────────
 
+def word_boundaries(text: str) -> list:
+    """词与词之间的位置（不含首尾）。没装 jieba 时返回空。"""
+    if jieba is None:
+        return []
+    cuts, pos = [], 0
+    for word in jieba.cut(text):
+        pos += len(word)
+        cuts.append(pos)
+    return cuts[:-1]
+
+
 def find_split_point(text: str) -> int:
-    """找最佳拆分点。优先级：？！ > 空格 > 中点强拆。
+    """找最佳拆分点（返回后半段起点）。优先级：？！ > 空格 > 词边界 > 中点强拆。
 
     中点按显示宽度（count_display_chars 同款权重：中文=1, ASCII=0.5）累计计算，
-    与超限判断口径一致，避免中英文混排时按字符数取中导致两半宽度悬殊。"""
-    total_width = sum(1.0 if ord(ch) > 0x7F else 0.5 for ch in text)
-    mid = len(text) // 2  # 兜底
-    acc = 0.0
-    for i, ch in enumerate(text):
-        acc += 1.0 if ord(ch) > 0x7F else 0.5
-        if acc >= total_width / 2:
-            mid = i + 1
-            break
-    best = -1
+    与超限判断口径一致，避免中英文混排时按字符数取中导致两半宽度悬殊。
+    标点和空格只在中间一半宽度内才用，免得拆出两三个字的碎条。"""
+    cum = [0.0]  # cum[p] = text[:p] 的显示宽度
+    for ch in text:
+        cum.append(cum[-1] + (1.0 if ord(ch) > 0x7F else 0.5))
+    total = cum[-1]
+    mid = next((p for p in range(1, len(text) + 1) if cum[p] >= total / 2), len(text) // 2)
 
-    # 优先级 1：？！
-    for i, ch in enumerate(text):
-        if ch in '？！?!':
-            if best == -1 or abs(i - mid) < abs(best - mid):
-                best = i
+    def central(p):
+        return total * 0.25 <= cum[p] <= total * 0.75
+
+    def nearest(cands):
+        return min(cands, key=lambda p: abs(p - mid)) if cands else -1
+
+    def ascii_word(ch):
+        return ch.isascii() and ch.isalnum()
+
+    # 优先级 1：？！之后（句末那个不算）
+    best = nearest([i + 1 for i, ch in enumerate(text[:-1])
+                    if ch in '？！?!' and central(i + 1)])
     if best != -1:
-        return best + 1  # 在标点后拆
+        return best
 
-    # 优先级 2：空格
-    for i, ch in enumerate(text):
-        if ch == ' ':
-            if best == -1 or abs(i - mid) < abs(best - mid):
-                best = i
+    # 优先级 2：空格之后（英文词之间的空格不拆，如 Claude Code、Opus 5）
+    best = nearest([i + 1 for i, ch in enumerate(text[:-1])
+                    if ch == ' ' and i > 0 and central(i + 1)
+                    and not (ascii_word(text[i - 1]) and ascii_word(text[i + 1]))])
     if best != -1:
-        return best + 1  # 在空格后拆
+        return best
 
-    # 优先级 3：中点强拆
+    # 优先级 3：词边界，「的了吗」这类字不放到下一条开头
+    best = nearest([p for p in word_boundaries(text) if text[p] not in ATTACH_TO_PREV])
+    if best != -1:
+        return best
+
+    # 优先级 4：中点强拆
     return mid
 
 
-def split_long(subs, hard_limit=25):
+def split_to_fit(sub, hard_limit):
+    """把一条字幕一分为二，再对两半递归，直到每段都不超过 hard_limit。"""
+    if count_display_chars(sub.text) <= hard_limit:
+        return [sub]
+
+    text = sub.text
+    split_pos = find_split_point(text)
+    part1 = text[:split_pos].strip()
+    part2 = text[split_pos:].strip()
+
+    if not part1:
+        part1, part2 = part2[:len(part2) // 2], part2[len(part2) // 2:]
+    if not part2:
+        return [sub]
+
+    # 按字符比例分配时间
+    total_chars = len(part1) + len(part2)
+    ratio = len(part1) / total_chars if total_chars > 0 else 0.5
+    split_time = interpolate_time(sub.start, sub.end, ratio)
+
+    sub1 = pysrt.SubRipItem(start=sub.start, end=split_time, text=part1)
+    sub2 = pysrt.SubRipItem(start=split_time, end=sub.end, text=part2)
+    return split_to_fit(sub1, hard_limit) + split_to_fit(sub2, hard_limit)
+
+
+def split_long(subs, hard_limit=16):
     """拆分超长字幕。返回 (split_list, split_ops, needing_review)。"""
     result = []
     split_ops = []
     needing_review = []
 
     for idx, sub in enumerate(subs):
-        if count_display_chars(sub.text) <= hard_limit:
-            result.append(sub)
+        pieces = split_to_fit(sub, hard_limit)
+        if len(pieces) == 1:
+            result.append(pieces[0])
             continue
-
-        # 需要拆分
-        text = sub.text
-        split_pos = find_split_point(text)
-        part1 = text[:split_pos].strip()
-        part2 = text[split_pos:].strip()
-
-        if not part1:
-            part1, part2 = part2[:len(part2) // 2], part2[len(part2) // 2:]
-        if not part2:
-            result.append(sub)
-            continue
-
-        # 按字符比例分配时间
-        total_chars = len(part1) + len(part2)
-        ratio = len(part1) / total_chars if total_chars > 0 else 0.5
-        split_time = interpolate_time(sub.start, sub.end, ratio)
-
-        sub1 = pysrt.SubRipItem(start=sub.start, end=split_time, text=part1)
-        sub2 = pysrt.SubRipItem(start=split_time, end=sub.end, text=part2)
 
         output_idx = len(result) + 1  # 1-based
-        result.append(sub1)
-        result.append(sub2)
+        output_indices = list(range(output_idx, output_idx + len(pieces)))
+        result.extend(pieces)
         split_ops.append({
             'source_idx': idx + 1,
-            'output_indices': [output_idx, output_idx + 1],
+            'output_indices': output_indices,
             'op': 'split'
         })
-        needing_review.append(output_idx)
-        needing_review.append(output_idx + 1)
+        needing_review.extend(output_indices)
 
     return result, split_ops, needing_review
 
@@ -447,7 +483,7 @@ def build_operation_map(original_count, merge_ops, split_ops, dedup_removed):
     return ops
 
 
-def process(input_path, output_path=None, soft_limit=18, hard_limit=25,
+def process(input_path, output_path=None, soft_limit=16, hard_limit=16,
             gap=0.5, no_regroup=False, show_stats=False):
     """主处理流程。"""
     subs = pysrt.open(input_path, encoding='utf-8-sig')
@@ -535,8 +571,8 @@ def main():
     parser = argparse.ArgumentParser(description='SRT 字幕结构清理工具')
     parser.add_argument('input', help='输入 SRT 文件路径')
     parser.add_argument('-o', '--output', help='输出文件路径（默认: *_cleaned.srt）')
-    parser.add_argument('--soft-limit', type=int, default=18, help='软上限字符数（默认: 18）')
-    parser.add_argument('--hard-limit', type=int, default=25, help='硬上限字符数（默认: 25）')
+    parser.add_argument('--soft-limit', type=int, default=16, help='合并上限字符数（默认: 16）')
+    parser.add_argument('--hard-limit', type=int, default=16, help='每条上限字符数，超过就拆（默认: 16，Netflix 简体中文每行 16 字）')
     parser.add_argument('--gap', type=float, default=0.5, help='合并间隔阈值秒（默认: 0.5）')
     parser.add_argument('--no-regroup', action='store_true', help='跳过合并和拆分')
     parser.add_argument('--stats', action='store_true', help='打印统计信息')

@@ -49,7 +49,7 @@ Gemini 以极低成本完成 95%+ 的修正，Opus 只需审查修改清单（di
 - 环境变量 `GEMINI_API_KEY`
 
 ```bash
-pip install google-genai pysrt
+pip install google-genai pysrt jieba
 ```
 
 ## 安装
@@ -120,8 +120,7 @@ python3 srt_corrector.py "input_cleaned.srt" --topic "视频主题" --premium
 ## 显示规则
 
 针对 16:9 横屏视频字幕优化：
-- 软上限：18 显示字符（中文=1，ASCII=0.5）
-- 硬上限：25 字符（自动拆分并标记需人工校验）
+- 每条上限：16 显示字符（中文=1，ASCII=0.5；Netflix 简体中文每行 16 字），超过就按词边界拆开并标记需人工校验
 - 标点：逗号句号 → 空格，保留？！
 
 ## 许可证
