@@ -59,7 +59,7 @@ python3 "${CLAUDE_PLUGIN_ROOT}/skills/cyxj-audio-check/audio_check.py" <成片> 
 |---|---|---|
 | `audio_check.py <成片> [--master 母带] [--target -14] [--tp -1] [--json]` | 只读体检,出放行表 | ffmpeg / ffprobe;numpy 可选(母带对齐用) |
 | `audio_fix.py remaster <成片> [--mono-from right\|left\|mix]` | 只修音轨:声道修正 + 两遍 loudnorm 到 -14 / -1,画面原样拷贝 | ffmpeg |
-| `audio_fix.py mix --voice 人声 --bgm 音乐 [--video 画面] [--bgm-under 14] [--duck 4]` | 人声 + BGM 重混:BGM 压到人声下 N dB → 侧链闪避 → loudnorm | ffmpeg |
+| `audio_fix.py mix --voice 人声 --bgm 音乐 [--video 画面] [--bgm-under 10] [--duck 4]` | 人声 + BGM 重混:BGM 压到人声下 N dB → 侧链闪避 → loudnorm | ffmpeg |
 
 标准默认 YouTube(-14 LUFS / -1 dBTP),抖音 / B 站没有公开数值,沿用同一标准【推断】。
 

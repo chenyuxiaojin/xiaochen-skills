@@ -124,7 +124,7 @@ def main():
     m = sub.add_parser("mix")
     m.add_argument("--voice", required=True); m.add_argument("--bgm", required=True); m.add_argument("--video")
     m.add_argument("--voice-channel", choices=["right", "left", "mix"], default="mix")
-    m.add_argument("--bgm-under", type=float, default=14, help="停顿处 BGM 低于人声多少 dB,默认 14")
+    m.add_argument("--bgm-under", type=float, default=10, help="停顿处 BGM 低于人声多少 dB,默认 10")
     m.add_argument("--duck", type=float, default=4, help="闪避压缩比,默认 4(说话时再压约 7 dB)")
     for p in (r, m):
         p.add_argument("--target", type=float, default=-14.0); p.add_argument("--tp", type=float, default=-1.0)

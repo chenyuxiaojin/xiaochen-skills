@@ -260,14 +260,15 @@ def check(path, master=None, target=-14.0, tp_limit=-1.0):
         row(WARN, "BGM / 人声", "估不出", method)
     elif b_db is not None and b_db < -65:
         row(OK, "BGM / 人声", f"人声 {v_db:.1f} dBFS,停顿处 {b_db:.1f} dBFS", f"基本没有 BGM({method})")
-    elif ratio < 10:
-        row(FAIL, "BGM / 人声", f"BGM 只比人声低 {ratio:.0f} dB", f"要 15-20 dB;BGM 太大({method})"); fixes.append("F4")
-    elif ratio < 15:
-        row(WARN, "BGM / 人声", f"BGM 比人声低 {ratio:.0f} dB", f"要 15-20 dB,偏大一点({method})")
-    elif ratio > 26:
-        row(WARN, "BGM / 人声", f"BGM 比人声低 {ratio:.0f} dB", f"几乎听不见,想要有就抬一点({method})")
+    # 标准 = 低 10 dB(小陈 2026-10-08 定:低 11–12 dB 手机外放几乎听不到,低 5 dB 停顿处和人声挤在一起)
+    elif ratio < 7:
+        row(FAIL, "BGM / 人声", f"BGM 只比人声低 {ratio:.1f} dB", f"要 10 dB 左右;BGM 太大({method})"); fixes.append("F4")
+    elif ratio < 9:
+        row(WARN, "BGM / 人声", f"BGM 比人声低 {ratio:.1f} dB", f"要 10 dB 左右,偏大一点({method})")
+    elif ratio > 13:
+        row(WARN, "BGM / 人声", f"BGM 比人声低 {ratio:.1f} dB", f"手机外放快听不到了,想要有就抬一点({method})")
     else:
-        row(OK, "BGM / 人声", f"BGM 比人声低 {ratio:.0f} dB", f"要 15-20 dB({method})")
+        row(OK, "BGM / 人声", f"BGM 比人声低 {ratio:.1f} dB", f"要 10 dB 左右({method})")
 
     # 静音段
     if sil:
@@ -298,7 +299,7 @@ FIX_TEXT = {
     "F1": "F1 声道:达芬奇选中人声片段 → 右键「片段属性」→ 音频 → 格式 Mono、源声道选实际有声的那个(内嵌通道 1=左 / 2=右)。应急:audio_fix.py remaster --mono-from right",
     "F2": "F2 响度:交付页 → 音频归一化 → 勾「归一化音频」→「优化至标准」→ 标准选 YouTube(-14 LKFS / -1 dBTP)。应急:audio_fix.py remaster",
     "F3": "F3 峰值/削波:先把总线或人声推子降 3 dB,再用交付页「优化至标准」。应急:audio_fix.py remaster",
-    "F4": "F4 BGM 太大:音乐轨推子拉到人声下 18 dB 左右;或音频助手重跑(素材全放好后最后一步跑)。应急:audio_fix.py mix --voice 人声 --bgm 音乐",
+    "F4": "F4 BGM 太大:音乐轨推子拉到人声下 10 dB 左右;或音频助手重跑(素材全放好后最后一步跑)。应急:audio_fix.py mix --voice 人声 --bgm 音乐",
     "F5": "F5 忽大忽小:人声片段先「归一化音频电平」(BS.1770-4,-16)拉平,再跑音频助手做对白拉平,最后交付页「优化至标准」",
     "F6": "F6 码率:交付页把视频码率调到下限以上(4K30 ≥ 35 Mbps,1080p ≥ 8 Mbps),音频 AAC 320 kbps 48 kHz",
 }
