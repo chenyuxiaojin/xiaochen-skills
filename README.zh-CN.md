@@ -2,7 +2,7 @@
 
 # xiaochen-skills
 
-> 小陈的 Claude Code 插件集：14 个插件（16 个技能），面向视频制作、内容发布和知识管理。
+> 小陈的 Claude Code 插件集：15 个插件（17 个技能），面向视频制作、内容发布和知识管理。
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-plugin-blueviolet)](https://claude.ai/code)
@@ -23,6 +23,7 @@ Claude Code 内置技能覆盖通用任务。这个集合在上面加了一层�
 | [cyxj-yt-creator](./plugins/cyxj-yt-creator/) | 用 Apify 研究外部博主怎么讲某工具/话题：抓字幕、按日期整理视频、写差异化切口，存入 Obsidian 待发布稿 | `查博主怎么用`、`用 Apify 搜 YouTube`、`研究这个工具的 YouTube 视频` | `APIFY_API_TOKEN`；Python: `requests`；Obsidian 库路径 |
 | [cyxj-roundtable](./plugins/cyxj-roundtable/) | 召集 6 个 Claude Opus subagent 扮演对立角色（苏格拉底 / 严苛同行 / 带偏见投资人 / 历史学家 / 5 年后后悔的你 / 同盟者），多视角压测决策，会议记录自动存入 Obsidian | `/圆桌`、`开个圆桌`、`开圆桌`、`圆桌一下` | 无需额外 API key（通过 Claude Code 调用 Claude Opus）；Obsidian 库路径 |
 | [cyxj-transcript](./plugins/cyxj-transcript/) | 把视频/录音逐字稿整理成文章草稿：去口语化、加小标题、数据转表格，原稿保留文末，产出 Obsidian Markdown | `转稿`、`逐字稿整理`、`把这个稿子整理成文章`、`口播稿成文` | Obsidian 库路径；无需 API key |
+| [cyxj-subtitle-wenan](./plugins/cyxj-subtitle-wenan/) | 外文字幕翻译去广告，改成说得出口的中文文案/逐字稿写入 Obsidian 待发布；默认保原意 | `字幕转文案`, `外文字幕改文案`, `YouTube 字幕转逐字稿`, `/cyxj-subtitle-wenan` | `yt-dlp`；Obsidian 库路径 |
 | [cyxj-blog-pub](./plugins/cyxj-blog-pub/) | 发布文章到 Astro 博客：校验 frontmatter、kebab-case 文件名、正文图片替换为图床 URL，build 后部署 | `发布到博客`、`发博客`、`博客发文`、`上博客`、`Astro 发布` | 本地配置好 Astro 博客仓库和图床；**部署目标是作者自己的服务器，使用前需修改** |
 | [cyxj-video-doctor](./plugins/cyxj-video-doctor/) | 知识视频诊所（3 分钟+ 冲抖音精选），一个插件两个 skill 共享赛道真相单源：**cyxj-content**（六维内容诊断）+ **cyxj-hook**（开头/钩子诊断 + 四型方案） | `/内容诊断`、`帮我看看这条稿`、`/cyxj-hook`、`优化我的视频开头`、`开头钩子` | 无（纯指令型技能） |
 | [cyxj-data-review](./plugins/cyxj-data-review/) | 抖音数据复盘诊断：围绕 KPI 链（收藏→涨粉→进精选）做证据驱动诊断，每条结论标【事实】【推断】【未知】 | `复盘我的数据`、`数据复盘`、`看看我最近数据`、`精选诊断` | 用户导出的抖音数据；无需 API key |
@@ -38,7 +39,7 @@ Claude Code 内置技能覆盖通用任务。这个集合在上面加了一层�
 /plugin marketplace add chenyuxiaojin/xiaochen-skills
 ```
 
-一条命令安装全部 14 个插件（16 个技能）。
+一条命令安装全部 15 个插件（17 个技能）。
 
 ## 使用方法
 
@@ -58,7 +59,7 @@ YouTube 选题            → 启动 cyxj-youtube-topics
 | | xiaochen-skills | [Anthropic 官方示例 Skills](https://github.com/anthropics/claude-code) | [awesome-claude-code](https://github.com/hesreallyhim/awesome-claude-code) 社区列表 |
 |---|---|---|---|
 | 定位 | 视频制作 + 公众号发布 + Obsidian 知识管理 | 通用示例和模式参考 | 社区技能链接汇总，非单一安装 |
-| 技能数量 | 16 个技能 / 14 个插件 | 随示例变化 | 多仓库分散 |
+| 技能数量 | 17 个技能 / 15 个插件 | 随示例变化 | 多仓库分散 |
 | 安装方式 | 一条命令全量安装 | 手动复制文件 | 各仓库分别安装 |
 | 多智能体 | 有（圆桌召集 6 个 Opus subagent） | 取决于示例 | 各异 |
 | 脚本自动化 | 有（Python + Bash + Gemini + Apify） | 较少 | 各异 |
@@ -67,7 +68,7 @@ YouTube 选题            → 启动 cyxj-youtube-topics
 ## 常见问题
 
 **怎么安装？**
-在 Claude Code 里运行 `/plugin marketplace add chenyuxiaojin/xiaochen-skills`，14 个插件（16 个技能）全部注册。
+在 Claude Code 里运行 `/plugin marketplace add chenyuxiaojin/xiaochen-skills`，15 个插件（17 个技能）全部注册。
 
 **能只安装一个技能吗？**
 可以。每个插件互相独立。如果 marketplace 支持单插件安装，可以按名称指定；也可以手动复制 `plugins/cyxj-{name}/` 目录并在自己的 marketplace.json 里注册。

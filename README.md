@@ -2,7 +2,7 @@
 
 # xiaochen-skills
 
-> xiaochen-skills is a Claude Code plugin marketplace bundling 14 plugins (16 skills) for video production, content publishing, and knowledge management.
+> xiaochen-skills is a Claude Code plugin marketplace bundling 15 plugins (17 skills) for video production, content publishing, and knowledge management.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-plugin-blueviolet)](https://claude.ai/code)
@@ -23,6 +23,7 @@ Claude Code's built-in skills cover general tasks. This collection adds a vertic
 | [cyxj-yt-creator](./plugins/cyxj-yt-creator/) | Research how YouTubers cover a tool/topic via Apify: fetch transcripts, rank by date/views, write differentiation notes to Obsidian draft queue | `查博主怎么用`, `用 Apify 搜 YouTube`, `研究这个工具的 YouTube 视频` | `APIFY_API_TOKEN`; Python: `requests`; Obsidian vault path |
 | [cyxj-roundtable](./plugins/cyxj-roundtable/) | Convene 6 independent Claude Opus subagents playing adversarial roles (Socrates / harsh peer / biased investor / historian / future-regretful-you / ally) to pressure-test a decision; save to Obsidian | `/圆桌`, `开个圆桌`, `开圆桌`, `/roundtable` | No extra API key (uses Claude Opus via Claude Code); Obsidian vault path |
 | [cyxj-transcript](./plugins/cyxj-transcript/) | Turn a raw transcript (video voiceover, recording transcription) into a structured article draft: de-spoken, headings added, data tabulated, original preserved at the end — outputs Obsidian Markdown | `转稿`, `逐字稿整理`, `把这个稿子整理成文章`, `口播稿成文` | Obsidian vault path; no API key |
+| [cyxj-subtitle-wenan](./plugins/cyxj-subtitle-wenan/) | Translate foreign YouTube/video captions, strip ads/CTAs, rewrite as speakable Chinese copy (逐字稿) into Obsidian draft queue; fidelity to original meaning by default | `字幕转文案`, `外文字幕改文案`, `YouTube 字幕转逐字稿`, `/cyxj-subtitle-wenan` | `yt-dlp`; Obsidian vault path |
 | [cyxj-blog-pub](./plugins/cyxj-blog-pub/) | Publish an article to an Astro blog: validate frontmatter, enforce kebab-case filenames, replace images with CDN URLs, then build and deploy | `发布到博客`, `发博客`, `博客发文`, `上博客`, `Astro 发布` | Astro blog repo configured locally; image CDN configured; **deploy target is author's server — must be updated before use** |
 | [cyxj-video-doctor](./plugins/cyxj-video-doctor/) | Knowledge-video clinic (3-min+ aimed at Douyin featured), one plugin with two skills sharing a single track-truth reference: **cyxj-content** (six-dimension content diagnosis) and **cyxj-hook** (opening-hook diagnosis + 4 hook archetypes) | `/内容诊断`, `帮我看看这条稿`, `/cyxj-hook`, `优化我的视频开头`, `开头钩子` | None (instruction-only skills) |
 | [cyxj-data-review](./plugins/cyxj-data-review/) | Evidence-driven Douyin analytics review around the KPI chain (saves → followers → featured); every conclusion tagged 【事实】【推断】【未知】 | `复盘我的数据`, `数据复盘`, `看看我最近数据`, `精选诊断` | Douyin analytics export from the user; no API key |
@@ -58,7 +59,7 @@ No slash command prefix is required for most skills — the trigger phrases list
 | | xiaochen-skills | [anthropic/claude-code-skills](https://github.com/anthropics/claude-code) (official examples) | [awesome-claude-code](https://github.com/hesreallyhim/awesome-claude-code) community list |
 |---|---|---|---|
 | Focus | Video production + WeChat publishing + Obsidian knowledge management | General-purpose demos and patterns | Curated links to many community skills |
-| Skill count | 16 skills / 14 plugins | Varies (reference examples) | Many repos, not a single install |
+| Skill count | 17 skills / 15 plugins | Varies (reference examples) | Many repos, not a single install |
 | Install method | Single `/plugin marketplace add` command | Copy individual files | Each repo installs separately |
 | Multi-agent | Yes (roundtable spawns 6 Opus subagents) | Depends on example | Varies |
 | Script automation | Yes (Python + Bash, Gemini, Apify) | Minimal | Varies |
@@ -67,7 +68,7 @@ No slash command prefix is required for most skills — the trigger phrases list
 ## FAQ
 
 **How do I install?**
-Run `/plugin marketplace add chenyuxiaojin/xiaochen-skills` inside Claude Code. All 14 plugins (16 skills) are registered.
+Run `/plugin marketplace add chenyuxiaojin/xiaochen-skills` inside Claude Code. All 15 plugins (17 skills) are registered.
 
 **Can I install only one skill?**
 Yes. Each plugin is self-contained. You can install a single plugin by specifying the plugin name if the marketplace supports it, or copy the individual `plugins/cyxj-{name}/` directory and register it in your own marketplace.
