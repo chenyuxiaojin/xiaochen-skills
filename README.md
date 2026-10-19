@@ -30,6 +30,7 @@ Claude Code's built-in skills cover general tasks. This collection adds a vertic
 | [cyxj-jingxuan](./plugins/cyxj-jingxuan/) | Write a 150-250 character Douyin Featured application from the video's final subtitles/transcript, in a fixed 4-part structure (originality → depth → audience value → platform fit); every claim verifiable in the video, no invented data | `写精选申请`, `精选申请`, `申请精选`, `/cyxj-jingxuan` | Final subtitles/transcript of the video; no API key |
 | [cyxj-release-kit](./plugins/cyxj-release-kit/) | One-stop release kit after final cut: titles + descriptions for 6 platforms (YouTube/Bilibili/Douyin + distribution) and 3-ratio covers via an HTML cover workbench (browser-rendered text, zero typo / zero crop) plus upload JPGs | `发布物料`, `出发布包`, `六平台标题`, `封面工作台`, `/cyxj-release-kit` | Base images via cyxj-image-studio (`GPTIMG2_*`); a browser for the cover workbench |
 | [cyxj-audio-check](./plugins/cyxj-audio-check/) | Final-cut audio QC + fix: ffmpeg measures loudness (LUFS), true peak, L/R balance, BGM-to-voice ratio, silences and bitrate into a pass/fail sheet; failures map to step-by-step DaVinci fixes (F1-F6); ffmpeg fallback remasters the track or remixes voice + BGM with sidechain ducking, then re-checks | `音频体检`, `查一下音频`, `这版能发吗`, `/cyxj-audio-check` | ffmpeg / ffprobe; Python `numpy` optional (master alignment) |
+| [cyxj-deeper](./plugins/cyxj-deeper/) | Deeper pass (after Felix Rieseberg's "How to be more ambitious"): before doing a task, answer four questions (what a top pro would add / rawest source material / concrete methods & tools / external judge, no self-grading), rewrite the task into a deeper—not bigger—version, confirm, then execute | `挖深一点`, `做深`, `深度版`, `更有野心`, `/deeper` | None (instruction-only skill) |
 
 ## Install
 
@@ -79,7 +80,7 @@ It is the author's personal naming prefix — short for "陈与小金" (Chen Yu 
 **Which skills work out of the box and which need configuration?**
 
 Skills that work with minimal setup (only Obsidian vault path needed):
-- `cyxj-obsidian-build`, `cyxj-roundtable`, `cyxj-transcript`, `cyxj-video-doctor` (hook + content), `cyxj-data-review`, `cyxj-jingxuan`
+- `cyxj-obsidian-build`, `cyxj-roundtable`, `cyxj-transcript`, `cyxj-video-doctor` (hook + content), `cyxj-data-review`, `cyxj-jingxuan`, `cyxj-deeper`
 
 Skills that require API keys:
 - `cyxj-subfix` → `GEMINI_API_KEY`

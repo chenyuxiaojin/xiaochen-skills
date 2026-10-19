@@ -30,6 +30,7 @@ Claude Code 内置技能覆盖通用任务。这个集合在上面加了一层�
 | [cyxj-jingxuan](./plugins/cyxj-jingxuan/) | 抖音精选申请文案：读成片字幕/逐字稿，按四段式（原创定性→深度证明→受众价值→平台对齐）写 150-250 字申请，每条理由可在视频中核验，数据不编 | `写精选申请`、`精选申请`、`申请精选`、`/cyxj-jingxuan` | 成片字幕/逐字稿；无需 API key |
 | [cyxj-release-kit](./plugins/cyxj-release-kit/) | 视频发布物料一条龙：6 平台标题+简介 + HTML 封面工作台三比例出图（无字底图+浏览器排字，零错字零裁切）+ 上传 JPG | `发布物料`、`出发布包`、`六平台标题`、`封面工作台`、`/cyxj-release-kit` | 底图依赖 cyxj-image-studio（`GPTIMG2_*`）；浏览器（封面工作台） |
 | [cyxj-audio-check](./plugins/cyxj-audio-check/) | 成片音频体检 + 修法:ffmpeg 量响度(LUFS)/真峰值/左右声道/BGM 比例/静音/码率,出放行表(可发/不可发);不可发给达芬奇菜单级修法(F1-F6),可 ffmpeg 应急修音轨或人声+BGM 自动闪避重混,修完自动复测 | `音频体检`、`查一下音频`、`这版能发吗`、`人声太小`、`BGM 太大`、`/cyxj-audio-check` | ffmpeg / ffprobe;Python `numpy` 可选(母带对齐) |
+| [cyxj-deeper](./plugins/cyxj-deeper/) | 深度版：动手前按四问（顶尖的人会多做什么 / 最原始的材料 / 具体方法和工具 / 外部裁判，不许自评）把任务挖深，重写成更深而不是更大的版本，确认后执行；方法论来自 Felix Rieseberg《How to be more ambitious》 | `挖深一点`、`做深`、`深度版`、`更有野心`、`顶级创作者会怎么做`、`/deeper` | 无（纯指令型技能） |
 
 ## 安装
 
@@ -79,7 +80,7 @@ YouTube 选题            → 启动 cyxj-youtube-topics
 **哪些技能开箱即用？哪些需要配置？**
 
 开箱即用（只需配置 Obsidian 库路径）：
-- `cyxj-obsidian-build`、`cyxj-roundtable`、`cyxj-transcript`、`cyxj-video-doctor`（hook + content）、`cyxj-data-review`、`cyxj-jingxuan`
+- `cyxj-obsidian-build`、`cyxj-roundtable`、`cyxj-transcript`、`cyxj-video-doctor`（hook + content）、`cyxj-data-review`、`cyxj-jingxuan`、`cyxj-deeper`
 
 需要 API key 的技能：
 - `cyxj-subfix` → `GEMINI_API_KEY`
