@@ -43,7 +43,7 @@
 **不要做的事**：
 - 不要把 hero 之后的章节 / 后记拆成 `.article` 的多个兄弟 `<section>`
 - 不要用 `margin-top` 给章节之间留白——用 `<section class="spacer"></section>` 占位（内部填充米色背景，避免兄弟间隙）
-- 不要把 `.body` 嵌套到 `.hero` 里面（嵌套之后 hero 的米黄网点背景和上下橙带会被 WeChat 剥掉）
+- 不要把 `.body` 嵌套到 `.hero` 里面（嵌套之后 hero 的米黄背景和上下橙带会被 WeChat 剥掉）
 - 不要用 `position: absolute` / `writing-mode: vertical-rl` / `transform: rotate(180deg)`，公众号统统不支持
 
 ## Orange Editorial 专属组件模板
@@ -388,5 +388,5 @@
 - [ ] hero 末尾有 `.hero-bleed` + `.hero-bleed-cream` 两块米色压底（缓冲 WeChat 间隙）
 - [ ] body 开头有 `border-top: 30px solid #F2E6CC`（CSS 里已写好，HTML 别覆盖）
 - [ ] hero 的 `.hero-deck` ≤60 字、最多 2 句，不是文章第一段整段
-- [ ] 文章开头确认有 hero（米黄网点底 + 顶部橙色 ticker 带 + 底部橙色 bleed 带），结尾确认有 footer-card + ticker-end
+- [ ] 文章开头确认有 hero（米黄底 + 顶部橙色 ticker 带 + 底部橙色 bleed 带），结尾确认有 footer-card + ticker-end
 - [ ] 全文没有出现 `.img-scroll` / `.img-scroll-track` / `.img-scroll-item`

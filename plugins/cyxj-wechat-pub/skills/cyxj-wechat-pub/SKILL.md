@@ -2,10 +2,10 @@
 name: cyxj-wechat-pub
 description: >
   将 Obsidian Markdown 文章转换为高质量公众号排版，内置 3 套 CSS 主题可选：
-  TATALAB 蓝（默认）、炭黑暖金（深度/商务）、暖橙编辑（编辑/海报风）。
+  暖橙编辑（默认，编辑/海报风）、TATALAB 蓝、炭黑暖金（深度/商务）。
   支持内容审查、打磨、IP 配图生成、预览确认，输出可直接粘贴到微信后台。
   触发词：发布到公众号、公众号排版、微信发布、排版文章、XCYJ 排版。
-version: 1.2.0
+version: 1.3.0
 ---
 
 # XCYJ WeChat Publisher - 陈与小金公众号排版发布 Skill
@@ -24,15 +24,15 @@ version: 1.2.0
 
 ## Theme 选择
 
-排版前先决定用哪个主题（默认 tatalab）：
+排版前先决定用哪个主题（**默认 orange-editorial**：小陈 2026-09-20、10-20 两次点名公众号用橙色那套）：
 
 | 主题文件 | 风格 | 适用题材 |
 |---------|------|---------|
 | `theme-tatalab.css` | 蓝色商务感（Material Blue 系：#1565C0 / #1976D2 / #BBDEFB） | AI 编程 / 运营干货 / 教程效率类，活泼亲和 |
 | `theme-noir-gold.css` | 炭黑 + 暖金沉稳感（#26262A 炭灰 Hero + #8A6D1A 金棕强调 + #FAF6EC 米黄引用块） | AI 行业观察 / 深度分析 / 长稿，沉稳权威 |
-| `theme-orange-editorial.css` | 米黄纸面编辑/海报风，橙做点缀（#F2E6CC 米黄底 + #2A1F18 深棕字 + #E8763C 橙只用于色带/大数字/阴影/小块 + #A6461A 深橙强调字 + Bebas Neue + 2px 描边 + 6px 实心阴影 + 网点底纹；橙底上一律深棕字 ≥4.5:1） | AI 行业观察 / 大事件解读 / 海报式长稿，杂志/印刷感强 |
+| `theme-orange-editorial.css` | 米黄纸面编辑/海报风，橙做点缀（#F2E6CC 米黄底 + #2A1F18 深棕字 + #E8763C 橙只用于色带/大数字/阴影/小块 + #A6461A 深橙强调字 + Bebas Neue + 2px 描边 + 6px 实心阴影，纯色底不用渐变/网点；橙底上一律深棕字 ≥4.5:1） | AI 行业观察 / 大事件解读 / 海报式长稿，杂志/印刷感强 |
 
-调用 juice 时把 `theme-tatalab.css` 替换成想要的主题文件名即可，其他流程不变。Phase 0 内容审查时顺便判定主题：技术/教程类默认 tatalab；行业观察/深度分析/商业评论类问用户是 noir-gold 还是 orange-editorial（orange-editorial 适合需要强视觉冲击、有数据 + 时间线 + 关键词 + 结论金句的长稿；noir-gold 适合更克制的深度评论）。
+调用 juice 时传想要的主题文件名即可，其他流程不变。陈与小金的文章一律 orange-editorial，用户点名要蓝 / 黑金时才换 tatalab / noir-gold。
 
 **选了 orange-editorial 就必须先读**
 `${CLAUDE_PLUGIN_ROOT}/skills/cyxj-wechat-pub/references/orange-editorial.md`
@@ -51,7 +51,7 @@ Obsidian .md
   -> Phase 0: 内容审查（判定是否需要扩写/去AI味/结构调整）
   -> Phase 1: 内容打磨（如需要，扩写/改写/Humanize）
   -> Phase 2: 结构分析 + 生成 HTML
-  -> Phase 3: IP 配图生成 + 上传公网
+  -> Phase 3: 封面 / 插图生成（无脸卡通风）+ 上传公网
   -> Phase 4: CSS 内联 + 预览确认（用户自行复制粘贴到微信后台）
 ```
 
@@ -94,14 +94,14 @@ Obsidian .md
 
 **Important**: You (Claude) are responsible for generating the HTML with correct class names. The converter only handles CSS inlining.
 
-### Phase 3: IP 配图生成 + 上传
+### Phase 3: 封面 / 插图生成 + 上传
 
-需要 IP 配图 / 封面时，读
+需要配图 / 封面时，读
 `${CLAUDE_PLUGIN_ROOT}/skills/cyxj-wechat-pub/references/illustration.md`——
-里面是题材↔视觉方案匹配表、渲染风格选择、GPTIMG2 引擎与凭据、两个端点的 curl 示例、
-分辨率档位、图床上传流程、封面 21:9 规格。**不要凭印象拼 API 参数，以该文件为准。**
+**文首「现行画风」是默认：封面和插图一律无脸卡通风、封面不放字、不用真人照片**（2026-10-20 起）；
+后面是 GPTIMG2 引擎与凭据、curl 示例、图床上传流程，以及只在用户点名时才用的半写实 IP 人物路线。**不要凭印象拼 API 参数，以该文件为准。**
 
-先问用户需要几张 IP 配图（短文章已有截图时只补无图章节），再动手。纯文字排版不配图时跳过本 Phase。
+插图默认每篇 2–3 张（有实测截图的章节不再配）。纯文字排版不配图时跳过本 Phase。
 
 ### Phase 4: CSS 内联 + 预览确认
 
@@ -116,7 +116,7 @@ cd ${CLAUDE_PLUGIN_ROOT}/skills/cyxj-wechat-pub && node -e "
 const juice = require('juice');
 const fs = require('fs');
 // 改这一行切换主题：theme-tatalab.css / theme-noir-gold.css / theme-orange-editorial.css
-const css = fs.readFileSync('theme-tatalab.css', 'utf8');
+const css = fs.readFileSync('theme-orange-editorial.css', 'utf8');
 const html = fs.readFileSync('/tmp/wechat-input.html', 'utf8');
 fs.writeFileSync('/tmp/wechat-output.html', juice.inlineContent(html, css));
 "
