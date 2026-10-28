@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>封面编辑器</title>
+<style>
+  @font-face { font-family: "Smiley Sans";
+               src: local("Smiley Sans Oblique"), local("Smiley Sans"), url("SmileySans-Oblique.ttf"); }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body { background: #17110b; font-family: "PingFang SC", sans-serif; color: #e8d9bd; overflow: hidden; }
+
+  /* ---------- 画布(自然尺寸) ---------- */
+  .canvas { position: relative; background: #33220f; overflow: hidden; }
+  .bg { position: absolute; inset: -80px; background-size: cover; background-position: right center;
+        filter: blur(90px) brightness(0.85) saturate(1.15); }
+  .plate-wrap { position: absolute; }
+  .plate-wrap img { display: block; }
+  .grad { position: absolute; inset: 0; pointer-events: none;
+        background: radial-gradient(ellipse 62% 75% at 24% 48%, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 32%, rgba(22,12,5,.50) 72%, rgba(12,6,2,.86) 100%),
+                    linear-gradient(to right, rgba(0,0,0,0) 45%, rgba(14,8,3,.45) 100%); }
+  .title { position: absolute; text-align: center; transform: translateX(-50%);
+        font-family: "Smiley Sans", "PingFang SC", sans-serif; color: #fff;
+        text-shadow: 0 14px 34px rgba(0,0,0,.55), 0 4px 10px rgba(0,0,0,.35); }
+  .title div { white-space: nowrap; line-height: 1.1; }
+  .title .o { color: #ff8a00; text-shadow: 0 14px 34px rgba(0,0,0,.6), 0 4px 10px rgba(0,0,0,.4); }
+  .arrow { position: absolute; }
+
+  /* ---------- 编辑态 ---------- */
+  body.edit .plate-wrap, body.edit .title, body.edit .arrow { cursor: grab; }
+  body.edit .layer-hover { outline: 3px dashed rgba(255,138,0,.9); outline-offset: 6px; }
+  .stage { position: absolute; top: 64px; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; }
+  .frame { position: relative; box-shadow: 0 20px 60px rgba(0,0,0,.6); }
+  .frame .canvas { transform-origin: top left; }
+  .bar { position: absolute; top: 0; left: 0; right: 0; height: 64px; background: #241b10; border-bottom: 1px solid #4a3a24;
+         display: flex; align-items: center; gap: 10px; padding: 0 16px; font-size: 14px; white-space: nowrap; overflow-x: auto; }
+  .bar b { color: #ff8a00; }
+  .bar button, .bar select, .bar input[type=text] { font: inherit; font-size: 14px; padding: 6px 10px; border-radius: 8px;
+         border: 1px solid #5a4630; background: #3a2b1a; color: #f3e6cc; }
+  .bar button { cursor: pointer; }
+  .bar button.primary { background: #ff8a00; color: #1a1208; border-color: #ff8a00; font-weight: 600; }
+  .bar input[type=text] { width: 150px; }
+  .bar .sep { width: 1px; height: 32px; background: #4a3a24; margin: 0 4px; }
+  .bar .tab { background: transparent; }
+  .bar .tab.on { background: #ff8a00; color: #1a1208; border-color: #ff8a00; font-weight: 600; }
+  .hint { position: absolute; left: 16px; bottom: 12px; font-size: 13px; color: #b9a27d; line-height: 1.6; pointer-events: none; }
+  .toast { position: absolute; right: 16px; bottom: 16px; background: #ff8a00; color: #1a1208; padding: 10px 16px; border-radius: 10px;
+           font-weight: 600; opacity: 0; transition: opacity .2s; pointer-events: none; }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+<script>
+/* ===================== 每期只改这里 ===================== */
+const PROJECT = "本期项目名";                            // 存布局用的名字,每期改
+const PLATES  = ["plate_p1.png", "plate_p2.png", "plate_p3.png"]; // 人物底图(16:9 无字),加几张就填几张
+const DEFAULT_TEXT = { l1: "白字第一行", l2: "", l3: "橙字一行" }; // l1/l2 白字,l3 橙字;空字符串=不显示该行
+
+/* 三比例的出厂布局(= 2026-10-15「模型如何看视频」定稿位置,真人底图人在左、字在右)。
+   px/py:人物图左上角坐标;pw:人物图宽(越大人越大);
+   tx:文字块中心 x;ty:文字块顶;s1/s2/s3:三行字号;
+   ax/ay/aw:箭头左上角和宽;arrow:要不要箭头。 */
+const FACTORY = {
+  "16x9": { w: 2560, h: 1440, px: -110, py: 0,    pw: 2900, tx: 1810, ty: 200, s1: 285, s2: 285, s3: 290, ax: 1170, ay: 1010, aw: 400, arrow: true },
+  "4x3":  { w: 2048, h: 1536, px: -260, py: 0,    pw: 2900, tx: 1388, ty: 150, s1: 250, s2: 250, s3: 255, ax: 1020, ay: 1000, aw: 360, arrow: true },
+  "3x4":  { w: 1536, h: 2048, px: -155, py: 728,  pw: 3200, tx: 768,  ty: 120, s1: 290, s2: 290, s3: 295, ax: 1040, ay: 940,  aw: 360, arrow: true },
+};
+const RATIO_ORDER = ["4x3", "16x9", "3x4"];
+/* ======================================================== */
+
+const ARROW = '<svg class="arrow" viewBox="0 0 400 340"><defs><marker id="h{ID}" markerWidth="9" markerHeight="9" refX="4.5" refY="4.5" orient="auto"><path d="M1,1 L8,4.5 L1,8" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker></defs><path d="M 360,30 C 300,180 210,250 60,290" fill="none" stroke="#fff" stroke-width="16" stroke-linecap="round" marker-end="url(#h{ID})"/></svg>';
+const KEY = "coverEditor_" + PROJECT;
+
+/* ---------- 布局状态:{text:{l1,l2,l3}, plate:1, ratios:{16x9:{...},4x3:{...},3x4:{...}}} ---------- */
+function factoryState() {
+  const s = { text: Object.assign({}, DEFAULT_TEXT), plate: 1, ratios: {} };
+  for (const k in FACTORY) { const f = FACTORY[k]; s.ratios[k] = { px: f.px, py: f.py, pw: f.pw, tx: f.tx, ty: f.ty, s1: f.s1, s2: f.s2, s3: f.s3, ax: f.ax, ay: f.ay, aw: f.aw, arrow: f.arrow }; }
+  return s;
+}
+function loadState() {
+  try { const j = localStorage.getItem(KEY); if (j) { const s = JSON.parse(j); if (s.ratios && s.text) return s; } } catch (e) {}
+  return factoryState();
+}
+function saveState() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+/* ---------- 画布生成 ---------- */
+function buildCanvas(rk) {
+  const f = FACTORY[rk], r = state.ratios[rk], plate = PLATES[state.plate - 1], t = state.text, uid = "e" + rk;
+  const el = document.createElement("div");
+  el.className = "canvas"; el.style.width = f.w + "px"; el.style.height = f.h + "px";
+  let inner = '<div class="bg" style="background-image:url(' + plate + ')"></div>'
+    + '<div class="plate-wrap" data-layer="plate" style="left:' + r.px + 'px;top:' + r.py + 'px"><img src="' + plate + '" style="width:' + r.pw + 'px" draggable="false"></div>'
+    + '<div class="grad"></div>';
+  if (r.arrow) inner += ARROW.replaceAll("{ID}", uid).replace('class="arrow"', 'class="arrow" data-layer="arrow" style="left:' + r.ax + 'px;top:' + r.ay + 'px;width:' + r.aw + 'px;height:' + Math.round(r.aw * 0.85) + 'px"');
+  let lines = "";
+  if (t.l1) lines += '<div style="font-size:' + r.s1 + 'px">' + t.l1 + '</div>';
+  if (t.l2) lines += '<div style="font-size:' + r.s2 + 'px">' + t.l2 + '</div>';
+  if (t.l3) lines += '<div class="o" style="font-size:' + r.s3 + 'px">' + t.l3 + '</div>';
+  inner += '<div class="title" data-layer="title" style="left:' + r.tx + 'px;top:' + r.ty + 'px">' + lines + '</div>';
+  el.innerHTML = inner;
+  return el;
+}
+
+/* ---------- 模式分发 ---------- */
+const params = new URLSearchParams(location.search);
+let state = loadState();
+
+if (params.get("export")) {
+  /* 导出模式:?export=1&r=4x3&s=<base64(json 布局)> → 只画一张,自然尺寸,无 UI */
+  const rk = params.get("r") || "4x3";
+  if (params.get("s")) { try { state = JSON.parse(decodeURIComponent(escape(atob(params.get("s"))))); } catch (e) {} }
+  const f = FACTORY[rk];
+  document.documentElement.style.cssText = document.body.style.cssText = "width:" + f.w + "px;height:" + f.h + "px;overflow:hidden;";
+  document.body.appendChild(buildCanvas(rk));
+} else {
+  document.body.classList.add("edit");
+  let cur = params.get("r") || "4x3";
+  let canvas, scale = 1;
+
+  /* 顶栏 */
+  document.body.insertAdjacentHTML("beforeend",
+    '<div class="bar">'
+    + '<b>比例</b>' + RATIO_ORDER.map(k => '<button class="tab" data-r="' + k + '">' + k.replace("x", ":") + '</button>').join("")
+    + '<span class="sep"></span><b>人物图</b><select id="plate">' + PLATES.map((p, i) => '<option value="' + (i + 1) + '">底图 ' + (i + 1) + '</option>').join("") + '</select>'
+    + '<span class="sep"></span><b>白字</b><input type="text" id="l1"><input type="text" id="l2" placeholder="第二行(可空)"><b>橙字</b><input type="text" id="l3">'
+    + '<span class="sep"></span><b>大小</b>'
+    + '<span>文字 <button data-z="title" data-k="-">−</button><button data-z="title" data-k="+">＋</button></span>'
+    + '<span>人物 <button data-z="plate" data-k="-">−</button><button data-z="plate" data-k="+">＋</button></span>'
+    + '<span>箭头 <button data-z="arrow" data-k="-">−</button><button data-z="arrow" data-k="+">＋</button></span>'
+    + '<span class="sep"></span><label><input type="checkbox" id="arrow"> 箭头</label>'
+    + '<span class="sep"></span><button id="reset">恢复出厂</button><button id="dl" class="primary">保存布局(下载 json)</button>'
+    + '</div>'
+    + '<div class="stage"><div class="frame"></div></div>'
+    + '<div class="hint">拖动:人物 / 文字 / 箭头 直接按住拖。<br>大小:顶栏「文字 / 人物 / 箭头」的 − ＋ 按钮,每按一下 6%;或者鼠标放在那一层上滚滚轮。方向键微调选中层 1px,按住 Shift 10px。<br>改完点「保存布局」,json 落到 ~/Downloads,再运行同目录 <b>导出.sh</b> 出三张。三比例各存各的位置,文字和底图三个比例共用。</div>'
+    + '<div class="toast" id="toast"></div>');
+
+  const frame = document.querySelector(".frame");
+  const toast = (m) => { const t = document.getElementById("toast"); t.textContent = m; t.classList.add("show"); setTimeout(() => t.classList.remove("show"), 1600); };
+
+  function syncBar() {
+    document.querySelectorAll(".tab").forEach(b => b.classList.toggle("on", b.dataset.r === cur));
+    document.getElementById("plate").value = state.plate;
+    document.getElementById("l1").value = state.text.l1; document.getElementById("l2").value = state.text.l2; document.getElementById("l3").value = state.text.l3;
+    document.getElementById("arrow").checked = !!state.ratios[cur].arrow;
+  }
+  function render() {
+    const f = FACTORY[cur];
+    const stage = document.querySelector(".stage");
+    scale = Math.min((stage.clientWidth - 48) / f.w, (stage.clientHeight - 96) / f.h);
+    frame.style.width = Math.round(f.w * scale) + "px"; frame.style.height = Math.round(f.h * scale) + "px";
+    frame.innerHTML = "";
+    canvas = buildCanvas(cur);
+    canvas.style.transform = "scale(" + scale + ")";
+    frame.appendChild(canvas);
+    syncBar(); saveState();
+  }
+
+  /* 拖动 + 滚轮 + 方向键 */
+  let drag = null, selected = null;
+  frame.addEventListener("mousedown", (e) => {
+    const layer = e.target.closest("[data-layer]"); if (!layer) return;
+    e.preventDefault(); selected = layer.dataset.layer;
+    const r = state.ratios[cur];
+    const start = selected === "plate" ? [r.px, r.py] : selected === "title" ? [r.tx, r.ty] : [r.ax, r.ay];
+    drag = { layer: selected, x0: e.clientX, y0: e.clientY, sx: start[0], sy: start[1], el: layer };
+    layer.style.cursor = "grabbing";
+  });
+  window.addEventListener("mousemove", (e) => {
+    const hov = e.target.closest && e.target.closest("[data-layer]");
+    document.querySelectorAll(".layer-hover").forEach(x => x !== hov && x.classList.remove("layer-hover"));
+    if (hov) hov.classList.add("layer-hover");
+    if (!drag) return;
+    const r = state.ratios[cur], dx = Math.round((e.clientX - drag.x0) / scale), dy = Math.round((e.clientY - drag.y0) / scale);
+    const nx = drag.sx + dx, ny = drag.sy + dy;
+    if (drag.layer === "plate") { r.px = nx; r.py = ny; drag.el.style.left = nx + "px"; drag.el.style.top = ny + "px"; }
+    else if (drag.layer === "title") { r.tx = nx; r.ty = ny; drag.el.style.left = nx + "px"; drag.el.style.top = ny + "px"; }
+    else { r.ax = nx; r.ay = ny; drag.el.style.left = nx + "px"; drag.el.style.top = ny + "px"; }
+  });
+  window.addEventListener("mouseup", () => { if (drag) { drag.el.style.cursor = ""; drag = null; saveState(); } });
+  function zoom(which, k) {
+    const r = state.ratios[cur];
+    if (which === "plate") {
+      /* 以人物图当前中心为锚点缩放,人不会跑 */
+      const img = canvas.querySelector(".plate-wrap img");
+      const imgH = img ? img.getBoundingClientRect().height / scale : r.pw * 9 / 16;
+      const cx = r.px + r.pw / 2, cy = r.py + imgH / 2;
+      r.pw = Math.round(r.pw * k); r.px = Math.round(cx - r.pw / 2); r.py = Math.round(cy - imgH * k / 2);
+    } else if (which === "title") { r.s1 = Math.round(r.s1 * k); r.s2 = Math.round(r.s2 * k); r.s3 = Math.round(r.s3 * k); }
+    else { r.aw = Math.round(r.aw * k); }
+    render();
+  }
+  frame.addEventListener("wheel", (e) => {
+    const layer = e.target.closest("[data-layer]"); if (!layer) return;
+    e.preventDefault();
+    zoom(layer.dataset.layer, e.deltaY < 0 ? 1.03 : 1 / 1.03);
+  }, { passive: false });
+  document.querySelectorAll("[data-z]").forEach(b => b.onclick = () => zoom(b.dataset.z, b.dataset.k === "+" ? 1.06 : 1 / 1.06));
+  window.addEventListener("keydown", (e) => {
+    if (!selected || e.target.tagName === "INPUT") return;
+    const d = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key]; if (!d) return;
+    e.preventDefault(); const r = state.ratios[cur], m = e.shiftKey ? 10 : 1;
+    if (selected === "plate") { r.px += d[0] * m; r.py += d[1] * m; } else if (selected === "title") { r.tx += d[0] * m; r.ty += d[1] * m; } else { r.ax += d[0] * m; r.ay += d[1] * m; }
+    render();
+  });
+
+  /* 顶栏事件 */
+  document.querySelectorAll(".tab").forEach(b => b.onclick = () => { cur = b.dataset.r; render(); });
+  document.getElementById("plate").onchange = (e) => { state.plate = Number(e.target.value); render(); };
+  for (const id of ["l1", "l2", "l3"]) document.getElementById(id).oninput = (e) => { state.text[id] = e.target.value; render(); };
+  document.getElementById("arrow").onchange = (e) => { state.ratios[cur].arrow = e.target.checked; render(); };
+  document.getElementById("reset").onclick = () => { if (confirm("三个比例全部恢复出厂布局?")) { state = factoryState(); render(); toast("已恢复出厂"); } };
+  document.getElementById("dl").onclick = () => {
+    saveState();
+    const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "封面布局-" + PROJECT + ".json"; a.click();
+    toast("已下载 封面布局-" + PROJECT + ".json → 运行 导出.sh");
+  };
+  window.addEventListener("resize", render);
+  render();
+}
+</script>
+</body>
+</html>
