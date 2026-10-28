@@ -103,6 +103,8 @@ function buildCanvas(rk) {
 
 /* ---------- 模式分发 ---------- */
 const params = new URLSearchParams(location.search);
+/* 配色开关:?accent=yellow → 强调字(l3)改白+黄版;不传 = 现行白+橙版。只换颜色,不动布局 */
+if (params.get("accent") === "yellow") document.head.insertAdjacentHTML("beforeend", "<style>.title .o{color:#ffd400}</style>");
 let state = loadState();
 
 if (params.get("export")) {
