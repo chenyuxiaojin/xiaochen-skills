@@ -5,7 +5,7 @@
 video-cover 的「零第三方依赖」属性依赖这一点，不要在这里引入 requests 等包。
 
 约定：
-- GPTIMG2_BASE_URL 官方形态是 https://api.chatgpt-code.com（末尾没有 /v1），
+- GPTIMG2_BASE_URL 形如 https://<中转域名>（末尾没有 /v1），
   但用户误填带 /v1 的也要接受。
 - load_gptimg2() 返回的 base 统一为「无末尾斜杠、无 /v1」；
   需要拼端点时用 api_base(base) 得到以 /v1 结尾的形态。

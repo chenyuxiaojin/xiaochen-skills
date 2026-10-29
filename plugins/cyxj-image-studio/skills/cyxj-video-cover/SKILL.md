@@ -1,7 +1,7 @@
 ---
 name: cyxj-video-cover
 description: |
-  无字底图生成引擎(gpt-image-2-vip,真人照片重绘保脸)。只出不带任何文字的场景图,
+  无字底图生成引擎(当前默认图像模型,真人照片重绘保脸)。只出不带任何文字的场景图,
   供 cyxj-release-kit 的 HTML 封面工作台当底图,或手动要一张无字人物场景图时用。
   ⚠️ 封面成品、视频发布物料(标题/简介/封面)一律走 cyxj-release-kit——
   本 skill 不再直接产出带字封面,不要用它响应「做封面/生成封面」类请求。
@@ -32,10 +32,11 @@ python3 <本目录>/scripts/generate.py \
 
 ## 技术事实(engine 层,维护时看)
 
-- 引擎:`gpt-image-2-vip` @ GPTIMG2 中转 `api.chatgpt-code.com`(OpenAI 兼容,`{base}/v1/images/edits`,
+- 引擎:当前默认图像模型,地址取自用户配置的 `GPTIMG2_BASE_URL`(OpenAI 兼容,`{base}/v1/images/edits`,
   真人照片做参考图重绘保脸;`response_format=url`,脚本下载落地 PNG)
 - 密钥:`密钥存储/.env` 的 `GPTIMG2_BASE_URL`(末尾无 `/v1`)+ `GPTIMG2_API_KEY`,脚本自动读
-- 引擎实测对照与 Gemini 实验路径:`references/engines.md`
+- 引擎实测对照与 Gemini 实验路径:`references/engines.md`(历史实测记录,具体模型以当时为准)
+- **禁止在 skill 正文硬编码模型名和 API 地址**;换模型/换中转只改用户配置或脚本默认值
 - 依赖:Python 3.11+ 标准库;可选 Pillow(自动中心裁切)
 
 ## 历史

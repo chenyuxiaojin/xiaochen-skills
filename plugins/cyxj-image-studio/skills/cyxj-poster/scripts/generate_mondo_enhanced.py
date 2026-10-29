@@ -21,7 +21,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "lib"))
 import imgapi
 
 # API Configuration
-# Image generation backend: GPTIMG2 (gpt-image-2 @ api.chatgpt-code.com, OpenAI-compatible HTTP)
+# Image generation backend: GPTIMG2 (model/base URL from user config, OpenAI-compatible HTTP)
 DEFAULT_IMAGE_MODEL = 'gpt-image-2'
 # Text backend (prompt enhancement) — unchanged, still Google Gemini
 DEFAULT_TEXT_MODEL = 'gemini-3.1-flash-lite-preview'

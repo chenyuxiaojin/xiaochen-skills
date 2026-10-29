@@ -1,12 +1,12 @@
 # Roundtable Consilium Skill
 
-> A Claude Code Skill that convenes 6 independent Opus 4.7 subagents as adversarial advisors when the user (小陈) needs to think through a difficult decision. Inspired by Roman consilium and rejection of AI sycophancy. The user sits at the head of the table — AI does not decide.
+> A Claude Code Skill that convenes 6 independent top-tier-model subagents as adversarial advisors when the user (小陈) needs to think through a difficult decision. Inspired by Roman consilium and rejection of AI sycophancy. The user sits at the head of the table — AI does not decide.
 
 ## Core Capabilities
 
 - Extract topic briefing from current conversation context
 - Hand-shake briefing with user before dispatching subagents
-- Parallel-dispatch 6 Opus 4.7 subagents with distinct adversarial personas
+- Parallel-dispatch 6 top-tier-model subagents with distinct adversarial personas
 - Each subagent isolated (cannot see other seats) to prevent echo chamber
 - Seat 7 (real user feedback) explicitly NOT roleplayed — user must ask a real person
 - AI refuses to make the final decision on user's behalf
@@ -38,6 +38,6 @@ English: `/roundtable`, `open the roundtable`
 
 ## Cost Profile
 
-- Full meeting: ¥8-20 per session (6 Opus 4.7 subagents)
+- Full meeting: ¥8-20 per session (6 top-tier-model subagents)
 - Single seat test: ¥1-2
 - Dry-run with Haiku 4.5: ¥0.5

@@ -1,12 +1,12 @@
 ---
 name: cyxj-roundtable
 description: |
-  圆桌会议 skill。当你想不明白一件事时，召集 6 个独立 Opus 4.7 subagent
+  圆桌会议 skill。当你想不明白一件事时，召集 6 个独立 subagent（当前最强对话模型档）
   扮演 6 个有立场的角色（苏格拉底/严苛同行/带偏见投资人/历史学家/5 年后后悔的你/同盟者），
   从 6 个不会互相迁就的视角同时给出意见。主位坐你，AI 不替你拍板。
   会议结束自动落地到 Obsidian 决策记录。
   触发方式：/圆桌、"开个圆桌"、"开圆桌"、"圆桌一下"。
-  Roundtable consilium. Convenes 6 independent Opus 4.7 subagents with adversarial
+  Roundtable consilium. Convenes 6 independent top-tier-model subagents with adversarial
   perspectives to help you decide. You sit at the head. AI does not decide for you.
   Trigger: /roundtable, "open the roundtable", "/圆桌"
 ---
@@ -70,7 +70,7 @@ Read: ${CLAUDE_PLUGIN_ROOT}/skills/cyxj-roundtable/templates/briefing.md
 
 每次 Agent 调用参数：
 - `subagent_type`: `general-purpose`
-- `model`: `opus`（默认 Opus 4.7；dry-run 模式例外，见下文）
+- `model`: `opus`（用当前 opus 档对话模型，不钉具体版本；dry-run 模式例外，见下文。禁止在 skill 正文硬编码模型版本号和 API 地址）
 - `description`: `圆桌·第 N 席`（N 为席位编号）
 - `prompt`: 见派单消息模板
 

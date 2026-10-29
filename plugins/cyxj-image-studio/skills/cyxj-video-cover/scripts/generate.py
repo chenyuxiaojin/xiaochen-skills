@@ -2,7 +2,7 @@
 """
 视频封面生成（真人版）
 
-用 gpt-image-2（GPTIMG2 中转站 api.chatgpt-code.com）+ 你的真人照片，生成带本人形象的封面。
+用当前默认图像模型（GPTIMG2 中转，地址见用户配置）+ 你的真人照片，生成带本人形象的封面。
 照片走 /v1/images/edits 端点重绘入场，人脸保持一致；输出 2K 级别大图，url 方式返回后落地。
 默认输出 4 个比例（YouTube 16:9 / 公众号 2.35:1 / 竖版 3:4 / 横版 4:3），
 每比例 2 张供挑选，全部并行生成（约 1 分钟出齐）。
@@ -23,7 +23,7 @@
 key 与中转站地址自动从密钥存储读取（无需手动 export）：
   ~/项目/自己的应用/密钥存储/.env 里的 GPTIMG2_BASE_URL / GPTIMG2_API_KEY
 也可用环境变量覆盖：GPTIMG2_BASE_URL / GPTIMG2_API_KEY
-注意：GPTIMG2_BASE_URL（https://api.chatgpt-code.com）末尾【没有】/v1，脚本拼端点时自己补。
+注意：GPTIMG2_BASE_URL（https://<中转域名>）末尾【没有】/v1，脚本拼端点时自己补。
 """
 
 import argparse

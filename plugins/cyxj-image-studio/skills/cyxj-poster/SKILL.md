@@ -13,7 +13,7 @@ description: 一句话生成大师级海报/封面设计。33+设计师风格+10
 python3 ${CLAUDE_PLUGIN_ROOT}/skills/cyxj-poster/scripts/generate_mondo_enhanced.py "subject" "type" [options]
 ```
 
-> **生图后端**：gpt-image-2（GPTIMG2 @ `api.chatgpt-code.com`，OpenAI 兼容 HTTP）。
+> **生图后端**：当前默认图像模型（OpenAI 兼容 HTTP），模型与中转地址从用户已有配置读取（`GPTIMG2_BASE_URL` / `GPTIMG2_API_KEY` 及脚本默认值），**禁止在 skill 正文硬编码模型名和 API 地址**。
 > 默认输出 2K 分辨率，统一用 `response_format=url` 取图后下载落地。
 > - 文生图走 `/v1/images/generations`；带参考图（`--ip-ref` / `--input`）时走 `/v1/images/edits`（multipart）。
 > - 需要环境变量 `GPTIMG2_BASE_URL` / `GPTIMG2_API_KEY`（未设置则从 `~/项目/自己的应用/密钥存储/.env` 读取）。
