@@ -25,8 +25,8 @@ Claude Code 内置技能覆盖通用任务。这个集合在上面加了一层�
 | [cyxj-transcript](./plugins/cyxj-transcript/) | 把视频/录音逐字稿整理成文章草稿：去口语化、加小标题、数据转表格，原稿保留文末，产出 Obsidian Markdown | `转稿`、`逐字稿整理`、`把这个稿子整理成文章`、`口播稿成文` | Obsidian 库路径；无需 API key |
 | [cyxj-subtitle-wenan](./plugins/cyxj-subtitle-wenan/) | 外文字幕翻译去广告，改成说得出口的中文文案/逐字稿写入 Obsidian 待发布；默认保原意 | `字幕转文案`, `外文字幕改文案`, `YouTube 字幕转逐字稿`, `/cyxj-subtitle-wenan` | `yt-dlp`；Obsidian 库路径 |
 | [cyxj-blog-pub](./plugins/cyxj-blog-pub/) | 发布文章到 Astro 博客：校验 frontmatter、kebab-case 文件名、正文图片替换为图床 URL，build 后部署 | `发布到博客`、`发博客`、`博客发文`、`上博客`、`Astro 发布` | 本地配置好 Astro 博客仓库和图床；**部署目标是作者自己的服务器，使用前需修改** |
-| [cyxj-video-doctor](./plugins/cyxj-video-doctor/) | 知识视频诊所（3 分钟+ 冲抖音精选），一个插件两个 skill 共享赛道真相单源：**cyxj-content**（六维内容诊断）+ **cyxj-hook**（开头/钩子诊断 + 四型方案） | `/内容诊断`、`帮我看看这条稿`、`/cyxj-hook`、`优化我的视频开头`、`开头钩子` | 无（纯指令型技能） |
-| [cyxj-data-review](./plugins/cyxj-data-review/) | 抖音数据复盘诊断：围绕 KPI 链（收藏→涨粉→进精选）做证据驱动诊断，每条结论标【事实】【推断】【未知】 | `复盘我的数据`、`数据复盘`、`看看我最近数据`、`精选诊断` | 用户导出的抖音数据；无需 API key |
+| [cyxj-video-doctor](./plugins/cyxj-video-doctor/) | 知识视频诊所（3 分钟+），一个插件两个 skill 共享赛道真相单源：**cyxj-content**（六维内容诊断）+ **cyxj-hook**（开头/钩子诊断 + 四型方案） | `/内容诊断`、`帮我看看这条稿`、`/cyxj-hook`、`优化我的视频开头`、`开头钩子` | 无（纯指令型技能） |
+| [cyxj-data-review](./plugins/cyxj-data-review/) | 抖音数据复盘诊断：围绕 KPI 链（收藏→涨粉）做证据驱动诊断，每条结论标【事实】【推断】【未知】 | `复盘我的数据`、`数据复盘`、`看看我最近数据` | 用户导出的抖音数据；无需 API key |
 | [cyxj-jingxuan](./plugins/cyxj-jingxuan/) | 抖音精选申请文案：读成片字幕/逐字稿，按四段式（原创定性→深度证明→受众价值→平台对齐）写 150-250 字申请，每条理由可在视频中核验，数据不编 | `写精选申请`、`精选申请`、`申请精选`、`/cyxj-jingxuan` | 成片字幕/逐字稿；无需 API key |
 | [cyxj-release-kit](./plugins/cyxj-release-kit/) | 视频发布物料一条龙：6 平台标题+简介 + HTML 封面工作台三比例出图（无字底图+浏览器排字，零错字零裁切）+ 上传 JPG | `发布物料`、`出发布包`、`六平台标题`、`封面工作台`、`/cyxj-release-kit` | 底图依赖 cyxj-image-studio（`GPTIMG2_*`）；浏览器（封面工作台） |
 | [cyxj-audio-check](./plugins/cyxj-audio-check/) | 成片音频体检 + 修法:ffmpeg 量响度(LUFS)/真峰值/左右声道/BGM 比例/静音/码率,出放行表(可发/不可发);不可发给达芬奇菜单级修法(F1-F6),可 ffmpeg 应急修音轨或人声+BGM 自动闪避重混,修完自动复测 | `音频体检`、`查一下音频`、`这版能发吗`、`人声太小`、`BGM 太大`、`/cyxj-audio-check` | ffmpeg / ffprobe;Python `numpy` 可选(母带对齐) |

@@ -67,12 +67,12 @@
     },
     {
       "name": "cyxj-video-doctor",
-      "description": "知识视频诊所（3 分钟+ 冲抖音精选）：含 cyxj-content（六维内容诊断）和 cyxj-hook（开头/钩子优化四型方案）两个 skill，共享赛道真相单源",
+      "description": "知识视频诊所（3 分钟+）：含 cyxj-content（六维内容诊断）和 cyxj-hook（开头/钩子优化四型方案）两个 skill，共享赛道真相单源",
       "source": "./plugins/cyxj-video-doctor"
     },
     {
       "name": "cyxj-data-review",
-      "description": "抖音平台数据复盘诊断：盘点→时间序列对比→分档诊断→下一步，围绕 KPI 链（收藏→涨粉→进精选），每条结论标【事实】【推断】【未知】，北极星=收藏率",
+      "description": "抖音平台数据复盘诊断：盘点→时间序列对比→分档诊断→下一步，围绕 KPI 链（收藏→涨粉），每条结论标【事实】【推断】【未知】，北极星=收藏率",
       "source": "./plugins/cyxj-data-review"
     },
     {

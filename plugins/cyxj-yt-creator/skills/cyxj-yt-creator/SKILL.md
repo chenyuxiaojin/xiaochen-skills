@@ -107,4 +107,4 @@ python3 "${CLAUDE_PLUGIN_ROOT}/skills/cyxj-yt-creator/scripts/research_to_draft.
 
 ## 交接
 
-待发布稿写入后，提示用户：差异化切口定了、想把这条做成能冲精选的视频，用 `cyxj-content` 做六维诊断；开头单独打磨用 `cyxj-hook`。
+待发布稿写入后，提示用户：差异化切口定了、想把这条做成观众想收藏的视频，用 `cyxj-content` 做六维诊断；开头单独打磨用 `cyxj-hook`。
