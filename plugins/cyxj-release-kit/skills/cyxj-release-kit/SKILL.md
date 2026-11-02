@@ -224,5 +224,4 @@ description: |
 | skill | 管什么 | 本 skill 关系 |
 |---|---|---|
 | cyxj-video-cover | 生图封面(整图带字) | 降级为**底图生成器**:只用 `--style plate` / `plate-noface`,default 风格会渲字不能用 |
-| cyxj-jingxuan | 抖音精选申请文案 | 发布后的下一步,不在本 skill 内 |
 | cyxj-hook / cyxj-content | 视频开头/内容诊断 | 管片子本身,不管发布物料 |
