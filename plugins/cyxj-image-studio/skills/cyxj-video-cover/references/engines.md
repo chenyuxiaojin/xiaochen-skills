@@ -18,6 +18,6 @@
 - **两个引擎中文都不是 100%**（gemini 偶把「五个」出成「三个」）：每张多出 2–3 版挑文字对的，或文字单独叠层。
 
 **Gemini 调用速记**（探测用，实验性手动路径）：
-`POST .../v1beta/models/gemini-3-pro-image-preview:generateContent?key=$GEMINI_API_KEY`，body =
+`POST .../v1beta/models/gemini-3-pro-image-preview:generateContent?key=${CYXJ_GEMINI_API_KEY:-$GEMINI_API_KEY}`，body =
 `{"contents":[{"parts":[{"text":"<prompt>"},{"inline_data":{"mime_type":"image/png","data":"<脸b64>"}}]}],"generationConfig":{"responseModalities":["IMAGE"],"imageConfig":{"aspectRatio":"16:9"}}}`；
 出图在 `candidates[0].content.parts[].inlineData.data`(b64)；不喂脸就去掉 inline_data 那个 part；出图后用 Pillow 中心裁到精确比例。

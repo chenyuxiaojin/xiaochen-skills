@@ -175,7 +175,8 @@ def process_srt(input_path: str, topic: str, model: str = DEFAULT_MODEL,
     """处理 SRT 文件，返回 (输出SRT路径, 修改清单路径)。"""
 
     # 初始化 Gemini 客户端
-    api_key = os.environ.get("GEMINI_API_KEY")
+    # 可用 CYXJ_GEMINI_API_KEY 给这些工具单独指定 key,没设就用 GEMINI_API_KEY
+    api_key = os.environ.get("CYXJ_GEMINI_API_KEY") or os.environ.get("GEMINI_API_KEY")
     if not api_key:
         print("✗ 未找到 GEMINI_API_KEY 环境变量", file=sys.stderr)
         sys.exit(1)

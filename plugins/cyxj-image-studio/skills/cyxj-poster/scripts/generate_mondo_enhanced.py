@@ -116,7 +116,8 @@ ARTIST_STYLES = {
 
 def get_client():
     """Get Google Gemini API client (TEXT path only — prompt enhancement)"""
-    api_key = os.getenv('GEMINI_API_KEY')
+    # 可用 CYXJ_GEMINI_API_KEY 给这些工具单独指定 key,没设就用 GEMINI_API_KEY
+    api_key = os.getenv('CYXJ_GEMINI_API_KEY') or os.getenv('GEMINI_API_KEY')
     if not api_key:
         print("Error: GEMINI_API_KEY environment variable is required.")
         print("Please set it with your Google Gemini API key.")
