@@ -27,7 +27,6 @@ Claude Code's built-in skills cover general tasks. This collection adds a vertic
 | [cyxj-blog-pub](./plugins/cyxj-blog-pub/) | Publish an article to an Astro blog: validate frontmatter, enforce kebab-case filenames, replace images with CDN URLs, then build and deploy | `发布到博客`, `发博客`, `博客发文`, `上博客`, `Astro 发布` | Astro blog repo configured locally; image CDN configured; **deploy target is author's server — must be updated before use** |
 | [cyxj-video-doctor](./plugins/cyxj-video-doctor/) | Knowledge-video clinic (3-min+), one plugin with two skills sharing a single track-truth reference: **cyxj-content** (six-dimension content diagnosis) and **cyxj-hook** (opening-hook diagnosis + 4 hook archetypes) | `/内容诊断`, `帮我看看这条稿`, `/cyxj-hook`, `优化我的视频开头`, `开头钩子` | None (instruction-only skills) |
 | [cyxj-data-review](./plugins/cyxj-data-review/) | Evidence-driven Douyin analytics review around the KPI chain (saves → followers); every conclusion tagged 【事实】【推断】【未知】 | `复盘我的数据`, `数据复盘`, `看看我最近数据` | Douyin analytics export from the user; no API key |
-| [cyxj-jingxuan](./plugins/cyxj-jingxuan/) | Write a 150-250 character Douyin Featured application from the video's final subtitles/transcript, in a fixed 4-part structure (originality → depth → audience value → platform fit); every claim verifiable in the video, no invented data | `写精选申请`, `精选申请`, `申请精选`, `/cyxj-jingxuan` | Final subtitles/transcript of the video; no API key |
 | [cyxj-release-kit](./plugins/cyxj-release-kit/) | One-stop release kit after final cut: titles + descriptions for 6 platforms (YouTube/Bilibili/Douyin + distribution) and 3-ratio covers via an HTML cover workbench (browser-rendered text, zero typo / zero crop) plus upload JPGs | `发布物料`, `出发布包`, `六平台标题`, `封面工作台`, `/cyxj-release-kit` | Base images via cyxj-image-studio (`GPTIMG2_*`); a browser for the cover workbench |
 | [cyxj-audio-check](./plugins/cyxj-audio-check/) | Final-cut audio QC + fix: ffmpeg measures loudness (LUFS), true peak, L/R balance, BGM-to-voice ratio, silences and bitrate into a pass/fail sheet; failures map to step-by-step DaVinci fixes (F1-F6); ffmpeg fallback remasters the track or remixes voice + BGM with sidechain ducking, then re-checks | `音频体检`, `查一下音频`, `这版能发吗`, `/cyxj-audio-check` | ffmpeg / ffprobe; Python `numpy` optional (master alignment) |
 | [cyxj-deeper](./plugins/cyxj-deeper/) | Deeper pass (after Felix Rieseberg's "How to be more ambitious"): before doing a task, answer four questions (what a top pro would add / rawest source material / concrete methods & tools / external judge, no self-grading), rewrite the task into a deeper—not bigger—version, confirm, then execute | `挖深一点`, `做深`, `深度版`, `更有野心`, `/deeper` | None (instruction-only skill) |
@@ -80,7 +79,7 @@ It is the author's personal naming prefix — short for "陈与小金" (Chen Yu 
 **Which skills work out of the box and which need configuration?**
 
 Skills that work with minimal setup (only Obsidian vault path needed):
-- `cyxj-obsidian-build`, `cyxj-roundtable`, `cyxj-transcript`, `cyxj-video-doctor` (hook + content), `cyxj-data-review`, `cyxj-jingxuan`, `cyxj-deeper`
+- `cyxj-obsidian-build`, `cyxj-roundtable`, `cyxj-transcript`, `cyxj-video-doctor` (hook + content), `cyxj-data-review`, `cyxj-deeper`
 
 Skills that require API keys:
 - `cyxj-subfix` → `GEMINI_API_KEY`

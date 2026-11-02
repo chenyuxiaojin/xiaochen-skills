@@ -16,7 +16,7 @@
     "cyxj-ai-weekly-news": null
   },
   "metadata": {
-    "description": "小陈的 Claude Code 技能集：达芬奇字幕修正、公众号排版发布、Obsidian 知识库编译、海报设计、YouTube 选题发现、博主用法研究、真人视频封面、圆桌决策压测、逐字稿转文章、Astro 博客发布、知识视频开头优化、知识视频内容诊断、抖音数据复盘诊断、抖音精选申请文案、视频发布物料一条龙、成片音频体检与修法、字幕转文案、任务挖深（深度版）",
+    "description": "小陈的 Claude Code 技能集：达芬奇字幕修正、公众号排版发布、Obsidian 知识库编译、海报设计、YouTube 选题发现、博主用法研究、真人视频封面、圆桌决策压测、逐字稿转文章、Astro 博客发布、知识视频开头优化、知识视频内容诊断、抖音数据复盘诊断、视频发布物料一条龙、成片音频体检与修法、字幕转文案、任务挖深（深度版）",
     "version": "1.18.0"
   },
   "plugins": [
@@ -74,11 +74,6 @@
       "name": "cyxj-data-review",
       "description": "抖音平台数据复盘诊断：盘点→时间序列对比→分档诊断→下一步，围绕 KPI 链（收藏→涨粉），每条结论标【事实】【推断】【未知】，北极星=收藏率",
       "source": "./plugins/cyxj-data-review"
-    },
-    {
-      "name": "cyxj-jingxuan",
-      "description": "抖音精选申请文案：读成片字幕/逐字稿，按四段式（原创定性→深度证明→受众价值→平台对齐）写 150-250 字纯文本申请，每条理由可在视频中核验，数据不编",
-      "source": "./plugins/cyxj-jingxuan"
     },
     {
       "name": "cyxj-release-kit",
