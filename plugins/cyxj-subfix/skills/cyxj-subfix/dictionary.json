@@ -240,7 +240,7 @@
     ]
   },
   "feedback": {
-    "gemini_missed": [
+    "first_pass_missed": [
       {
         "original": "交会",
         "correct": "教会",

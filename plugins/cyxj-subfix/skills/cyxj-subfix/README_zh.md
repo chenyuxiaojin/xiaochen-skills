@@ -2,7 +2,7 @@
 
 [English](README.md)
 
-一个 Claude Code Skill，用于修正达芬奇 DaVinci Resolve 导出 SRT 字幕中的语音识别（ASR）错误。采用 **Gemini + Opus 混合架构**，以极低成本实现高质量修正。
+一个 Claude Code Skill，用于修正达芬奇 DaVinci Resolve 导出 SRT 字幕中的语音识别（ASR）错误。采用 **Sonnet + Opus 混合架构**：Sonnet 负责初修，Opus 审查修改。
 
 ## 解决什么问题
 
@@ -18,11 +18,11 @@
 Phase 1: Python 结构处理 (srt_cleaner.py)
   HTML 清理 → 去重 → 标点替换 → 合并短条目 → 拆分长条目 → 重新编号
 
-Phase 2a: Gemini 3.1 Flash-Lite 自动初修（--premium 用 3.5 Flash）(srt_corrector.py)
-  分批 API 调用（词典 + 主题上下文）→ _gemini_fixed.srt + _changes.json
+Phase 2a: Sonnet 自动初修，通过 `claude -p` 调用 (srt_corrector.py)
+  分批调用（词典 + 主题上下文）→ _sonnet_fixed.srt + _changes.json
 
 Phase 2b: Opus 审查（在 Claude Code 对话中）
-  审查 Gemini 的修改清单 → 纠正错误 → 补充遗漏 → 保存 _fixed.srt
+  审查 Sonnet 的修改清单 → 纠正错误 → 补充遗漏 → 保存 _fixed.srt
 
 Phase 2c: 音频交叉验证（有成片音频时，用 lark-minutes 妙记逐字稿做第二信源）
 
@@ -31,25 +31,19 @@ Phase 3: 写回 Obsidian 逐字稿
 Phase 4: 收尾清理（只保留母片原文件 + _fixed.srt，含 .bak 在内的中间产物自动清理）
 ```
 
-流程结束后，本地目录只留两个文件：用户给的原始 SRT（母片，全程未改动）和最终修正后的 `_fixed.srt`；`.bak`、`_cleaned.srt`、`_gemini_fixed.srt`、`_changes.json` 等中间产物会被自动清理（删 `.bak` 前先 `cmp` 校验母片完好）。
+流程结束后，本地目录只留两个文件：用户给的原始 SRT（母片，全程未改动）和最终修正后的 `_fixed.srt`；`.bak`、`_cleaned.srt`、`_sonnet_fixed.srt`、`_changes.json` 等中间产物会被自动清理（删 `.bak` 前先 `cmp` 校验母片完好）。
 
 ### 为什么用混合架构？
 
-| 方案 | 400 条字幕成本 | 准确度 |
-|------|--------------|--------|
-| 纯 Opus (v3) | ~$2-4 | 高 |
-| Gemini + Opus 审查 (v4) | ~$0.1-0.3 | 高 |
-
-Gemini 以极低成本完成 95%+ 的修正，Opus 只需审查修改清单（diff），不处理全文。
+Sonnet 走 Claude Code 额度完成初修，不需要额外的 API key；Opus 只审查修改清单（diff），不处理全文。
 
 ## 环境要求
 
 - [Claude Code](https://docs.anthropic.com/en/docs/claude-code) CLI
 - Python 3.10+
-- 环境变量 `GEMINI_API_KEY`
 
 ```bash
-pip install google-genai pysrt jieba
+pip install pysrt jieba
 ```
 
 ## 安装
@@ -71,11 +65,8 @@ pip install google-genai pysrt jieba
 # Phase 1: 结构清理
 python3 srt_cleaner.py "input.srt" --stats
 
-# Phase 2a: Gemini 自动修正
+# Phase 2a: Sonnet 自动修正
 python3 srt_corrector.py "input_cleaned.srt" --topic "视频主题"
-
-# 使用高端模型（更准但稍贵）
-python3 srt_corrector.py "input_cleaned.srt" --topic "视频主题" --premium
 ```
 
 ## 文件说明
@@ -83,7 +74,7 @@ python3 srt_corrector.py "input_cleaned.srt" --topic "视频主题" --premium
 | 文件 | 用途 |
 |------|------|
 | `srt_cleaner.py` | Phase 1：结构处理（HTML 清理、去重、合并/拆分、编号） |
-| `srt_corrector.py` | Phase 2a：Gemini API 分批修正，支持词典 |
+| `srt_corrector.py` | Phase 2a：通过 `claude -p` 用 Sonnet 分批修正，支持词典 |
 | `dictionary.json` | 已知 ASR 错误映射（正确词 → 错误变体列表） |
 | `SKILL.md` | Claude Code Skill 定义和工作流程 |
 
@@ -106,16 +97,11 @@ python3 srt_corrector.py "input_cleaned.srt" --topic "视频主题" --premium
 /字幕修正 --add "错误词" "正确词"
 ```
 
-`feedback.gemini_missed` 字段记录 Gemini 漏掉但 Opus 发现的错误，实现持续改进。
+`feedback.first_pass_missed` 字段记录初修漏掉但 Opus 发现的错误，实现持续改进。
 
-## Gemini 模型选择
+## 模型
 
-| 模型 | 用途 | 输入/输出价格（每百万 token） |
-|------|------|-------------|
-| `gemini-3.1-flash-lite` | 日常初修（默认），官方定位"高频/批量数据处理" | $0.25 / $1.50 |
-| `gemini-3.5-flash` | `--premium` 高端初修，语义理解更强 | $1.50 / $9.00 |
-
-> 价格核实于 2026-07-09（官方 pricing 页原文）。图片生成模型（`gemini-3.1-flash-image`、`gemini-3-pro-image`）不适用于文本修正。
+初修用 `sonnet`，这是 Claude Code 的模型别名，指向当前的 Sonnet。要换模型就传 `--model`。
 
 ## 显示规则
 

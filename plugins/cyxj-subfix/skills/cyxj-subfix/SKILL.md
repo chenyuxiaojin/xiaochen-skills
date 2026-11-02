@@ -1,13 +1,13 @@
 ---
 name: cyxj-subfix
 description: >
-  达芬奇字幕修正工具：SRT 清理、Gemini 语义初修、Opus 审查把关。
+  达芬奇字幕修正工具：SRT 清理、Sonnet 语义初修、Opus 审查把关。
   触发词：/字幕修正、修正字幕、字幕错别字、SRT 修正、达芬奇字幕。
   当用户提供 SRT 文件路径需要修正时使用此 skill。
-version: 4.2.0
+version: 5.0.0
 ---
 
-# 达芬奇字幕修正 Skill v4
+# 达芬奇字幕修正 Skill v5
 
 ## 路径约定
 
@@ -18,13 +18,13 @@ python3 "${CLAUDE_PLUGIN_ROOT}/skills/cyxj-subfix/srt_cleaner.py" ...
 
 ## 架构原则
 
-**三层分离**：Python 做结构处理，Gemini 做语义初修，Opus 审查把关。
+**三层分离**：Python 做结构处理，Sonnet 做语义初修，Opus 审查把关。
 
 - Python（srt_cleaner.py）：HTML 清理、去重、标点替换、合并、拆分、编号、导出逐字稿 Markdown — 所有时间码操作
-- Gemini（srt_corrector.py）：同音字修正 + 去口吃 + 去填充词 — API 自动处理，几乎免费
-- Opus（对话内）：审查 Gemini 的修改清单，纠正错误修正，发现遗漏 — 只看 diff，token 极少
+- Sonnet（srt_corrector.py）：同音字修正 + 去口吃 + 去填充词 — 用 `claude -p` 分批调用，走 Claude Code 额度，不需要 API key
+- Opus（对话内）：审查 Sonnet 的修改清单，纠正错误修正，发现遗漏 — 只看 diff，token 极少
 
-**词典定位**：词典是"已知陷阱"参考，不是主力。同一个词的错误变体太多，词典永远无法穷举。真正的修正靠 Gemini 的语义理解 + 视频主题上下文。Opus 审查后发现的遗漏会反馈到词典，让系统越来越准。
+**词典定位**：词典是"已知陷阱"参考，不是主力。同一个词的错误变体太多，词典永远无法穷举。真正的修正靠 Sonnet 的语义理解 + 视频主题上下文。Opus 审查后发现的遗漏会反馈到词典，让系统越来越准。
 
 ## 使用方法
 
@@ -32,7 +32,6 @@ python3 "${CLAUDE_PLUGIN_ROOT}/skills/cyxj-subfix/srt_cleaner.py" ...
 /字幕修正 ~/Desktop/Timeline1.srt                          # 完整流程
 /字幕修正 ~/Desktop/Timeline1.srt --topic "Claude Code教程" # 指定主题提高修正准确度
 /字幕修正 ~/Desktop/Timeline1.srt --no-regroup             # 跳过合并拆分
-/字幕修正 ~/Desktop/Timeline1.srt --premium                # Phase 2a 用高端 Gemini 模型
 /字幕修正 添加词条 错误词→正确词                             # 添加词典条目（见下方"词典管理"）
 ```
 
@@ -58,31 +57,30 @@ python3 "${CLAUDE_PLUGIN_ROOT}/skills/cyxj-subfix/srt_cleaner.py" ...
    如果用户指定 `--no-regroup`，追加该参数跳过合并拆分。
 3. **报告结果**：向用户汇报去重、合并、拆分、超限条目数量
 
-### Phase 2a: Gemini 自动初修
+### Phase 2a: Sonnet 自动初修
 
 1. **确认主题**：如果用户提供了 `--topic`，以此为语境参考；否则从字幕内容推断主题，向用户确认
 2. **运行 srt_corrector.py**：
    ```bash
    python3 "${CLAUDE_PLUGIN_ROOT}/skills/cyxj-subfix/srt_corrector.py" "<_cleaned.srt>" --topic "主题"
    ```
-   如果用户指定 `--premium`，追加该参数使用高端模型。
 3. **输出**：
-   - `_gemini_fixed.srt`：Gemini 修正后的完整 SRT
+   - `_sonnet_fixed.srt`：Sonnet 修正后的完整 SRT
    - `_changes.json`：修改清单（原文→修正，带原因）
 
 ### Phase 2b: Opus 审查（在对话中）
 
 1. **读取 `_changes.json`**（只看修改清单，不读全文 SRT）
-2. **审查 Gemini 的修正**：
+2. **审查 Sonnet 的修正**：
    - 检查每项修正是否合理
-   - 标记错误的修正（Gemini 改错了的）
-   - 发现遗漏的错误（浏览 _gemini_fixed.srt 中 Gemini 未修改的部分，抽查是否有遗漏）
+   - 标记错误的修正（Sonnet 改错了的）
+   - 发现遗漏的错误（浏览 _sonnet_fixed.srt 中 Sonnet 未修改的部分，抽查是否有遗漏）
 3. **应用最终修正**：
    - 撤销错误的修正
    - 补充遗漏的修正
    - 保存为 `_fixed.srt`
 4. **反馈到词典**：
-   - 把 Gemini 漏掉的重要错误写入 `dictionary.json` 的 `feedback.gemini_missed` 字段
+   - 把 Sonnet 漏掉的重要错误写入 `dictionary.json` 的 `feedback.first_pass_missed` 字段
    - 如果遗漏的错误有通用性（不是偶发的），同时添加到 `corrections` 中
 
 ### Phase 2c: 音频交叉验证（有成片音频时强烈推荐）
@@ -126,7 +124,7 @@ Phase 3 完成、逐字稿已写回 Obsidian 后，**必须**清理全部中间�
 3. 执行清理：
 
 ```bash
-cmp -s "<原文件>.srt" "<原文件>.srt.bak" && rm -f "<原文件>.srt.bak" "<stem>_cleaned.srt" "<stem>_cleaned_stats.json" "<stem>_gemini_fixed.srt" "<stem>_changes.json" "<stem>_transcript.md"
+cmp -s "<原文件>.srt" "<原文件>.srt.bak" && rm -f "<原文件>.srt.bak" "<stem>_cleaned.srt" "<stem>_cleaned_stats.json" "<stem>_sonnet_fixed.srt" "<stem>_changes.json" "<stem>_transcript.md"
 ```
 
 `_transcript.md` 已在 Phase 3 写回 Obsidian，本地副本一并删除。删除后向用户报一句"以下中间产物已清理"+文件列表（不用事先逐个确认）。
@@ -141,8 +139,8 @@ cmp -s "<原文件>.srt" "<原文件>.srt.bak" && rm -f "<原文件>.srt.bak" "<
 ## Opus 审查时的权限边界
 
 **可以做：**
-- 审查并修正 Gemini 的错误修改
-- 补充 Gemini 遗漏的同音字、口吃、填充词修正
+- 审查并修正 Sonnet 的错误修改
+- 补充 Sonnet 遗漏的同音字、口吃、填充词修正
 - 将遗漏反馈到词典
 - 审查合并结果，标记语义问题
 - 建议用户添加新词典条目
@@ -156,15 +154,10 @@ cmp -s "<原文件>.srt" "<原文件>.srt.bak" && rm -f "<原文件>.srt.bak" "<
 
 ## 模型选择
 
-| 用途 | 模型 ID | 价格（输入/输出 per M token） | 说明 |
-|------|---------|------|------|
-| 日常初修 | `gemini-3.1-flash-lite` | $0.25 / $1.50 | 默认，官方定位"高频/批量数据处理"，价格约为 3.5-flash 的 1/6 |
-| 高端初修 | `gemini-3.5-flash` | $1.50 / $9.00 | `--premium` 时启用，语义理解更强，用于疑难字幕 |
+| 用途 | 模型 | 费用 | 说明 |
+|------|------|------|------|
+| 初修 | `sonnet`（Claude Code 别名，指向当前 Sonnet） | 走 Claude Code 额度 | effort 为 medium；可用 `--model` 换模型 |
 | 审查 | Opus（对话内） | 按对话计费 | 只审查 diff |
-
-价格核实于 2026-07-09（ai.google.dev/gemini-api/docs/pricing 原文，Standard 档）。
-
-**注意**：`gemini-3.1-flash-image`（Nano Banana 2）、`gemini-3-pro-image`（Nano Banana Pro）是图片生成专用模型，不用于文本修正。
 
 ## 词典管理
 
@@ -179,11 +172,11 @@ cmp -s "<原文件>.srt" "<原文件>.srt.bak" && rm -f "<原文件>.srt.bak" "<
 
 ### 反馈机制
 
-`dictionary.json` 的 `feedback.gemini_missed` 字段记录 Gemini 漏掉但 Opus 审查时发现的错误：
+`dictionary.json` 的 `feedback.first_pass_missed` 字段记录 Sonnet 漏掉但 Opus 审查时发现的错误：
 ```json
 {"original": "错误文字", "correct": "正确文字", "context": "错误类型描述", "date": "2026-03-21"}
 ```
 
 这些记录用于：
-1. 优化 Gemini 的 prompt（如果某类错误反复出现）
+1. 优化初修的 prompt（如果某类错误反复出现）
 2. 扩充 corrections 词典（如果错误有通用性）

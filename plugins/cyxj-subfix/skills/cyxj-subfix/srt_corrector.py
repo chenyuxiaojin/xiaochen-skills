@@ -1,29 +1,39 @@
 #!/usr/bin/env python3
-"""SRT 字幕语义修正工具 - 达芬奇字幕修正 Skill v4
+"""SRT 字幕语义修正工具 - 达芬奇字幕修正 Skill v5
 
-用 Gemini 3.1 Flash-Lite（--premium 时用 3.5 Flash）做初修，输出修正后的 SRT 和修改清单。
-依赖：google-genai, pysrt
+通过本机 Claude Code（claude -p）用 Sonnet 做初修，输出修正后的 SRT 和修改清单。
+依赖：Claude Code CLI, pysrt
 """
 
 import argparse
 import json
 import os
 import re
+import shutil
+import subprocess
 import sys
+import tempfile
 import time
 from pathlib import Path
 
 import pysrt
-from google import genai
-from google.genai import types
 
 # ── 配置 ──────────────────────────────────────────────────────────────────
 
-DEFAULT_MODEL = "gemini-3.1-flash-lite"  # 官方定位：高频/批量数据处理场景，价格约为 3.5-flash 的 1/6
-PREMIUM_MODEL = "gemini-3.5-flash"  # --premium：更强的语义理解，用于疑难字幕
+DEFAULT_MODEL = "sonnet"  # Claude Code 的模型别名，始终指向当前的 Sonnet
+EFFORT = "medium"
 BATCH_SIZE = 40  # 每批字幕条数
 MAX_RETRIES = 3
 RETRY_DELAY = 2  # 秒
+CLI_TIMEOUT = 300  # 单批超时（秒）
+
+# 在 Claude Code 对话里运行时，这些变量会让子进程以为自己嵌套在当前会话里
+CHILD_ENV_DROP = {
+    "CLAUDECODE", "CLAUDE_CODE_ENTRYPOINT", "CLAUDE_CODE_SESSION_ID",
+    "CLAUDE_CODE_CHILD_SESSION", "CLAUDE_PID", "CLAUDE_EFFORT",
+    "CLAUDE_CODE_MESSAGING_SOCKET", "CLAUDE_CODE_MESSAGING_TOKEN",
+    "CLAUDE_CODE_SESSION_ATTENDED", "CLAUDE_CODE_PLUGIN_DIRS", "CLAUDE_PLUGIN_DATA",
+}
 
 SKILL_DIR = Path(__file__).parent
 DICTIONARY_PATH = SKILL_DIR / "dictionary.json"
@@ -70,7 +80,7 @@ def format_dictionary_for_prompt(error_map: dict) -> str:
     return "\n".join(lines)
 
 
-# ── Gemini API 调用 ───────────────────────────────────────────────────────
+# ── Sonnet 调用 ───────────────────────────────────────────────────────────
 
 def build_system_prompt(topic: str, dict_text: str) -> str:
     """构建系统提示词。"""
@@ -107,8 +117,8 @@ def build_batch_prompt(subs_batch: list[tuple[int, str]]) -> str:
     return "请检查以下字幕并修正错误：\n\n" + "\n".join(lines)
 
 
-def parse_gemini_response(response_text: str) -> list[dict] | None:
-    """解析 Gemini 返回的 JSON 修改清单。解析失败返回 None（区别于"无需修正"的 []）。"""
+def parse_model_response(response_text: str) -> list[dict] | None:
+    """解析模型返回的 JSON 修改清单。解析失败返回 None（区别于"无需修正"的 []）。"""
     text = response_text.strip()
 
     # 去掉可能的 markdown 代码块标记
@@ -133,38 +143,41 @@ def parse_gemini_response(response_text: str) -> list[dict] | None:
                 return json.loads(match.group())
             except json.JSONDecodeError:
                 pass
-        print(f"  ⚠ 无法解析 Gemini 响应，跳过此批", file=sys.stderr)
+        print(f"  ⚠ 无法解析模型响应，跳过此批", file=sys.stderr)
         return None
 
 
-def call_gemini_batch(client, model: str, system_prompt: str,
-                      batch: list[tuple[int, str]]) -> list[dict] | None:
-    """调用 Gemini API 处理一批字幕。失败（重试耗尽/解析失败）返回 None。"""
+def call_sonnet_batch(model: str, system_prompt: str,
+                      batch: list[tuple[int, str]], workdir: str) -> list[dict] | None:
+    """用 claude -p 处理一批字幕。失败（重试耗尽/解析失败）返回 None。"""
     user_prompt = build_batch_prompt(batch)
+    # 只让模型改字：不给工具，不加载设置、插件和 MCP
+    cmd = ["claude", "-p", "--model", model, "--effort", EFFORT,
+           "--output-format", "json", "--no-session-persistence",
+           "--tools", "", "--disable-slash-commands", "--strict-mcp-config",
+           "--setting-sources", "", "--system-prompt", system_prompt]
+    env = {k: v for k, v in os.environ.items() if k not in CHILD_ENV_DROP}
 
     for attempt in range(MAX_RETRIES):
         try:
-            response = client.models.generate_content(
-                model=model,
-                contents=user_prompt,
-                config=types.GenerateContentConfig(
-                    system_instruction=system_prompt,
-                    temperature=0.1,  # 低温度，追求准确
-                    max_output_tokens=4096,
-                )
-            )
-
-            if response.text:
-                return parse_gemini_response(response.text)
-            return []
+            proc = subprocess.run(cmd, input=user_prompt, capture_output=True, text=True,
+                                  timeout=CLI_TIMEOUT, env=env, cwd=workdir)
+            if proc.returncode != 0:
+                detail = (proc.stderr or proc.stdout).strip()[:300]
+                raise RuntimeError(f"claude 退出码 {proc.returncode}: {detail}")
+            data = json.loads(proc.stdout)
+            result = data.get("result")
+            if data.get("is_error") or not isinstance(result, str) or not result.strip():
+                raise RuntimeError(f"claude 没有返回有效结果: {str(result)[:300]}")
+            return parse_model_response(result)
 
         except Exception as e:
             if attempt < MAX_RETRIES - 1:
-                print(f"  ⚠ API 错误 (重试 {attempt + 1}/{MAX_RETRIES}): {e}",
+                print(f"  ⚠ 调用出错 (重试 {attempt + 1}/{MAX_RETRIES}): {e}",
                       file=sys.stderr)
                 time.sleep(RETRY_DELAY * (attempt + 1))
             else:
-                print(f"  ✗ API 失败，跳过此批: {e}", file=sys.stderr)
+                print(f"  ✗ 调用失败，跳过此批: {e}", file=sys.stderr)
                 return None
 
 
@@ -174,14 +187,9 @@ def process_srt(input_path: str, topic: str, model: str = DEFAULT_MODEL,
                 batch_size: int = BATCH_SIZE) -> tuple[str, str]:
     """处理 SRT 文件，返回 (输出SRT路径, 修改清单路径)。"""
 
-    # 初始化 Gemini 客户端
-    # 可用 CYXJ_GEMINI_API_KEY 给这些工具单独指定 key,没设就用 GEMINI_API_KEY
-    api_key = os.environ.get("CYXJ_GEMINI_API_KEY") or os.environ.get("GEMINI_API_KEY")
-    if not api_key:
-        print("✗ 未找到 GEMINI_API_KEY 环境变量", file=sys.stderr)
+    if not shutil.which("claude"):
+        print("✗ 未找到 claude 命令，请先安装 Claude Code", file=sys.stderr)
         sys.exit(1)
-
-    client = genai.Client(api_key=api_key)
 
     # 加载文件和词典
     subs = pysrt.open(input_path, encoding="utf-8-sig")
@@ -206,27 +214,25 @@ def process_srt(input_path: str, topic: str, model: str = DEFAULT_MODEL,
     total_fixed = 0
     failed_batches = 0
 
-    for batch_idx, batch in enumerate(batches):
-        start_idx = batch[0][0]
-        end_idx = batch[-1][0]
-        print(f"  处理批次 {batch_idx + 1}/{len(batches)} "
-              f"(#{start_idx}-#{end_idx})...", end=" ", flush=True)
+    # 在空的临时目录里运行，不读当前项目的 CLAUDE.md
+    with tempfile.TemporaryDirectory() as workdir:
+        for batch_idx, batch in enumerate(batches):
+            start_idx = batch[0][0]
+            end_idx = batch[-1][0]
+            print(f"  处理批次 {batch_idx + 1}/{len(batches)} "
+                  f"(#{start_idx}-#{end_idx})...", end=" ", flush=True)
 
-        changes = call_gemini_batch(client, model, system_prompt, batch)
+            changes = call_sonnet_batch(model, system_prompt, batch, workdir)
 
-        if changes is None:
-            failed_batches += 1
-            print("✗ 本批处理失败，字幕保持原样")
-        elif changes:
-            all_changes.extend(changes)
-            total_fixed += len(changes)
-            print(f"✓ {len(changes)} 处修正")
-        else:
-            print("✓ 无需修正")
-
-        # 避免 API 限流
-        if batch_idx < len(batches) - 1:
-            time.sleep(0.5)
+            if changes is None:
+                failed_batches += 1
+                print("✗ 本批处理失败，字幕保持原样")
+            elif changes:
+                all_changes.extend(changes)
+                total_fixed += len(changes)
+                print(f"✓ {len(changes)} 处修正")
+            else:
+                print("✓ 无需修正")
 
     print()
     print(f"📊 总计: {total_fixed} 处修正 / {len(subs)} 条字幕")
@@ -259,7 +265,7 @@ def process_srt(input_path: str, topic: str, model: str = DEFAULT_MODEL,
 
     # 输出文件
     p = Path(input_path)
-    output_srt = str(p.parent / (p.stem.replace("_cleaned", "") + "_gemini_fixed" + p.suffix))
+    output_srt = str(p.parent / (p.stem.replace("_cleaned", "") + "_sonnet_fixed" + p.suffix))
     output_json = str(p.parent / (p.stem.replace("_cleaned", "") + "_changes.json"))
 
     subs.save(output_srt, encoding="utf-8")
@@ -285,21 +291,18 @@ def process_srt(input_path: str, topic: str, model: str = DEFAULT_MODEL,
 
 def main():
     parser = argparse.ArgumentParser(
-        description="SRT 字幕语义修正工具 (Gemini Flash)")
+        description="SRT 字幕语义修正工具 (Claude Code + Sonnet)")
     parser.add_argument("input", help="输入 SRT 文件路径（通常是 _cleaned.srt）")
     parser.add_argument("--topic", required=True,
                         help="视频主题（用于语境判断，如 'Claude Code教程'）")
     parser.add_argument("--model", default=DEFAULT_MODEL,
-                        help=f"Gemini 模型 ID（默认: {DEFAULT_MODEL}）")
-    parser.add_argument("--premium", action="store_true",
-                        help=f"使用高端模型 ({PREMIUM_MODEL})")
+                        help=f"Claude Code 模型名（默认: {DEFAULT_MODEL}）")
     parser.add_argument("--batch-size", type=int, default=BATCH_SIZE,
                         help=f"每批处理条数（默认: {BATCH_SIZE}）")
 
     args = parser.parse_args()
 
-    model = PREMIUM_MODEL if args.premium else args.model
-    process_srt(args.input, args.topic, model, args.batch_size)
+    process_srt(args.input, args.topic, args.model, args.batch_size)
 
 
 if __name__ == "__main__":

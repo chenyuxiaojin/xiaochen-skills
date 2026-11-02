@@ -1,3 +1,2 @@
 pysrt
-google-genai
 jieba

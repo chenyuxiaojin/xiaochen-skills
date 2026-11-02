@@ -15,7 +15,7 @@ Claude Code's built-in skills cover general tasks. This collection adds a vertic
 
 | Skill | What it does | Trigger phrases | Dependencies |
 |-------|-------------|-----------------|--------------|
-| [cyxj-subfix](./plugins/cyxj-subfix/) | Fix ASR subtitles from DaVinci Resolve: SRT cleanup → Gemini semantic correction → Claude Opus review | `/字幕修正`, `修正字幕`, `字幕错别字`, `SRT 修正` | `GEMINI_API_KEY`; Python: `google-genai`, `pysrt` |
+| [cyxj-subfix](./plugins/cyxj-subfix/) | Fix ASR subtitles from DaVinci Resolve: SRT cleanup → Sonnet semantic correction → Claude Opus review | `/字幕修正`, `修正字幕`, `字幕错别字`, `SRT 修正` | Claude Code CLI; Python: `pysrt`, `jieba` |
 | [cyxj-wechat-pub](./plugins/cyxj-wechat-pub/) | Convert Obsidian Markdown to WeChat Official Account HTML with 3 built-in CSS themes (TATALAB blue / noir-gold / orange editorial) | `发布到公众号`, `公众号排版`, `微信发布`, `排版文章` | npm: `juice`; WeChat backend access |
 | [cyxj-obsidian-build](./plugins/cyxj-obsidian-build/) | Compile an Obsidian vault into a 3-tier knowledge architecture (Ingest / Query / Lint) inspired by Karpathy's LLM Wiki methodology | `整理 Obsidian`, `编译知识库`, `摄入笔记`, `查知识库`, `健康度检查` | Obsidian vault path configured; no API key |
 | [cyxj-image-studio](./plugins/cyxj-image-studio/) | Image studio (gpt-image-2), one plugin with two skills sharing credential loading: **cyxj-poster** (master-level poster / book cover / album art, 33+ designer + 10 photography styles) and **cyxj-video-cover** (textless 16:9 base-plate engine: redraws a real-person photo preserving the face, output feeds cyxj-release-kit's HTML cover workbench — finished covers with text are made by cyxj-release-kit, not here) | `做海报`, `海报设计`, `书籍封面`, `专辑封面` | `GPTIMG2_BASE_URL`/`GPTIMG2_API_KEY`; poster additionally `GEMINI_API_KEY` + Python `requests`, `google-genai`, `pillow`; video-cover is stdlib-only (Pillow optional) |
@@ -82,7 +82,6 @@ Skills that work with minimal setup (only Obsidian vault path needed):
 - `cyxj-obsidian-build`, `cyxj-roundtable`, `cyxj-transcript`, `cyxj-video-doctor` (hook + content), `cyxj-data-review`, `cyxj-deeper`
 
 Skills that require API keys:
-- `cyxj-subfix` → `GEMINI_API_KEY`
 - `cyxj-image-studio` → `GPTIMG2_BASE_URL`/`GPTIMG2_API_KEY` (both skills); poster additionally `GEMINI_API_KEY` (文字扩写)
 - `cyxj-youtube-topics` → `YOUTUBE_DATA_API_KEY` + `APIFY_API_TOKEN` (subtitles)
 - `cyxj-yt-creator` → `APIFY_API_TOKEN`

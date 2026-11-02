@@ -15,7 +15,7 @@ Claude Code 内置技能覆盖通用任务。这个集合在上面加了一层�
 
 | 技能 | 功能 | 触发词 | 前置依赖 |
 |------|------|--------|---------|
-| [cyxj-subfix](./plugins/cyxj-subfix/) | 达芬奇字幕修正：SRT 清理 → Gemini 语义初修 → Claude Opus 审查把关 | `/字幕修正`、`修正字幕`、`字幕错别字`、`SRT 修正` | `GEMINI_API_KEY`；Python: `google-genai`、`pysrt` |
+| [cyxj-subfix](./plugins/cyxj-subfix/) | 达芬奇字幕修正：SRT 清理 → Sonnet 语义初修 → Claude Opus 审查把关 | `/字幕修正`、`修正字幕`、`字幕错别字`、`SRT 修正` | Claude Code CLI；Python: `pysrt`、`jieba` |
 | [cyxj-wechat-pub](./plugins/cyxj-wechat-pub/) | Obsidian Markdown → 微信公众号 HTML，内置 3 套主题（TATALAB 蓝 / 炭黑暖金 / 暖橙编辑），可直接粘贴到微信后台 | `发布到公众号`、`公众号排版`、`微信发布`、`排版文章` | npm: `juice`；微信公众号后台权限 |
 | [cyxj-obsidian-build](./plugins/cyxj-obsidian-build/) | 将 Obsidian 库编译为三层知识架构（摄入/查询/检查），灵感来自 Karpathy 的 LLM Wiki 方法论 | `整理 Obsidian`、`编译知识库`、`摄入笔记`、`查知识库`、`健康度检查` | 配置 Obsidian 库路径；无需 API key |
 | [cyxj-image-studio](./plugins/cyxj-image-studio/) | 生图工坊（gpt-image-2 中转），一个插件两个 skill 共享凭据加载：**cyxj-poster**（33+ 大师风格海报/书封/专辑封面）+ **cyxj-video-cover**（无字底图引擎：真人照重绘保脸，只出 16:9 无文字场景图，供 cyxj-release-kit 封面工作台当底图；带字封面成品一律走 cyxj-release-kit） | `做海报`、`海报设计`、`书籍封面`、`专辑封面` | `GPTIMG2_BASE_URL`/`GPTIMG2_API_KEY`；poster 另需 `GEMINI_API_KEY` + Python `requests`/`google-genai`/`pillow`；video-cover 仅标准库（Pillow 可选） |
@@ -82,7 +82,6 @@ YouTube 选题            → 启动 cyxj-youtube-topics
 - `cyxj-obsidian-build`、`cyxj-roundtable`、`cyxj-transcript`、`cyxj-video-doctor`（hook + content）、`cyxj-data-review`、`cyxj-deeper`
 
 需要 API key 的技能：
-- `cyxj-subfix` → `GEMINI_API_KEY`
 - `cyxj-image-studio` → `GPTIMG2_BASE_URL`/`GPTIMG2_API_KEY`（两个 skill 共用）；poster 另需 `GEMINI_API_KEY`（文字扩写）
 - `cyxj-youtube-topics` → `YOUTUBE_DATA_API_KEY` + `APIFY_API_TOKEN`（字幕）
 - `cyxj-yt-creator` → `APIFY_API_TOKEN`
